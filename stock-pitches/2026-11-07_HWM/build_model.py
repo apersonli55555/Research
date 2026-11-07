@@ -123,7 +123,7 @@ rows=[
 ('g26fcf','FY2026 free cash flow guidance (baseline)',2000,USD,SECQ3+'. Range $1,950-$2,050'),
 ('g27rev','FY2027 revenue guidance (approx.)',11500,USD,SECQ3+': "approximately $11.5 billion"'),
 ('VALUATION WEIGHTS (Summary sheet)',None,None,None,None),
-('w1','Weight: DCF perpetuity growth',0.25,PCT,'ASSUMPTION'),
+('w1','Weight: DCF 10-yr with fade (perpetuity)',0.25,PCT,'ASSUMPTION'),
 ('w2','Weight: DCF exit multiple',0.25,PCT,'ASSUMPTION'),
 ('w3','Weight: Comps EV/EBITDA',0.25,PCT,'ASSUMPTION'),
 ('w4','Weight: Comps P/E',0.25,PCT,'ASSUMPTION'),
@@ -376,18 +376,56 @@ sens(41,'SENSITIVITY: value per share, perpetuity method (WACC x terminal growth
      lambda w,g: f'=({pvsum(w)}+$G$4*(1+{g})/({w}-{g})/(1+{w})^$B$10-{I["netdebt"]})/{sh}')
 sens(51,'SENSITIVITY: value per share, exit-multiple method (WACC x exit EV/EBITDA)',[14,18,22,26,30],MULT,
      lambda w,m: f'=({pvsum(w)}+Model!$I$18*{m}/(1+{w})^$B$10-{I["netdebt"]})/{sh}')
+section(ws,62,'D) 10-YEAR DCF: FY2027-31E explicit + FY2032-36E fade to terminal growth (answers the "year 5 is not steady state" critique)',10)
+header(ws,63,['','','FY2032E','FY2033E','FY2034E','FY2035E','FY2036E'])
+fc='CDEFG'
+for k,c in enumerate(fc,1):
+    pc = 'Model!I' if k==1 else f'{fc[k-2]}'
+    put(ws,f'{c}64',f'=Model!$I$6-(Model!$I$6-{I["g"]})*{k}/5',fmt=PCT)
+    put(ws,f'{c}65',(f'=Model!I16*(1+{c}64)' if k==1 else f'={fc[k-2]}65*(1+{c}64)'),fmt=USD)
+    put(ws,f'{c}66',f'={c}65*Model!$I$7',fmt=USD)
+    put(ws,f'{c}67',f'={c}65*Model!$I$8',fmt=USD)
+    put(ws,f'{c}68',f'={c}65*Model!$I$9',fmt=USD)
+    put(ws,f'{c}69',(f'=({c}65-Model!I16)*Model!$I$10' if k==1 else f'=({c}65-{fc[k-2]}65)*Model!$I$10'),fmt=USD)
+    put(ws,f'{c}70',f'=({c}66-{c}67)*{I["tax"]}',fmt=USD)
+    put(ws,f'{c}71',f'={c}66-{c}70-{c}68-{c}69',fmt=USD)
+    put(ws,f'{c}72',f'=(DATE({2031+k},7,1)-{I["valdate"]})/365.25',fmt=NUM2)
+    put(ws,f'{c}73',f'=1/(1+{W})^{c}72',fmt='0.000')
+    put(ws,f'{c}74',f'={c}71*{c}73',fmt=USD)
+for r,t in zip(range(64,75),['Revenue growth (linear fade from FY31E rate to terminal g)','Revenue','Adj. EBITDA (FY31E margin held)','D&A','Capex','Increase in NWC','Taxes on EBIT','Unlevered FCF','Timing (years)','Discount factor','PV of FCF']):
+    label(ws,f'A{r}',t,bold=(r in (71,74)))
+fb=[(76,'PV of FCF, FY2027-31E (+ Q4-26 stub)','=B9',USD),
+(77,'PV of FCF, FY2032-36E fade','=SUM(C74:G74)',USD),
+(78,'Terminal value at end-FY2036 (perpetuity)',f'=G71*(1+{I["g"]})/({W}-{I["g"]})',USD),
+(79,'PV of terminal value',f'=B78/(1+{W})^((DATE(2036,12,31)-{I["valdate"]})/365.25)',USD),
+(80,'Enterprise value','=B76+B77+B79',USD),
+(81,'  % of EV from terminal value','=B79/B80',PCT),
+(82,'Value per share (10-year DCF)',f'=(B80-{I["netdebt"]})/({I["shares"]}+{I["dilut"]})',USD2),
+(83,'  Upside / (downside) vs. current price',f'=B82/{I["price"]}-1',PCT),
+(84,'  Implied EV/EBITDA on FY2036E at terminal',f'=B78/G66',MULT)]
+for r,lab,f,fmt in fb:
+    label(ws,f'A{r}',lab,bold=lab.startswith('Value per share')); put(ws,f'B{r}',f,fmt=fmt)
+section(ws,86,'E) 10-YEAR DCF VALUE PER SHARE vs. WACC (g = terminal growth on Inputs): where does it reach the current price?',10)
+for j,w in enumerate([0.06,0.065,0.07,0.08,0.09,0.1045]):
+    cl=L(2+j)
+    put(ws,f'{cl}87',w,fmt=PCT,font=Font(name=F,bold=True,color='0000FF',size=10))
+    f10=(f'=(SUMPRODUCT($B$4:$G$4,1/(1+{cl}87)^$B$5:$G$5)+SUMPRODUCT($C$71:$G$71,1/(1+{cl}87)^$C$72:$G$72)'
+         f'+$G$71*(1+{I["g"]})/({cl}87-{I["g"]})/(1+{cl}87)^((DATE(2036,12,31)-{I["valdate"]})/365.25)-{I["netdebt"]})/({I["shares"]}+{I["dilut"]})')
+    put(ws,f'{cl}88',f10,fmt=USD2)
+label(ws,'A87','WACC',bold=True); label(ws,'A88','10-year DCF value per share',bold=True)
+label(ws,'A89','Break-even WACC to justify $205.81 with these forecasts is ~6.6% (solved by bisection in Python on Nov 7, 2026; re-solve if inputs change).',ital=True)
 label(ws,'A60','Cross-check: B9 equals the SUMPRODUCT used in the tables at the base WACC ->',ital=True)
 put(ws,'H60',f'=B9-{pvsum(I["wacc"])}',fmt=NUM2)
 label(ws,'I60','(should be 0)',ital=True)
 
 # ================= Comps =================
 ws=wb.create_sheet('Comps')
-widths=[8,30,12,10,11,11,11,11,9,9,11,11,10,10,10,10,10,9,9,9,9,9]
+widths=[8,30,12,10,11,11,11,11,9,9,11,11,10,10,10,10,10,9,9,9,9,10,11]
 for i,w in enumerate(widths,1): ws.column_dimensions[L(i)].width=w
 put(ws,'A1','Trading Comparables (LTM, GAAP, $mm except per share)',TITLE)
 label(ws,'A2','Prices: Nov 6, 2026 close (stockanalysis.com). Fundamentals: SEC XBRL, latest 10-K + 10-Q; LTM = last fiscal year + current YTD - prior YTD. EBITDA = GAAP operating income + D&A (consistent across all names, so no company "adjustments").',ital=True)
 cols=['Ticker','Company','LTM period end','Price','Shares (mm)','Class A price','Class A sh (mm)','Market cap','Cash','Debt','Noncontrol. int.','Enterprise value',
-      'LTM revenue','LTM EBIT','LTM D&A','LTM EBITDA','LTM dil. EPS','EV / Revenue','EV / EBITDA','P / E','EBITDA margin']
+      'LTM revenue','LTM EBIT','LTM D&A','LTM EBITDA','LTM dil. EPS','EV / Revenue','EV / EBITDA','P / E','EBITDA margin','YTD rev. growth','EV/EBITDA ÷ growth']
 header(ws,4,cols)
 peers=[
 ('TDG','TransDigm Group','2026-06-27',1197.01,55.276525,None,None,2773,32621+139,9,10006,4608,420,32.97,
@@ -402,6 +440,8 @@ peers=[
  '=689.848+47.431-2.980',120.195,8.99,
  'No operating-income tag in XBRL: EBIT proxy = LTM pre-tax income 689.8 + interest exp 47.4 - interest income 3.0. Debt incl. short-term borrowings 592.4'),
 ]
+GROW={'TDG':7569/6394-1,'HEI':3967.345/3275.633-1,'ATI':3836.3/3410.3-1,'CRS':798.2/733.7-1,'WWD':3196.727/2571.8-1}
+GSRC={'TDG':'9M FY26 (to Jun 27, 2026) vs 9M FY25','HEI':'9M FY26 (to Jul 31, 2026) vs 9M FY25','ATI':'9M 2026 vs 9M 2025','CRS':'Q1 FY27 (to Sep 30, 2026) vs Q1 FY26','WWD':'9M FY26 (to Jun 30, 2026) vs 9M FY25'}
 r=5
 for p in peers:
     t,n,per,px,shs,pa,sa,cash,debt,nci,rev,ebit,da,eps,src=p
@@ -414,13 +454,16 @@ for p in peers:
     put(ws,f'M{r}',rev,fmt=USD); put(ws,f'N{r}',ebit,fmt=USD); put(ws,f'O{r}',da,fmt=USD)
     put(ws,f'P{r}',f'=N{r}+O{r}',fmt=USD); put(ws,f'Q{r}',eps,fmt=USD2)
     put(ws,f'R{r}',f'=L{r}/M{r}',fmt=MULT); put(ws,f'S{r}',f'=L{r}/P{r}',fmt=MULT); put(ws,f'T{r}',f'=D{r}/Q{r}',fmt=MULT); put(ws,f'U{r}',f'=P{r}/M{r}',fmt=PCT)
+    put(ws,f'V{r}','=%s'%{'TDG':'7569/6394-1','HEI':'3967.345/3275.633-1','ATI':'3836.3/3410.3-1','CRS':'798.2/733.7-1','WWD':'3196.727/2571.8-1'}[t],fmt=PCT)
+    ws[f'V{r}'].comment=Comment('Reported revenue growth, '+GSRC[t]+' (SEC XBRL). Includes acquisitions.','Analyst')
+    put(ws,f'W{r}',f'=S{r}/(V{r}*100)',fmt=NUM2)
     ws.cell(row=r,column=2).comment=Comment(src,'Analyst')
     r+=1
 last=r-1
 for lab,fn in [('Median','MEDIAN'),('Mean','AVERAGE')]:
     label(ws,f'B{r}',lab,bold=True)
-    for c in 'RSTU': put(ws,f'{c}{r}',f'={fn}({c}5:{c}{last})',fmt=PCT if c=='U' else MULT,bold=True)
-    for c in 'ABCDEFGHIJKLMNOPQRSTU': ws[f'{c}{r}'].border=TOP
+    for c in 'RSTUVW': put(ws,f'{c}{r}',f'={fn}({c}5:{c}{last})',fmt=PCT if c in 'UV' else (NUM2 if c=='W' else MULT),bold=True)
+    for c in 'ABCDEFGHIJKLMNOPQRSTUVW': ws[f'{c}{r}'].border=TOP
     r+=1
 med=r-2
 r+=1
@@ -431,6 +474,7 @@ put(ws,f'L{r}',f'=H{r}-I{r}+J{r}+K{r}',fmt=USD)
 put(ws,f'M{r}','=Historicals!G5',fmt=USD); put(ws,f'N{r}','=Historicals!G11',fmt=USD); put(ws,f'O{r}','=Historicals!G9',fmt=USD)
 put(ws,f'P{r}',f'=N{r}+O{r}',fmt=USD); put(ws,f'Q{r}','=Historicals!G20',fmt=USD2)
 put(ws,f'R{r}',f'=L{r}/M{r}',fmt=MULT); put(ws,f'S{r}',f'=L{r}/P{r}',fmt=MULT); put(ws,f'T{r}',f'=D{r}/Q{r}',fmt=MULT); put(ws,f'U{r}',f'=P{r}/M{r}',fmt=PCT)
+put(ws,f'V{r}','=Historicals!F5/Historicals!E5-1',fmt=PCT); put(ws,f'W{r}',f'=S{r}/(V{r}*100)',fmt=NUM2)
 hw=r
 r+=1
 label(ws,f'B{r}','HWM premium / (discount) to peer median',ital=True)
@@ -441,6 +485,8 @@ imp0=r
 label(ws,f'B{r}','EV/EBITDA: peer median x HWM LTM EBITDA'); put(ws,f'H{r}',f'=S{med}*P{hw}',fmt=USD); label(ws,f'I{r}','implied EV',ital=True)
 put(ws,f'L{r}',f'=(H{r}-{I["netdebt"]})/E{hw}',fmt=USD2); label(ws,f'M{r}','per share',ital=True); r+=1
 label(ws,f'B{r}','P/E: peer median x HWM LTM diluted EPS'); put(ws,f'L{r}',f'=T{med}*Q{hw}',fmt=USD2); label(ws,f'M{r}','per share',ital=True); r+=1
+label(ws,f'B{r}','Growth-adjusted cross-check (NOT in blend): HWM on 2027 guided growth (~12%) and FY2027E EBITDA'); put(ws,f'S{r}',f'={I["ev"]}/Model!E18',fmt=MULT); put(ws,f'V{r}','=Model!E17',fmt=PCT); put(ws,f'W{r}',f'=S{r}/(V{r}*100)',fmt=NUM2); fwd=r; r+=1
+label(ws,f'B{r}','Read: on TRAILING growth HWM screens cheaper than peers on EV/EBITDA-to-growth; on 2027 GUIDED growth it screens far more expensive. The debate is which growth rate the market should capitalize.',ital=True); r+=1
 label(ws,f'B{r}','Note: HWM LTM GAAP EBITDA includes a ~$91mm net restructuring credit (mostly the gain on the disk-forging plant sale) and FY2025 charges of $84mm, which roughly offset. Company Adj. EBITDA LTM = 9M26 $2,436 + Q4-25 $653 = $3,089.',ital=True)
 COMPS_EVE=f'Comps!$L${imp0}'; COMPS_PE=f'Comps!$L${imp0+1}'
 ws.freeze_panes='C5'
@@ -453,7 +499,7 @@ ws.column_dimensions['G'].width=60
 put(ws,'A1','HWM: Valuation Summary & Price Target',TITLE)
 label(ws,'A2','All figures live-linked. Change yellow cells on Inputs/Model to re-run.',ital=True)
 header(ws,4,['Method','Value / share','Weight','Weighted','vs. price','','Comment'])
-meth=[('DCF: perpetuity growth','=DCF!B19',I['w1'],'Most conservative: assumes steady state after 2031'),
+meth=[('DCF: 10-yr with fade, perpetuity','=DCF!B82',I['w1'],'5 explicit years + 5-year growth fade to 3%; 5-yr-only version on DCF!B19'),
       ('DCF: exit multiple','=DCF!B29',I['w2'],'Depends heavily on the exit multiple you assume'),
       ('Comps: EV/EBITDA (peer median)',f'={COMPS_EVE}',I['w3'],'Peers growing slower than HWM: arguably understates'),
       ('Comps: P/E (peer median)',f'={COMPS_PE}',I['w4'],'GAAP LTM EPS basis')]
@@ -481,14 +527,14 @@ km=[('EV / FY2026E Adj. EBITDA (guidance)',f'={I["ev"]}/{I["g26ebitda"]}',MULT),
     ('WACC','='+I['wacc'],PCT)]
 for i,(lab,f,fmt) in enumerate(km):
     label(ws,f'A{19+i}',lab); put(ws,f'B{19+i}',f,fmt=fmt)
-label(ws,'A30','Robustness: blend EXCLUDING perpetuity DCF (equal weights on other 3)',bold=True)
+label(ws,'A30','Robustness: blend EXCLUDING the DCF perpetuity method (equal weights on other 3)',bold=True)
 put(ws,'B30','=AVERAGE(B6:B8)',fmt=USD2)
 label(ws,'A31','  -> implied 12-month target'); put(ws,'B31','=B30*(1+B12)-B13',fmt=USD2)
 label(ws,'A32','  -> expected total return'); put(ws,'B32','=(B31+B13)/B11-1',fmt=PCT)
 label(ws,'A33','  -> recommendation under this alternative'); put(ws,'B33',f'=IF(B32>{I["thresh"]},"LONG",IF(B32<-{I["thresh"]},"SHORT","NEUTRAL"))')
 label(ws,'G30','The call is sensitive to method weights: read this before publishing',ital=True)
 section(ws,26,'BULL / BASE / BEAR (illustrative, per share)',7)
-label(ws,'A27','Bear: DCF perpetuity at 10.5% WACC, 2.5% g'); put(ws,'B27','=DCF!C48',fmt=USD2)
+label(ws,'A27','Bear: 5-yr DCF perpetuity at 10.5% WACC, 2.5% g'); put(ws,'B27','=DCF!C48',fmt=USD2)
 label(ws,'A28','Base: blended fair value'); put(ws,'B28','=D9',fmt=USD2)
 label(ws,'A29','Bull: exit multiple 26x (today\'s HWM multiple holds) at 8.5% WACC'); put(ws,'B29','=DCF!E54',fmt=USD2)
 ch=BarChart(); ch.type='bar'; ch.title='Valuation football field ($/share)'; ch.style=10

@@ -1,19 +1,22 @@
-# HWM Short: PM Critique and Teaching Notes
+# HWM Short: PM Critique and Teaching Notes (v2)
 
 ## Part 1: How a PM would tear this pitch apart
 
 These are the questions I'd expect from a long/short PM, roughly in the order they'd ask them. Each comes with an honest answer.
 
 ### 1. "Your short depends on one valuation method. Defend the weights."
-**This is the biggest weakness.** With equal weights the blend gives a $165 target (–19%) and a SHORT. Drop the perpetuity DCF and the target becomes $188 (–8%), which is NEUTRAL. That DCF implies Howmet is worth only 8.9x EBITDA in 2031, and no aerospace-component peer in the comp set trades anywhere near that today. A PM would say I picked a method that guarantees a short answer.
-*Fix:* Either (a) extend the DCF to 10 years with growth fading gradually, so year 5 isn't treated as steady state, or (b) argue explicitly why multiples should compress. I'd rerun option (a) before increasing the position size.
+**Still the biggest weakness, but now partly addressed.** v1 used a 5-year DCF whose terminal value implied 8.9x EBITDA in 2031, an easy target for criticism. v2 adds a five-year fade (FY2032–36E, growth stepping down from 6% to 3%). The value rose only from $88 to $94, so the low DCF value is driven by the **discount rate**, not the short horizon. The break-even WACC that justifies $205.81 is about 6.6% (DCF sheet, section E).
+
+With equal weights the target is $167 (–19%), a SHORT. Without the DCF it's about $188 (–8%), which is NEUTRAL. The article now says this openly.
+*Remaining fix:* Defend 10.45% vs. 6.6%. A PM would accept "even at 8.5% WACC the 10-year DCF is $132."
 
 ### 2. "What's the catalyst? Why does this go down in the next 12 months?"
 **Weak.** My catalysts are mostly things that "might disappoint." The company has beaten and raised every quarter this year, has $5.4B of buyback authorization, and has guided 2027 revenue up about 12%. A valuation short with no catalyst is how short sellers get hurt slowly.
 *Better answer would need:* evidence that 2027 margin or EPS guidance will disappoint, that build rates are slowing, or that the 2026 spare-parts surge was pulled forward. I don't have that evidence yet.
 
 ### 3. "Why is the stock already down 22%? What does the market know?"
-**I don't know, and I said so.** HWM fell from $264.85 (Aug 28) to $205.81 (Nov 6) even though Q3 results were strong. Before shorting, a PM would want to know whether this was a sector-wide de-rating, a rotation, or something company-specific. If it's sector-wide, I may be shorting near the bottom of a move that already happened.
+**Partly answered in v2.** From Aug 28 to Nov 6, CRS fell 42%, ATI 17%, the ITA aerospace & defense ETF 11%, and SPY 4%, while TDG and HEI were flat. The selloff was concentrated in aerospace metals names, and HWM rose 5.5% on its own earnings day. I still don't have a sourced *reason*.
+**Original answer:** I didn't know, and I said so. HWM fell from $264.85 (Aug 28) to $205.81 (Nov 6) even though Q3 results were strong. Before shorting, a PM would want to know whether this was a sector-wide de-rating, a rotation, or something company-specific. If it's sector-wide, I may be shorting near the bottom of a move that already happened.
 *Homework:* Compare HWM's move with TDG, HEI, GE, and SPY over the same window.
 
 ### 4. "You're short a high-quality compounder. What's your risk/reward?"
@@ -25,7 +28,7 @@ That's a fair challenge. My beta of 1.20 matches published estimates (Yahoo 5Y m
 
 ### 6. "Your comps are flawed."
 Yes, in four specific ways.
-- **Growth isn't adjusted for.** HWM grew revenue 24% in 9M2026. Most peers are growing much slower. A growth-adjusted multiple (EV/EBITDA ÷ growth) would make HWM look less expensive.
+- **Growth (fixed in v2).** On trailing growth HWM is *cheaper* than peers (1.16 vs. median 1.36 EV/EBITDA per point of growth). On 2027 guided growth it's 1.95. The pitch now rests explicitly on which growth rate the market should capitalize. *Caveat:* that compares HWM's forward figure with peers' trailing figures, because I don't have sourced forward estimates for the peers.
 - **Mismatched periods.** TDG, WWD, and HEI LTM periods end June/July 2026, while HWM's ends September 2026. TDG and WWD file 10-Ks in mid-November, so update the comps then.
 - **WWD EBIT is a proxy** (pre-tax income + net interest), because Woodward doesn't tag operating income in XBRL.
 - **HEI has two share classes.** I valued both, but the P/E uses the common (HEI) price, so it's overstated relative to HEI.A.
@@ -71,6 +74,12 @@ Trade working capital = receivables + inventory – payables. It's cash tied up 
    Terminal value was 71–83% of total value here. That's normal, and it's why DCFs are so sensitive to their assumptions.
 4. **Discount** each cash flow back to today. I used a mid-year convention, which assumes cash arrives evenly through the year. Then subtract net debt and divide by shares.
 
+### Break-even discount rate
+This is a version of the reverse DCF. Hold your forecasts fixed and solve for the WACC at which the DCF equals the share price. For HWM it's about 6.6%, versus 10.45% from CAPM. If the break-even rate is barely above the risk-free rate, the price is assuming either very low risk or forecasts well above yours.
+
+### Growth-adjusted multiples
+A high multiple isn't automatically expensive if growth is high. Dividing EV/EBITDA by the growth rate (in percentage points) shows how much you pay per point of growth. The trap is choosing which growth rate to divide by: trailing, guided, or long-term. Choosing one is a judgment call, so say which one you used and why.
+
 ### Reverse DCF: the most useful tool for a short
 Instead of asking "what is it worth?", you ask "what must I believe to justify today's price?" Here the answer is that HWM still trades at about 24x EBITDA in 2031, or grows FCF about 7.6% per year forever. Then you judge whether that's realistic. This keeps you honest, because you're debating the market's assumptions rather than your own.
 
@@ -78,7 +87,7 @@ Instead of asking "what is it worth?", you ask "what must I believe to justify t
 Never present one number. The DCF sheet shows value across WACC (8–11%), terminal growth (2–4%), and exit multiples (14–30x). If the conclusion flips inside a reasonable range, conviction should be low. Here it partly does.
 
 ### Price target mechanics
-Fair value today ($150) × (1 + cost of equity 10.8%) – dividends ($0.56) = **$165 12-month target**. The logic: if the stock were fairly priced, it should earn the cost of equity over the next year.
+Fair value today ($151) × (1 + cost of equity 10.8%) – dividends ($0.56) = **$167 12-month target**. The logic: if the stock were fairly priced, it should earn the cost of equity over the next year.
 
 ---
 
