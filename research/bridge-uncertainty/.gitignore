@@ -1,0 +1,6 @@
+data/
+results/predictions.pkl
+results/run.log
+__pycache__/
+*.pyc
+.pytest_cache/
