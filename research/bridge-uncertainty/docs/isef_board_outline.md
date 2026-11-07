@@ -63,7 +63,9 @@
 **6. Results.**
 - Table 1 (coverage, chronological vs random).
 - Fig. 3 (calibration curves).
-- **One sentence in large type:** "Average coverage hid failures: above 20 °C, the GP covered 1–7 % on three modes; the physics-guided model covered 87–96 % on all five."
+- **One sentence in large type:** "On temperatures warmer than any it trained on, the physics-guided model kept 90 % coverage (worst case 84 %); the best physics-free model kept 77 % (worst 59 %)."
+- Fig. 6 (robustness across 5 folds), plus the ablation in one line: "It's the cold-stiffening term: without it, the warm-weather slope comes out up to about 2× too steep."
+- **A negative-result box (judges respect this):** "Trained on spring and tested on winter, every model failed below 0 °C, including mine."
 
 **7. Detection.** Fig. 5, plus the false-alarm numbers. Say plainly that the retrofit was a large stiffening, so every method saw it. **[TODO: add your minimum-detectable-shift curve here once done. It is the strongest addition you can make.]**
 
@@ -73,8 +75,8 @@
 - A four-parameter physics prior fixed most of it, and the fitted parameters are physically interpretable.
 
 **9. Limitations and future work.**
-- Limitations: 8 hot days; one bridge; no sub-zero test data; the retrofit is not damage; one split.
-- Future work: rolling-origin evaluation, a second structure (LUMO), a PINN residual, minimum detectable shift.
+- Limitations: one bridge; small out-of-range samples; no model handles an unseen freezing regime; the retrofit is not damage.
+- Future work: a cross-season prior for the cold term, a second structure (LUMO), a PINN residual, minimum detectable shift.
 
 **10. References and disclosure.** 6–8 key references, a data credit, and a code link with QR code. Describe the AI-assistance and mentor help accurately; see the "AI-use disclosure" section in the manuscript.
 
@@ -87,8 +89,10 @@ Judges probe whether *you* understand and did the work. Be ready to answer these
 5. Why does a GP fail above the training temperature? (An RBF kernel reverts to the training mean.) Why do trees fail? (They predict a constant outside the training range.)
 6. Why use a day-block bootstrap instead of an ordinary bootstrap?
 7. Why not just use adaptive conformal inference? (It would adapt away real damage.)
-8. What would change your conclusion? (Rolling-origin results, a second structure.)
-9. What exactly did you do versus the AI assistant or a mentor? Keep a dated log.
+8. What would change your conclusion? (A second structure; a cross-season cold prior that fails.)
+9. Why did adding a linear trend to the trees make things *worse*? (The trend learned from winter data is contaminated by the freezing jump.)
+10. Why is your model not the best in the post-retrofit fold? (With no sub-freezing training data, the cold-term parameters aren't identifiable.)
+11. What exactly did you do versus the AI assistant or a mentor? Keep a dated log.
 
 ## Timeline to GARSEF (adjust to the actual fair date)
 - **Week 1:** tasks 1–3 (verify dates, find dE/dT, literature check); rewrite the README in your own words.

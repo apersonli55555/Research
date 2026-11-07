@@ -18,7 +18,8 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 
 T_REF = 10.0  # reference temperature [degC] for the physics model
-RESIDUAL_FEATURES = ["T_steel", "T_mean24", "dT_3h", "RH_deck", "T_air", "hour_sin", "hour_cos"]
+RESIDUAL_FEATURES = ["T_steel", "T_mean24", "dT_3h", "RH_air", "T_air", "hour_sin", "hour_cos"]
+# RH_air (weather station) rather than RH_deck: deck RH is missing for all of Dec 2018.
 
 
 class LinearT:
@@ -49,36 +50,43 @@ class CubicT:
 
 
 class GP:
-    """Baseline 3: Gaussian-process regression on (T, 24 h mean T, RH).
+    """Baseline 3: Gaussian-process regression on (T, 24 h mean T, air RH).
     A GP gives its own Bayesian predictive std; we report both its native
     intervals and conformalized ones. Training is subsampled for speed
-    (exact GP cost grows as n^3)."""
+    (exact GP cost grows as n^3). Missing 24 h means are filled with the
+    current T and missing RH with the training median, identically at fit and
+    predict time. (Deck RH is missing for all of Dec 2018, so the weather-
+    station RH is used instead.)"""
     name = "GP"
-    features = ["T_steel", "T_mean24", "RH_deck"]
+    features = ["T_steel", "T_mean24", "RH_air"]
 
     def __init__(self, n_max: int = 1500, seed: int = 0):
         self.n_max, self.seed = n_max, seed
 
+    def _Z(self, X):
+        Z = X[self.features].to_numpy().copy()
+        Z[:, 1] = np.where(np.isnan(Z[:, 1]), Z[:, 0], Z[:, 1])
+        Z[:, 2] = np.where(np.isnan(Z[:, 2]), self.rh_med, Z[:, 2])
+        return Z
+
+    def _kernel(self, d):
+        return ConstantKernel(1.0) * RBF(length_scale=np.ones(d)) + WhiteKernel(0.1)
+
     def fit(self, X, y):
-        Z = X[self.features].to_numpy()
-        ok = ~np.isnan(Z).any(1)
-        Z, y = Z[ok], np.asarray(y)[ok]
+        self.rh_med = float(np.nanmedian(X["RH_air"]))
+        Z, y = self._Z(X), np.asarray(y)
         rng = np.random.default_rng(self.seed)
         if len(y) > self.n_max:
             idx = rng.choice(len(y), self.n_max, replace=False)
             Z, y = Z[idx], y[idx]
         self.sx = StandardScaler().fit(Z)
         self.ym, self.ys = y.mean(), y.std()
-        k = ConstantKernel(1.0) * RBF(length_scale=np.ones(Z.shape[1])) + WhiteKernel(0.1)
-        self.m = GaussianProcessRegressor(k, normalize_y=False, random_state=self.seed)
+        self.m = GaussianProcessRegressor(self._kernel(Z.shape[1]), random_state=self.seed)
         self.m.fit(self.sx.transform(Z), (y - self.ym) / self.ys)
         return self
 
     def predict(self, X, return_std: bool = False):
-        Z = X[self.features].to_numpy()
-        # fall back to instantaneous T where the 24 h mean / RH is missing
-        Z = np.where(np.isnan(Z), X[["T_steel"]].to_numpy(), Z)
-        mu, sd = self.m.predict(self.sx.transform(Z), return_std=True)
+        mu, sd = self.m.predict(self.sx.transform(self._Z(X)), return_std=True)
         mu, sd = mu * self.ys + self.ym, sd * self.ys
         return (mu, sd) if return_std else mu
 
@@ -170,3 +178,62 @@ class PhysicsHybrid(PhysicsOnly):
 
 def all_models(seed: int = 0):
     return [LinearT(), CubicT(), GP(seed=seed), BlackBoxGBM(seed), PhysicsOnly(), PhysicsHybrid(seed)]
+
+
+# ---------------------------------------------------------------------------
+# Stronger baselines and ablations (added after the first round of results).
+# They answer the obvious reviewer question: is it the PHYSICS that helps, or
+# merely having *any* parametric temperature trend under the learner?
+# ---------------------------------------------------------------------------
+class LinearGBM:
+    """Ablation: linear trend in T + the same GBM residual learner.
+    Same structure as the proposed model, but the trend has no physics."""
+    name = "Linear + GBM"
+
+    def __init__(self, seed: int = 0):
+        self.seed = seed
+
+    def fit(self, X, y):
+        self.lin = LinearT().fit(X, y)
+        r = np.asarray(y) - self.lin.predict(X)
+        self.g = HistGradientBoostingRegressor(max_depth=3, learning_rate=0.05, max_iter=300,
+                                               l2_regularization=1.0, random_state=self.seed)
+        self.g.fit(X[RESIDUAL_FEATURES], r)
+        return self
+
+    def predict(self, X):
+        return self.lin.predict(X) + self.g.predict(X[RESIDUAL_FEATURES])
+
+
+class GPTrend(GP):
+    """Stronger GP baseline: adds a linear (DotProduct) kernel so the GP can
+    extrapolate a trend instead of reverting to its mean."""
+    name = "GP + linear kernel"
+
+    def _kernel(self, d):
+        from sklearn.gaussian_process.kernels import DotProduct
+        return (ConstantKernel(1.0) * RBF(length_scale=np.ones(d))
+                + ConstantKernel(0.1) * DotProduct(sigma_0=1.0) + WhiteKernel(0.1))
+
+
+class PhysicsNoColdGBM(PhysicsHybrid):
+    """Ablation: physics curve WITHOUT the cold-stiffening term (b fixed to 0)."""
+    name = "Physics(no cold) + GBM"
+
+    def fit(self, X, y):
+        T, yy = X["T_steel"].to_numpy(), np.asarray(y)
+        f0 = np.median(yy)
+        res = least_squares(lambda th: physics_curve([th[0], th[1], 0.0, 0.0], T) - yy,
+                            x0=[f0, -5e-4], bounds=([0.5 * f0, -0.02], [1.5 * f0, 0.02]),
+                            loss="soft_l1", f_scale=np.std(yy))
+        self.theta = np.array([res.x[0], res.x[1], 0.0, 0.0])
+        r = yy - physics_curve(self.theta, T)
+        self.g = HistGradientBoostingRegressor(max_depth=3, learning_rate=0.05, max_iter=300,
+                                               l2_regularization=1.0, random_state=self.seed)
+        self.g.fit(X[RESIDUAL_FEATURES], r)
+        return self
+
+
+def all_models(seed: int = 0):  # noqa: F811  (extends the list above)
+    return [LinearT(), CubicT(), GP(seed=seed), GPTrend(seed=seed), BlackBoxGBM(seed),
+            LinearGBM(seed), PhysicsOnly(), PhysicsNoColdGBM(seed), PhysicsHybrid(seed)]

@@ -1,0 +1,28 @@
+F1 fwd               mode  3: train T [ -0.4, 13.6]  n_tr=933 n_cal=742 n_te=1414 outside=0.06
+F1 fwd               mode  5: train T [ -0.4, 13.6]  n_tr=902 n_cal=724 n_te=1363 outside=0.07
+/usr/local/lib/python3.13/site-packages/sklearn/gaussian_process/kernels.py:445: ConvergenceWarning: The optimal value found for dimension 0 of parameter k1__k1__k1__constant_value is close to the specified lower bound 1e-05. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+F1 fwd               mode  6: train T [ -0.4, 13.6]  n_tr=931 n_cal=741 n_te=1407 outside=0.06
+F1 fwd               mode  9: train T [ -0.4, 13.6]  n_tr=925 n_cal=742 n_te=1398 outside=0.06
+F1 fwd               mode 13: train T [ -0.4, 13.6]  n_tr=924 n_cal=703 n_te=1402 outside=0.06
+F2 fwd (main)        mode  3: train T [ -3.0, 13.6]  n_tr=1675 n_cal=671 n_te=1791 outside=0.20
+F2 fwd (main)        mode  5: train T [ -3.0, 13.6]  n_tr=1626 n_cal=646 n_te=1707 outside=0.19
+F2 fwd (main)        mode  6: train T [ -3.0, 13.6]  n_tr=1672 n_cal=666 n_te=1788 outside=0.19
+F2 fwd (main)        mode  9: train T [ -3.0, 13.6]  n_tr=1667 n_cal=663 n_te=1780 outside=0.20
+F2 fwd (main)        mode 13: train T [ -2.9, 13.6]  n_tr=1627 n_cal=664 n_te=1778 outside=0.20
+F3 fwd               mode  3: train T [ -3.0, 18.1]  n_tr=2346 n_cal=743 n_te=1048 outside=0.09
+F3 fwd               mode  5: train T [ -3.0, 18.1]  n_tr=2272 n_cal=717 n_te=990 outside=0.09
+F3 fwd               mode  6: train T [ -3.0, 18.1]  n_tr=2338 n_cal=741 n_te=1047 outside=0.09
+F3 fwd               mode  9: train T [ -3.0, 18.1]  n_tr=2330 n_cal=735 n_te=1045 outside=0.09
+F3 fwd               mode 13: train T [ -2.9, 18.1]  n_tr=2291 n_cal=738 n_te=1040 outside=0.09
+B1 warm→cold         mode  3: train T [  1.9, 26.3]  n_tr=1048 n_cal=743 n_te=2346 outside=0.16
+B1 warm→cold         mode  5: train T [  1.9, 26.3]  n_tr=990 n_cal=717 n_te=2272 outside=0.16
+B1 warm→cold         mode  6: train T [  1.9, 26.3]  n_tr=1047 n_cal=741 n_te=2338 outside=0.16
+B1 warm→cold         mode  9: train T [  1.9, 26.3]  n_tr=1045 n_cal=735 n_te=2330 outside=0.16
+B1 warm→cold         mode 13: train T [  1.9, 26.3]  n_tr=1040 n_cal=738 n_te=2291 outside=0.15
+Q1 post, warm→cold   mode  3: train T [  4.7, 22.7]  n_tr=749 n_cal=660 n_te=950 outside=0.20
+Q1 post, warm→cold   mode  5: train T [  4.7, 22.7]  n_tr=650 n_cal=618 n_te=801 outside=0.23
+Q1 post, warm→cold   mode  6: train T [  4.7, 22.7]  n_tr=794 n_cal=718 n_te=1034 outside=0.21
+Q1 post, warm→cold   mode  9: train T [  4.7, 22.7]  n_tr=794 n_cal=717 n_te=1031 outside=0.21
+Q1 post, warm→cold   mode 13: train T [  4.7, 22.7]  n_tr=656 n_cal=604 n_te=742 outside=0.25
+done

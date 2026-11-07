@@ -11,6 +11,7 @@ python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 python -m pytest -q                  # 5 sanity tests (~1 s)
 python scripts/run_experiments.py    # downloads data (MD5-checked), ~5 min on 4 cores
+python scripts/run_robustness.py     # 5-fold robustness study, ~10 min
 python scripts/make_figures.py       # figures/ and results/summary.md
 ```
 
@@ -40,6 +41,8 @@ A natural frequency is a rate at which the bridge "prefers" to vibrate. For a si
 | GP | Gaussian process on (T, 24 h mean T, RH) | flexible Bayesian model with its own uncertainty |
 | GBM (no physics) | gradient-boosted trees on the same features as the hybrid | isolates what the physics adds |
 | Physics only | *f = f₀·√(1 + a(T − 10)) · (1 + b·softplus(T_c − T))* | 4 interpretable parameters |
+| Linear + GBM / Physics(no cold) + GBM | ablations: same learner on a linear trend / on physics without the cold term | is it the physics form, or any trend? |
+| GP + linear kernel | GP that can extrapolate a linear trend | a fairer GP |
 | **Physics + GBM (proposed)** | physics curve plus a small tree model fitted to the physics residuals | physics carries the trend; data fixes the rest |
 
 **Where the physics term comes from.** For steel, Young's modulus *E* decreases slightly as temperature rises. Since *k ∝ E* and *f ∝ √k*, *f ∝ √(1 + a·ΔT)*, with *a* the relative change of *E* per °C. Below a critical temperature *T_c* the bridge stiffens a lot more (see Fig. 2). One possible cause is frozen ballast or bearings, but **this dataset alone does not prove the cause.** We model that stiffening with a smooth hinge (softplus). The fitted *a* can be checked against handbook values; that check is a task for you (see below).
@@ -59,6 +62,7 @@ Split conformal (Angelopoulos & Bates 2021, arXiv:2107.07511):
 - **Random split** (Experiment A): hours from Nov 2018 to 14 May 2019 are randomly assigned to train (50 %), calibration (20 %) and test (30 %), repeated with 5 seeds. This is the *optimistic* setting where the exchangeability guarantee roughly applies. Note that it leaks information, because neighbouring hours are nearly identical.
 - **Chronological split** (Experiment B, the main one): train Nov 2018–Jan 2019, calibrate Feb 2019, test 1 Mar–14 May 2019. The highest temperature in training is 13.6 °C, in calibration 18.1 °C, and in test 26.3 °C. **Steel temperature is missing for October 2018**, so October is not used.
 - **Retrofit detection** (Experiment C): intervals stay frozen at the Feb calibration. For each day, compute the median of residual/q. An alarm is raised if |median| > 1. The false-alarm rate is measured on pre-retrofit test days and the detection rate on post-retrofit days (28 Sep 2019–15 Jan 2020).
+- **Robustness** (Experiment D, `scripts/run_robustness.py`): five folds. Three run forward in time (winter→spring). One runs warm→cold before the retrofit and is the only out-of-sample test of sub-zero hours. One runs warm→cold after the retrofit, a different structural state. Coverage is reported separately for test hours inside and outside the training temperature range.
 - **Modes:** 3, 5, 6, 9 and 13, the ones with less than 15 % missing frequencies before the retrofit.
 
 ### 5. Metrics
@@ -68,29 +72,48 @@ Split conformal (Angelopoulos & Bates 2021, arXiv:2107.07511):
 - **Conditional coverage by temperature bin**: is coverage OK at *every* temperature, or only on average?
 - **Day-block bootstrap 95 % CI**: resamples whole days, because hours within a day are correlated. Treating them as independent would make CIs far too narrow.
 
-## Results so far (from `results/summary.md`; all numbers are real outputs of this code)
-- **Random split:** every model reaches 0.90 ± 0.01 coverage. Conformal prediction works when its assumption holds.
-- **Chronological split, mean over 5 modes:** coverage was **0.907 for Physics+GBM**, 0.903 Physics only, 0.901 GBM, 0.870 Linear, 0.826 Cubic and **0.788 GP**.
-- **At test temperatures above 20 °C** (68 hours from only **8 days**; small sample), Physics+GBM covered **0.87–0.96** across the 5 modes. GBM without physics covered 0.51–0.90. GP covered 0.01–0.96 (it collapses on modes 6, 9 and 13), and the cubic covered 0.00–0.02. Mechanism: trees and RBF-kernel GPs cannot extrapolate a trend, and polynomials extrapolate the wrong one.
-- **Interval score:** Physics+GBM was best or within 0.001 Hz of best on all 5 modes. The gain over GBM-no-physics is **small on average** and concentrated at unseen temperatures.
-- **ACI** brings every model to about 0.89–0.91 coverage. So "physics is needed for coverage" is only true for *fixed* (non-adaptive) intervals, which are the ones you need for detection.
-- **Retrofit detection:** the retrofit shifted mode 6 by about +0.06 Hz (+2 %), mode 9 by about −0.03 Hz, and mode 13 by about +0.10 Hz. Almost every method detects this on 100 % of post-retrofit days for modes 6, 9 and 13. Modes 3 and 5 do not respond. The models differ mainly in **false alarms** before the retrofit: 0–1.3 % for the physics and GBM models, versus 7–23 % for Linear, Cubic and GP on modes 6 and 13. **The retrofit is too large a change to rank the methods by detection power**, so a minimum-detectable-shift study is needed (task 4 below).
-- **Fitted physics:** *a* < 0 (frequency falls as T rises) for modes 5, 6, 9 and 13. For mode 3 it came out **positive**, which is not physical for *E(T)*. Other effects (boundary conditions, ballast, the rail) must be involved. *T_c* ≈ 1.1–1.4 °C for all five modes. Another KW51 study (arXiv:2506.20295) reports a kink at 2–3 °C. Fig. 2 also shows that **no test hour is below 0 °C**, so the cold-stiffening part is fitted but **not tested out-of-sample**.
+## Results (from `results/summary.md` and `results/robustness_folds.csv`; all numbers are real outputs of this code)
+
+**Version note.** v2 added stronger baselines (GP + linear kernel, Linear + GBM), an ablation (physics without the cold term), and a 5-fold robustness study. It also switched humidity from the deck sensor (missing all of Dec 2018) to the weather station. That fix raised the GP's main-split coverage from 0.79 to 0.86. **The proposed model was not changed after seeing the robustness results.**
+
+1. **Exchangeable (random) split:** all 9 models reach 0.90 ± 0.01 coverage. Conformal prediction works when its assumption holds.
+2. **Main seasonal split, mean coverage over 5 modes:** Physics+GBM 0.904, Physics only 0.903, GBM 0.890, Linear 0.871, Physics(no cold)+GBM 0.871, Linear+GBM 0.858, GP 0.855, GP+linear kernel 0.847, Cubic 0.826.
+3. **Warm-side extrapolation** (folds F2 and F3, test hours warmer than anything in training, 5 modes): coverage of the nominal 90 % interval.
+
+   | Model | Median | Worst |
+   |---|---|---|
+   | **Physics+GBM** | **0.90** | **0.84** |
+   | Physics only | 0.88 | 0.76 |
+   | GBM | 0.77 | 0.59 |
+   | Physics(no cold)+GBM | 0.75 | 0.34 |
+   | GP+linear kernel | 0.69 | 0.04 |
+   | Linear+GBM | 0.66 | 0.15 |
+   | Linear | 0.56 | 0.01 |
+   | GP | 0.36 | 0.01 |
+   | Cubic | 0.26 | 0.00 |
+
+4. **What actually helps is the cold term, and not for the reason you'd guess.** Fitted on winter data *without* a cold term, the warm-weather temperature slope comes out about 2× too steep for modes 6 and 13 (e.g. mode 13: −1.1e-3 /°C vs −4.7e-4 /°C fitted on warm hours only). The freeze-related stiffening drags the line. Modelling the cold regime separately keeps that stiffening out of the slope, so the slope extrapolates sensibly into spring. (With the cold term the slope is somewhat *too shallow*, about −2.9e-4 for mode 13, but it errs in the less harmful direction.)
+5. **Cold-side extrapolation fails for every model.** Fold B1 trains on spring and tests on winter. Median outside-range coverage is 0.42–0.64 for all 9 models. On hours below 0 °C (about 130 h over 11 days), mode 6 coverage is 0.02–0.13 and mode 13 is 0.00–0.01 for every model. No model, including this one, can predict a stiffening mechanism it never saw.
+6. **The proposed model is not always best.** In the post-retrofit warm→cold fold (Q1) it reaches 0.86 on out-of-range hours, while Linear, GBM, GP and Physics(no cold)+GBM reach 0.90–0.92. The likely reason is that the training data never got below 4.7 °C, so the cold-term parameters are not identifiable. A principled fix is a prior on *T_c* and *b* from an earlier winter; that is future work, deliberately not tuned on these test folds.
+7. **The GP's own Bayesian intervals** cover 0.83–0.99 on the main split, but by being wide: 2.1× the proposed model's width on mode 13. Their interval score is worse than the proposed model's on modes 6, 9 and 13 (e.g. 0.097 vs 0.052 Hz on mode 13) and about equal on modes 3 and 5.
+8. **ACI** brings every model to 0.889–0.907 coverage, but it adapts to whatever it sees, including real damage.
+9. **Retrofit detection:** about +0.06 Hz on mode 6, −0.03 Hz on mode 9 and +0.10 Hz on mode 13. All models detect it on 100 % of post-retrofit days for those modes. False-alarm days before the retrofit: Physics+GBM 0–1.3 %, GBM 0–2.7 %, Linear/Cubic/GP/GP+linear kernel up to 7–19 %. The retrofit is too large to rank methods by detection power, so the minimum-detectable-shift study (task 4) is still needed.
+10. **Fitted physics:** *a* < 0 for modes 5, 6, 9 and 13 and positive (unexplained) for mode 3; *T_c* ≈ 1.1–1.4 °C for all modes.
 
 ## Honest limitations
-1. There is one chronological split. Results could depend on where the split boundaries fall, so a rolling-origin evaluation is needed.
-2. Only 8 days are above 20 °C, so the headline extrapolation result rests on a small sample. Note the CI widths.
-3. The physics model is a hypothesis, not a validated structural model. Mode 3's sign is unexplained.
-4. The frequencies are the dataset authors' identified modes, so mode-tracking errors are inherited.
-5. The retrofit is a *stiffening*, not damage. Say "state change", never "damage detection".
-6. It is one bridge. Generalization is unknown.
+1. **Cold regime:** no method handles sub-zero temperatures when trained without them. This is the biggest open problem.
+2. **Small extrapolation samples:** outside-range samples are small (median 96–379 hours per fold; the >20 °C bin is 8 days).
+3. **One bridge.** Generalization to other structures is unknown.
+4. **The retrofit is a stiffening, not damage.** Say "state change".
+5. **Inherited mode tracking:** frequencies come from the dataset authors' mode identification and tracking.
+6. **Fold design:** the folds were fixed before their results were seen, but they are still a handful of hand-picked splits rather than a systematic rolling-origin scheme.
 
 ## Your tasks (this is the part that makes the project yours)
 1. **Verify** the retrofit dates (15 May–27 Sep 2019) in Maes & Lombaert (2021) or Maes et al. (2022). Fix `data.py` if they differ.
 2. **Find a citable value** for steel's dE/dT/E near 0–30 °C (try the NIST technical note on temperature-dependent properties of structural steel, or Eurocode 3 tables). Compare it with the fitted *a* values in `results/physics_parameters.csv`. Do they agree in sign and order of magnitude?
 3. **Literature check:** search Google Scholar for "conformal" + "structural health monitoring", "conformal" + "natural frequency", and "KW51". Read Jones/Pitchforth/Cross (EWSHM 2024) on physics-informed GP kernels. Write down how your work differs.
 4. **Minimum detectable shift** (your main original experiment). Add a known synthetic shift of δ = 0.1 %, 0.25 %, 0.5 % or 1 % to the pre-retrofit *test* frequencies, labelled clearly as synthetic. Measure the detection rate vs δ for each model at a fixed false-alarm rate. This is what can actually separate the methods.
-5. **Rolling-origin evaluation:** slide the train/cal/test windows month by month and report the coverage spread.
+5. **Cold-regime prior (the biggest open problem):** fit *T_c* and *b* on one winter, carry them as fixed or prior values into a model trained on warm data, and test on fold B1. Can physics transfer across seasons?
 6. **PINN variant (connects to your earlier paper):** replace the GBM residual with a small neural net whose loss includes a penalty that keeps ∂f/∂T near the physics prediction. Compare it honestly with Physics+GBM.
 7. **Ablations:** drop the cold term, drop humidity, drop lagged temperature. Which matters?
 
