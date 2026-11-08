@@ -61,7 +61,7 @@ Real falls differ: they are sudden, partly occluded, filmed from arbitrary viewp
 
 ## 5. Results
 
-**Table 1. AUROC on real falls (OOPS-Fall test set) by training data.**
+**Table 1. AUROC on real falls (FallOrNot test set) by training data.**
 
 | Representation | Staged-trained | Real-trained | Staged + real |
 |---|---|---|---|
@@ -76,8 +76,8 @@ Real falls differ: they are sudden, partly occluded, filmed from arbitrary viewp
 | Evaluated on | Trained on | AUROC | Recall @ 5% FPR |
 |---|---|---|---|
 | Staged (UR Fall, CV) | staged | 1.000 [1.000, 1.000] | 1.000 |
-| Real (OOPS-Fall) | staged | 0.759 [0.696, 0.820] | 0.167 [0.098, 0.375] |
-| Real (OOPS-Fall) | real | 0.899 [0.859, 0.934] | 0.431 [0.325, 0.670] |
+| Real (FallOrNot) | staged | 0.759 [0.696, 0.820] | 0.167 [0.098, 0.375] |
+| Real (FallOrNot) | real | 0.899 [0.859, 0.934] | 0.431 [0.325, 0.670] |
 
 **Table 3. Falls vs. other accidents only (hard negatives), AUROC.**
 
@@ -135,7 +135,7 @@ OOPS! videos are public YouTube compilations. We release only labels, timestamps
 
 ## 9. Conclusion
 
-Detectors that look perfect on staged falls miss most real ones. A small amount of real data, used with motion-aware representations, closes most of the gap, while more staged data does not. We release OOPS-Fall so that fall detection can be measured where it matters.
+Detectors that look perfect on staged falls miss most real ones. A small amount of real data, used with motion-aware representations, closes most of the gap, while more staged data does not. We release FallOrNot so that fall detection can be measured where it matters.
 
 ---
 
