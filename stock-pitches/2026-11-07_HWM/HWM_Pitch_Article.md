@@ -65,7 +65,7 @@ At a 10.45% WACC (beta 1.20, in line with published estimates of 1.14–1.21), t
 
 ## Thesis 3: Cash yield is below Treasuries and the capital cycle is turning
 
-At $205.81 the FCF yield on 2026 guidance is **2.4%**, about half the 10-year Treasury yield. Management also says capex will be "elevated beyond 2027" for aerospace and gas-turbine capacity. Capex rose from 3.3% of sales in 2023 to 5.5% in 2025. Trade working capital grew from $1,783M to $2,260M in nine months.
+At $205.81 the FCF yield on 2026 guidance is **2.4%**, about half the 10-year Treasury yield. Management also says its capital plans "envisage elevated spend beyond 2027" for aerospace and gas-turbine capacity. Capex rose from 3.3% of sales in 2023 to 5.5% in 2025. Trade working capital grew from $1,783M to $2,260M in nine months.
 
 Howmet can easily afford this. But the investment itself is the industry's response to tight supply, and tight supply is the reason pricing power exists. As new capacity arrives, pricing power tends to erode.
 
