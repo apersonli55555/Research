@@ -20,7 +20,7 @@ saved every --save-every videos; re-running skips videos already processed.
 Usage (Colab, GPU):
   python vision/oops_mine.py --out /content/drive/MyDrive/fall-cvpr/oops
 """
-import argparse, csv, hashlib, heapq, json, os, subprocess, sys, tarfile, time
+import argparse, csv, hashlib, heapq, io, json, os, subprocess, sys, tarfile, time
 
 import numpy as np
 
@@ -43,6 +43,57 @@ def transition_time(entry):
     return float(np.median(ts)) if len(ts) >= 2 else None
 
 
+class ResumableStream(io.RawIOBase):
+    """Read-only byte stream over HTTP that survives dropped connections.
+
+    Streaming the 48 GB archive takes hours because each video is processed as it
+    arrives, and servers or proxies drop such slow connections. On any early end or
+    error this reconnects with an HTTP Range request from the exact byte reached.
+    """
+
+    def __init__(self, url, max_retries=50):
+        super().__init__()
+        self.url, self.pos, self.proc, self.retries, self.max_retries = url, 0, None, 0, max_retries
+        head = subprocess.run(["curl", "-sIL", url], capture_output=True, text=True).stdout
+        sizes = [int(l.split(":", 1)[1]) for l in head.splitlines() if l.lower().startswith("content-length:")]
+        self.total = sizes[-1] if sizes else None
+
+    def readable(self):
+        return True
+
+    def _open(self):
+        if self.proc:
+            self.proc.kill(); self.proc.wait()
+        self.proc = subprocess.Popen(["curl", "-sL", "--fail", "-r", f"{self.pos}-", self.url],
+                                     stdout=subprocess.PIPE, bufsize=0)
+
+    def readinto(self, b):
+        while True:
+            if self.proc is None:
+                self._open()
+            try:
+                n = self.proc.stdout.readinto(b)
+            except OSError:
+                n = 0
+            if n:
+                self.pos += n
+                self.retries = 0
+                return n
+            if self.total is not None and self.pos >= self.total:
+                return 0                                   # real end of file
+            self.retries += 1
+            if self.retries > self.max_retries:
+                raise IOError(f"download kept failing at byte {self.pos}")
+            print(f"connection dropped at {self.pos / 1e9:.2f} GB; reconnecting (try {self.retries})", flush=True)
+            time.sleep(min(60, 2 ** min(self.retries, 6)))
+            self._open()
+
+    def close(self):
+        if self.proc:
+            self.proc.kill(); self.proc.wait()
+        super().close()
+
+
 def decode_job(data, t):
     """Runs in a worker thread: decode the event (and pre-event) frames of one video."""
     ev = read_frames(data, max(0.0, t - 1), t + 1)
@@ -57,7 +108,7 @@ def main():
     ap.add_argument("--keep", type=int, default=3000, help="top-K event clips saved for labelling")
     ap.add_argument("--random-n", type=int, default=600, help="approx. size of the unbiased random sample")
     ap.add_argument("--limit", type=int, default=0, help="stop after N new videos (quick test)")
-    ap.add_argument("--save-every", type=int, default=500)
+    ap.add_argument("--save-every", type=int, default=200)
     ap.add_argument("--workers", type=int, default=max(2, (os.cpu_count() or 2)))
     ap.add_argument("--model", default="ViT-L-14")
     ap.add_argument("--pretrained", default="datacomp_xl_s13b_b90k")
@@ -146,8 +197,8 @@ def main():
     from concurrent.futures import ThreadPoolExecutor
     pool = ThreadPoolExecutor(a.workers)
     pending = deque()                                  # (name, t, data, future) in stream order
-    curl = subprocess.Popen(["curl", "-sL", "--retry", "5", a.url], stdout=subprocess.PIPE, bufsize=1 << 20)
-    outer = tarfile.open(fileobj=curl.stdout, mode="r|gz")
+    stream = ResumableStream(a.url)
+    outer = tarfile.open(fileobj=io.BufferedReader(stream, 1 << 20), mode="r|gz")
     n_seen, n_new, t0 = 0, 0, time.time()
 
     def drain_one():
@@ -160,54 +211,62 @@ def main():
             if n_new % a.save_every == 0:
                 save()
 
-    for m in outer:
-        if m.name.endswith("annotations.tar.gz"):
-            inner = tarfile.open(fileobj=outer.extractfile(m), mode="r|gz")
-            for im in inner:
-                f = inner.extractfile(im)
-                if f is None:
+    finished = False
+    try:
+        for m in outer:
+            if m.name.endswith("annotations.tar.gz"):
+                inner = tarfile.open(fileobj=outer.extractfile(m), mode="r|gz")
+                for im in inner:
+                    f = inner.extractfile(im)
+                    if f is None:
+                        continue
+                    base = os.path.basename(im.name)
+                    data = f.read()
+                    with open(os.path.join(a.out, base), "wb") as fh:
+                        fh.write(data)
+                    if base == "transition_times.json":
+                        ann = json.loads(data)
+                    elif base in ("train.txt", "val.txt"):
+                        for line in data.decode().splitlines():
+                            split[line.strip()] = base[:-4]
+                print(f"annotations: {len(ann)} clips with transition times")
+                continue
+            if not m.name.endswith("video.tar.gz"):
+                continue
+            vids = tarfile.open(fileobj=outer.extractfile(m), mode="r|gz")
+            for vm in vids:
+                if not vm.name.endswith(".mp4"):
                     continue
-                base = os.path.basename(im.name)
-                data = f.read()
-                with open(os.path.join(a.out, base), "wb") as fh:
-                    fh.write(data)
-                if base == "transition_times.json":
-                    ann = json.loads(data)
-                elif base in ("train.txt", "val.txt"):
-                    for line in data.decode().splitlines():
-                        split[line.strip()] = base[:-4]
-            print(f"annotations: {len(ann)} clips with transition times")
-            continue
-        if not m.name.endswith("video.tar.gz"):
-            continue
-        vids = tarfile.open(fileobj=outer.extractfile(m), mode="r|gz")
-        for vm in vids:
-            if not vm.name.endswith(".mp4"):
-                continue
-            name = os.path.basename(vm.name)[:-4]
-            n_seen += 1
-            if n_seen % 2000 == 0 and n_new == 0:
-                print(f"skipping already-processed videos... {n_seen} seen", flush=True)
-            if name in done or name not in ann:
-                continue
-            t = transition_time(ann[name])
-            if t is None:
-                continue
-            data = vids.extractfile(vm).read()
-            pending.append((name, t, data, pool.submit(decode_job, data, t)))
-            while len(pending) > 4 * a.workers:
-                drain_one()
-            if a.limit and n_new >= a.limit:
-                break
-        break
-    while pending and not (a.limit and n_new >= a.limit):
-        drain_one()
-    curl.kill()
-    for f in writes.values():
-        f.result()
-    pool.shutdown()
-    save()
-    print(f"done: {len(done)} videos, {len(kept)} top candidates + random sample in {clip_dir}")
+                name = os.path.basename(vm.name)[:-4]
+                n_seen += 1
+                if n_seen % 2000 == 0 and n_new == 0:
+                    print(f"skipping already-processed videos... {n_seen} seen", flush=True)
+                if name in done or name not in ann:
+                    continue
+                t = transition_time(ann[name])
+                if t is None:
+                    continue
+                data = vids.extractfile(vm).read()
+                pending.append((name, t, data, pool.submit(decode_job, data, t)))
+                while len(pending) > 4 * a.workers:
+                    drain_one()
+                if a.limit and n_new >= a.limit:
+                    break
+            break
+        while pending and not (a.limit and n_new >= a.limit):
+            drain_one()
+        finished = True
+    finally:                                           # save progress even if the stream breaks
+        stream.close()
+        for f in writes.values():
+            try:
+                f.result()
+            except Exception as e:
+                print("clip write failed:", e)
+        pool.shutdown()
+        save()
+        print(f"{'done' if finished else 'stopped early, progress saved'}: {len(done)} videos, "
+              f"{len(kept)} top candidates + random sample in {clip_dir}", flush=True)
 
 
 def load_frames(oops_dir):
