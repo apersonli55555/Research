@@ -4,7 +4,7 @@ This file is for any AI assistant (ChatGPT, Codex, Claude or others) helping wit
 
 ## The project in one paragraph
 
-We are writing a computer-vision research paper, targeting CVPR, titled **"Staged Falls Don't Transfer: Measuring the Lab-to-Real Gap in Video Fall Detection"**. Fall detectors are usually trained and tested on falls staged by actors in a lab, where they score near 100%. We built a real-world test set (**OOPS-Fall**) from the OOPS! dataset of in-the-wild accident videos, labelled by a human, and showed that lab-trained detectors fail on real falls (AUROC about 0.76), while a few real training falls fix most of it (about 0.90, p < 0.001).
+We are writing a computer-vision research paper, working title **"How Much Is a Real Fall Worth? Data Efficiency and False Alarms in Real-World Video Fall Detection"** (target venue under review: CVPR is now a long shot, see below). Fall detectors are usually trained and tested on falls staged by actors in a lab, where they score near 100%. We built a real-world test set (**FallOrNot**) from the OOPS! dataset of in-the-wild accident videos, labelled by a human, and showed that lab-trained detectors fail on real falls (AUROC about 0.76), while a few real training falls fix most of it (about 0.90, p < 0.001).
 
 ## Where things are
 
@@ -23,6 +23,10 @@ We are writing a computer-vision research paper, targeting CVPR, titled **"Stage
 | `index.html`, `research/` | An earlier, separate project: a phone motion-sensor fall detector and its SisFall benchmark. Not part of the CVPR paper; do not mix them up. |
 
 Data (clips, embeddings, labels, result files) lives on the owner's Google Drive in `fall-cvpr/`, not in this repository.
+
+## IMPORTANT: closest prior work (found November 2026)
+
+**OmniFall** (Schneider et al., arXiv 2505.19889; v1 May 2025, v3 July 2026) already shows the staged-to-wild gap on fall-containing OOPS videos, builds an in-the-wild OOPS test set it calls "OOPS-Fall"/"OF-ItW", shows synthetic training beats staged training, and trains one upper-bound model with in-the-wild data. **Never claim we are the first to show the gap or to build a real-world fall test set from OOPS.** Our benchmark is renamed **FallOrNot**. Our distinct contributions are: non-fall accidents as false-alarm negatives (random, model-independent sample of all accidents); how much real data is needed (learning curve, real-only vs. staged-only); appearance vs. motion; and, planned, real vs. synthetic (OF-Syn) vs. staged at equal budget. Cite OmniFall prominently in Related Work. See the positioning note at the top of `vision/PAPER_DRAFT.md`.
 
 ## Current state (keep this section updated)
 
