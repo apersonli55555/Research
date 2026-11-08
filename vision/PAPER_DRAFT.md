@@ -83,17 +83,37 @@ Real falls differ: they are sudden, partly occluded, filmed from arbitrary viewp
 | CLIP + VideoMAE | 0.715 [0.633, 0.795] | 0.860 [0.794, 0.914] |
 | CLIP temporal | 0.671 [0.582, 0.753] | 0.835 [0.765, 0.891] |
 
-**[TODO]** Figure 1: ROC curves (`roc_real.png`). Figure 2: learning curve, AUROC vs. number of real training falls (`learning_curve.png`). Table 4: paired bootstrap differences. All three are produced by the current `experiment.py` with one Colab run (Setup → Step 4), no further labelling.
+**Table 4. Head-to-head differences on the same test clips** (paired video-level bootstrap, 2,000 resamples).
+
+| Comparison | ΔAUROC | 95% CI | p |
+|---|---|---|---|
+| CLIP appearance: real- vs. staged-trained | +0.009 | [−0.055, +0.068] | 0.77 |
+| CLIP temporal: real- vs. staged-trained | +0.138 | [+0.078, +0.201] | < 0.001 |
+| VideoMAE: real- vs. staged-trained | +0.022 | [−0.036, +0.083] | 0.49 |
+| CLIP + VideoMAE: real- vs. staged-trained | +0.139 | [+0.087, +0.193] | < 0.001 |
+| Staged-trained: VideoMAE vs. CLIP appearance | +0.042 | [−0.028, +0.116] | 0.26 |
+| Staged-trained: CLIP + VideoMAE vs. CLIP appearance | +0.036 | [−0.027, +0.104] | 0.30 |
+
+**Figure 2 / Table 5. How much real data?** CLIP + VideoMAE, mean ± s.d. over 10 random draws of real training videos; staged-only AUROC 0.759.
+
+| Real falls | 4 | 8 | 15 | 30 | 60 | 116 | 131 |
+|---|---|---|---|---|---|---|---|
+| Real only | 0.725 ± 0.094 | 0.764 ± 0.035 | 0.815 ± 0.039 | 0.826 ± 0.019 | 0.871 ± 0.019 | 0.897 ± 0.006 | 0.899 |
+| Staged + real | 0.784 ± 0.014 | 0.788 ± 0.011 | 0.815 ± 0.032 | 0.827 ± 0.016 | 0.866 ± 0.015 | 0.890 ± 0.005 | 0.892 |
+
+**[TODO]** Render Figure 1 (`roc_real.png`) and Figure 2 (`learning_curve.png`) for the paper.
 
 ## 6. Analysis
 
 **The gap is large, and in-domain scores hide it.** Every probe is perfect on UR Fall, so the staged benchmark cannot rank methods at all, yet the same probes catch at most 30% of real falls at 5% FPR.
 
-**Data matters more than the encoder.** Changing the training data from staged to real raises CLIP + VideoMAE by 0.14 AUROC; changing the encoder under staged training moves it by at most 0.05.
+**Data matters more than the encoder.** Changing the training data from staged to real raises CLIP + VideoMAE by 0.14 AUROC (p < 0.001). Changing the encoder under staged training makes no significant difference (all p ≥ 0.26).
+
+**A handful of real falls is worth the whole staged dataset.** About 8 real falls match the 30 staged falls (60 clips) of UR Fall, about 15 exceed them, and performance is still rising at 131 (Table 5), so the benchmark is far from saturated. Staged data helps only when real data is tiny (4 real falls: 0.784 with staged data vs. 0.725 without).
 
 **Staged data does not help once real data is present** (0.892 with both vs. 0.899 real only), which suggests it encodes a different, narrower notion of "fall".
 
-**Motion is what transfers.** Appearance alone barely benefits from real data, while the temporal representation gains 0.14. Real falls are recognisable from how the scene changes, not from a single frame of a person on the ground.
+**Motion is what transfers.** Appearance alone does not benefit from real data (+0.009, p = 0.77), while the temporal CLIP representation gains 0.138 (p < 0.001). Interestingly, VideoMAE alone gains little (+0.022, p = 0.49) despite being a video model; its Kinetics-trained features may emphasise action categories over the abrupt change a fall produces, but it adds to CLIP temporal when combined. **[TODO: test this explanation.]**
 
 **Falls vs. other accidents is the bottleneck.** Hard-negative AUROC is lower than overall AUROC throughout. **[TODO: qualitative examples from `worst_errors.csv`.]**
 
@@ -120,7 +140,6 @@ Detectors that look perfect on staged falls miss most real ones. A small amount 
 
 | Item | Who | Notes |
 |---|---|---|
-| Head-to-head tests and learning curve | one Colab run (Setup → Step 4) | code ready; no labelling |
 | Remaining 257 test videos | annotator | about 30 min |
 | Second annotator on the test set (κ) | second person | about 30 min |
 | Second real-world test source | Claude | look for public real-fall video |

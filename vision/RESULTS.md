@@ -77,3 +77,39 @@ Falls vs. other accidents (`real_hard`, 165 clips, 102 falls), AUROC: CLIP + Vid
 - **Staged data adds nothing once real data exists** (0.892 with both vs. 0.899 real only).
 - **Temporal information matters, and the two encoders are complementary.** CLIP appearance barely benefits from real data (0.72 → 0.73), CLIP temporal gains most (0.73 → 0.87), and CLIP temporal + VideoMAE is best.
 - **Caveat: "real-trained" is in-distribution.** Training and test clips both come from OOPS!, so part of the gain is ordinary in-domain advantage. A second real-world test source is needed to separate "real vs. staged" from "same vs. different dataset". The training pool was also pre-selected by CLIP zero-shot score (the test set was not).
+
+## Run 3b: head-to-head tests and learning curve (same labels, no new labelling)
+
+Paired video-level bootstrap on the same 255 test clips (2,000 resamples); "p < 0.001" = no resample crossed zero.
+
+| Comparison (real test set) | AUROC diff | 95% CI | p |
+|---|---|---|---|
+| CLIP appearance: real- vs staged-trained | +0.009 | [−0.055, +0.068] | 0.770 |
+| CLIP appearance: staged+real vs staged | +0.018 | [−0.037, +0.070] | 0.508 |
+| CLIP temporal: real- vs staged-trained | **+0.138** | [+0.078, +0.201] | < 0.001 |
+| CLIP temporal: staged+real vs staged | +0.129 | [+0.075, +0.186] | < 0.001 |
+| VideoMAE: real- vs staged-trained | +0.022 | [−0.036, +0.083] | 0.493 |
+| VideoMAE: staged+real vs staged | +0.038 | [−0.012, +0.091] | 0.135 |
+| CLIP + VideoMAE: real- vs staged-trained | **+0.139** | [+0.087, +0.193] | < 0.001 |
+| CLIP + VideoMAE: staged+real vs staged | +0.133 | [+0.085, +0.183] | < 0.001 |
+| Staged-trained: CLIP temporal vs CLIP appearance | +0.005 | [−0.061, +0.073] | 0.922 |
+| Staged-trained: VideoMAE vs CLIP appearance | +0.042 | [−0.028, +0.116] | 0.263 |
+| Staged-trained: CLIP + VideoMAE vs CLIP appearance | +0.036 | [−0.027, +0.104] | 0.302 |
+
+Learning curve, CLIP + VideoMAE (staged-only AUROC 0.759); mean ± s.d. over 10 random draws of real training videos:
+
+| Real training videos | Real falls (avg) | Real-trained AUROC | Staged + real AUROC |
+|---|---|---|---|
+| 5 | 4 | 0.725 ± 0.094 | 0.784 ± 0.014 |
+| 10 | 8 | 0.764 ± 0.035 | 0.788 ± 0.011 |
+| 20 | 15 | 0.815 ± 0.039 | 0.815 ± 0.032 |
+| 40 | 30 | 0.826 ± 0.019 | 0.827 ± 0.016 |
+| 80 | 60 | 0.871 ± 0.019 | 0.866 ± 0.015 |
+| 160 | 116 | 0.897 ± 0.006 | 0.890 ± 0.005 |
+| 180 | 131 | 0.899 | 0.892 |
+
+## Reading
+- **The real-data gain is significant for motion-aware representations** (+0.14 AUROC, p < 0.001 for CLIP temporal and CLIP + VideoMAE) and **not significant for static appearance** (+0.01, p = 0.77). VideoMAE alone also gains little (+0.02, p = 0.49); the gain comes from the CLIP temporal features, alone or combined.
+- **Under staged training, the choice of encoder makes no significant difference** (all p ≥ 0.26).
+- **About 8 real falls match the 30 staged falls (60 clips)**, about 15 beat them, and AUROC is still rising at 131, so more real data would likely help further.
+- **Staged data helps only when real data is tiny** (4 real falls: 0.784 with staged vs. 0.725 without); from about 15 real falls on, it adds nothing.
