@@ -85,7 +85,9 @@ The formula carries the trend into new temperatures; the machine learning handle
 7. What does a positive *a* for mode 3 mean? → *The frequency rises with temperature for that mode, which steel softening alone can't explain. Honest answer: unknown; possibly bearings or the track.*
 8. What's the biggest weakness? → *One bridge, and the cold regime is unsolved.*
 9. What's novel? → *Testing conformal coverage under seasonal shift on KW51, inside vs outside the training range, with paired tests. (Confirm with your own literature search before claiming "first".)*
-10. What did you do yourself? → *Answer this truthfully and specifically.*
+10. Did you tune your model until it won? → *No. Settings were fixed in advance. I re-ran 9 settings for my model and gave the competitor the same 9. Every version of mine (0.88–0.90) beat every version of theirs (0.77–0.83), and my default wasn't even the best one.*
+11. Is your model just drawing wider bands? → *No. It has the narrowest bands of all nine models and still the best coverage.*
+12. What did you do yourself? → *Answer this truthfully and specifically.*
 
 ## 8. Glossary
 | Term | Meaning |

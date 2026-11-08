@@ -2,8 +2,8 @@
 # Alternative without make: bash scripts/run_all_parallel.sh
 PY ?= python
 
-.PHONY: all test main robustness rolling stats figures clean
-all: test main robustness rolling stats figures
+.PHONY: all test main robustness rolling stats sensitivity figures clean
+all: test main robustness rolling stats sensitivity figures
 
 test:
 	$(PY) -m pytest -q
@@ -14,6 +14,8 @@ robustness:
 rolling:   # 4 single-threaded shards in parallel (much faster than one multi-threaded run)
 	for k in 0 1 2 3; do OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 $(PY) scripts/run_rolling.py $$k 4 & done; wait
 	$(PY) scripts/run_rolling.py merge 4
+sensitivity:
+	$(PY) scripts/run_sensitivity.py
 stats:
 	$(PY) scripts/paired_tests.py
 figures:

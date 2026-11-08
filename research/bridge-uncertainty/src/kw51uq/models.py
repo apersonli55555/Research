@@ -98,11 +98,12 @@ class BlackBoxGBM:
     cannot extrapolate a temperature trend."""
     name = "GBM (no physics)"
 
-    def __init__(self, seed: int = 0):
-        self.seed = seed
+    def __init__(self, seed: int = 0, max_depth: int = 3, learning_rate: float = 0.05):
+        self.seed, self.max_depth, self.learning_rate = seed, max_depth, learning_rate
 
     def fit(self, X, y):
-        self.m = HistGradientBoostingRegressor(max_depth=3, learning_rate=0.05, max_iter=300,
+        self.m = HistGradientBoostingRegressor(max_depth=self.max_depth, learning_rate=self.learning_rate,
+                                               max_iter=300,
                                                l2_regularization=1.0, random_state=self.seed)
         self.m.fit(X[RESIDUAL_FEATURES], y)
         return self
@@ -136,7 +137,8 @@ class PhysicsOnly:
     def fit(self, X, y):
         T, y = X["T_steel"].to_numpy(), np.asarray(y)
         f0 = np.median(y)
-        res = least_squares(lambda th: physics_curve(th, T) - y,
+        sm = getattr(self, "s", 1.0)
+        res = least_squares(lambda th: physics_curve(th, T, sm) - y,
                             x0=[f0, -5e-4, 1e-3, 1.0],
                             bounds=([0.5 * f0, -0.02, 0.0, -5.0], [1.5 * f0, 0.02, 0.1, 8.0]),
                             loss="soft_l1", f_scale=np.std(y))
@@ -144,7 +146,7 @@ class PhysicsOnly:
         return self
 
     def predict(self, X):
-        return physics_curve(self.theta, X["T_steel"].to_numpy())
+        return physics_curve(self.theta, X["T_steel"].to_numpy(), getattr(self, "s", 1.0))
 
     def params(self) -> dict:
         f0, a, b, Tc = self.theta
@@ -161,14 +163,16 @@ class PhysicsHybrid(PhysicsOnly):
     regularized so it cannot override the physics."""
     name = "Physics + GBM (proposed)"
 
-    def __init__(self, seed: int = 0):
-        self.seed = seed
+    def __init__(self, seed: int = 0, s: float = 1.0, max_depth: int = 3, learning_rate: float = 0.05):
+        # Defaults are the settings used for every reported result; the other
+        # values exist only for the sensitivity study (scripts/run_sensitivity.py).
+        self.seed, self.s, self.max_depth, self.learning_rate = seed, s, max_depth, learning_rate
 
     def fit(self, X, y):
         super().fit(X, y)
         r = np.asarray(y) - super().predict(X)
-        self.g = HistGradientBoostingRegressor(max_depth=3, learning_rate=0.05, max_iter=300,
-                                               l2_regularization=1.0, random_state=self.seed)
+        self.g = HistGradientBoostingRegressor(max_depth=self.max_depth, learning_rate=self.learning_rate,
+                                               max_iter=300, l2_regularization=1.0, random_state=self.seed)
         self.g.fit(X[RESIDUAL_FEATURES], r)
         return self
 

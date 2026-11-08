@@ -18,6 +18,7 @@ python scripts/run_experiments.py    # main split, random split, detection (down
 python scripts/run_robustness.py     # 5 hand-designed folds (incl. cold-side and post-retrofit)
 python scripts/run_rolling.py        # 22 systematic rolling windows (slow; see Makefile for the parallel version)
 python scripts/paired_tests.py       # paired day-block bootstrap tests of coverage differences
+python scripts/run_sensitivity.py    # hyperparameter sensitivity + physics-parameter CIs (~15 min)
 python scripts/make_figures.py       # figures/ and results/summary.md
 ```
 Everything is seeded and deterministic. `results/summary.md` is regenerated from the CSVs, so every number in the paper should be traceable to a CSV row. Tests run automatically on GitHub (`.github/workflows/bridge-uncertainty-tests.yml`).
@@ -119,6 +120,15 @@ Split conformal (Angelopoulos & Bates 2021, arXiv:2107.07511):
   - Cold side, rolling windows: no significant differences (all CIs include 0, except a −0.019 [−0.032, −0.004] *disadvantage* vs Physics only).
   - Post-retrofit fold Q1: the proposed model is **significantly worse** than five comparators (−0.11 to −0.13; pooled coverage 0.78 vs 0.89–0.91).
 - **Bottom line, now statistically backed:** the physics-guided model is the only model that keeps nominal coverage when extrapolating to warmer temperatures, and the gain is significant against every alternative. It does not help, and can hurt, when the freezing regime is unseen or unidentifiable.
+
+### v4: reviewer checks (all on the 11 forward rolling windows unless noted)
+- **Not buying coverage with width.** On warm-side out-of-range hours the proposed model has the *narrowest* median band; every other model's is 0.5–26 % wider. Its coverage is still the highest.
+- **Not tuned.** Each of 9 residual-learner settings (depth 2/3/5 × learning rate 0.02/0.05/0.1) gives warm-side coverage of 0.883–0.899. The physics-free GBM given the *same* sweep tops out at 0.826, so every setting of the proposed model beats every setting of the competitor. Freezing-hinge width *s*: 0.5 °C → 0.907, 1 °C (default) → 0.895, 2 °C → 0.838. A softer hinge lets the cold effect leak into the warm slope, consistent with the ablation. The default was fixed in advance and is *not* the best setting. Inside the training range, all settings of both models give 0.908–0.918. (`results/sensitivity.csv`)
+- **Physics parameters with uncertainty** (day-block bootstrap, `results/physics_parameter_ci.csv`):
+  - (df/f) per °C is −1.3e-4 [−1.9e-4, −5.0e-5] for mode 6, −1.3e-4 [−1.5e-4, −1.0e-4] for mode 9 and −2.9e-4 [−4.0e-4, −1.4e-4] for mode 13. These are negative, as thermal softening predicts.
+  - Mode 5's interval includes 0. Mode 3 is positive, +2.1e-4 [4.7e-5, 3.5e-4]: a real but unexplained effect.
+  - *T_c* intervals span roughly −1.4 to +2.4 °C for every mode, which includes 0 °C. That is consistent with a freezing mechanism, but not proof of one.
+- **Code self-review:** no leakage of future data into features, conformal and bootstrap arithmetic checked, and default settings reproduce the saved predictions exactly.
 
 ## Honest limitations
 1. **Cold regime:** no method handles sub-zero temperatures when trained without them. This is the biggest open problem.

@@ -388,3 +388,75 @@
 | Rolling (all windows), inside training range     | GP + linear kernel     |     63778 |      168 |          0.918 |       0.913 |   0.006 |  -0     |   0.012 |         0.037 |    0.259 |
 | Rolling (all windows), inside training range     | Linear(T)              |     63778 |      168 |          0.918 |       0.912 |   0.006 |  -0.003 |   0.016 |         0.105 |    0.525 |
 | Rolling (all windows), inside training range     | GP                     |     63778 |      168 |          0.918 |       0.912 |   0.007 |   0     |   0.013 |         0.018 |    0.14  |
+
+
+## Sensitivity: pooled coverage on forward rolling windows for every setting tried (scripts/run_sensitivity.py; defaults: depth 3, lr 0.05, s 1.0)
+
+| model                    |   max_depth |   learning_rate |     s | region   |     n |   hits |   median_width_Hz |   pooled_coverage |
+|:-------------------------|------------:|----------------:|------:|:---------|------:|-------:|------------------:|------------------:|
+| GBM (no physics)         |           5 |            0.1  | nan   | inside   | 33079 |  30025 |             0.027 |             0.908 |
+| GBM (no physics)         |           5 |            0.05 | nan   | inside   | 33079 |  30103 |             0.026 |             0.91  |
+| GBM (no physics)         |           3 |            0.1  | nan   | inside   | 33079 |  30132 |             0.027 |             0.911 |
+| GBM (no physics)         |           3 |            0.05 | nan   | inside   | 33079 |  30156 |             0.027 |             0.912 |
+| GBM (no physics)         |           5 |            0.02 | nan   | inside   | 33079 |  30191 |             0.026 |             0.913 |
+| GBM (no physics)         |           3 |            0.02 | nan   | inside   | 33079 |  30193 |             0.026 |             0.913 |
+| GBM (no physics)         |           2 |            0.1  | nan   | inside   | 33079 |  30222 |             0.027 |             0.914 |
+| GBM (no physics)         |           2 |            0.02 | nan   | inside   | 33079 |  30239 |             0.025 |             0.914 |
+| GBM (no physics)         |           2 |            0.05 | nan   | inside   | 33079 |  30285 |             0.026 |             0.916 |
+| Physics + GBM (proposed) |           5 |            0.1  |   1   | inside   | 33079 |  30105 |             0.024 |             0.91  |
+| Physics + GBM (proposed) |           3 |            0.1  |   1   | inside   | 33079 |  30130 |             0.026 |             0.911 |
+| Physics + GBM (proposed) |           5 |            0.05 |   1   | inside   | 33079 |  30138 |             0.025 |             0.911 |
+| Physics + GBM (proposed) |           3 |            0.05 |   0.5 | inside   | 33079 |  30165 |             0.027 |             0.912 |
+| Physics + GBM (proposed) |           3 |            0.05 |   1   | inside   | 33079 |  30173 |             0.025 |             0.912 |
+| Physics + GBM (proposed) |           2 |            0.1  |   1   | inside   | 33079 |  30235 |             0.025 |             0.914 |
+| Physics + GBM (proposed) |           3 |            0.05 |   2   | inside   | 33079 |  30275 |             0.025 |             0.915 |
+| Physics + GBM (proposed) |           5 |            0.02 |   1   | inside   | 33079 |  30278 |             0.024 |             0.915 |
+| Physics + GBM (proposed) |           2 |            0.05 |   1   | inside   | 33079 |  30292 |             0.025 |             0.916 |
+| Physics + GBM (proposed) |           3 |            0.02 |   1   | inside   | 33079 |  30343 |             0.024 |             0.917 |
+| Physics + GBM (proposed) |           2 |            0.02 |   1   | inside   | 33079 |  30353 |             0.024 |             0.918 |
+| GBM (no physics)         |           2 |            0.02 | nan   | warm     |  3259 |   2510 |             0.025 |             0.77  |
+| GBM (no physics)         |           3 |            0.02 | nan   | warm     |  3259 |   2610 |             0.026 |             0.801 |
+| GBM (no physics)         |           2 |            0.05 | nan   | warm     |  3259 |   2613 |             0.026 |             0.802 |
+| GBM (no physics)         |           2 |            0.1  | nan   | warm     |  3259 |   2624 |             0.027 |             0.805 |
+| GBM (no physics)         |           3 |            0.05 | nan   | warm     |  3259 |   2641 |             0.027 |             0.81  |
+| GBM (no physics)         |           3 |            0.1  | nan   | warm     |  3259 |   2659 |             0.027 |             0.816 |
+| GBM (no physics)         |           5 |            0.02 | nan   | warm     |  3259 |   2665 |             0.026 |             0.818 |
+| GBM (no physics)         |           5 |            0.1  | nan   | warm     |  3259 |   2690 |             0.027 |             0.825 |
+| GBM (no physics)         |           5 |            0.05 | nan   | warm     |  3259 |   2692 |             0.026 |             0.826 |
+| Physics + GBM (proposed) |           3 |            0.05 |   2   | warm     |  3259 |   2731 |             0.025 |             0.838 |
+| Physics + GBM (proposed) |           2 |            0.02 |   1   | warm     |  3259 |   2879 |             0.024 |             0.883 |
+| Physics + GBM (proposed) |           5 |            0.1  |   1   | warm     |  3259 |   2879 |             0.024 |             0.883 |
+| Physics + GBM (proposed) |           2 |            0.1  |   1   | warm     |  3259 |   2890 |             0.025 |             0.887 |
+| Physics + GBM (proposed) |           3 |            0.1  |   1   | warm     |  3259 |   2890 |             0.026 |             0.887 |
+| Physics + GBM (proposed) |           5 |            0.05 |   1   | warm     |  3259 |   2913 |             0.025 |             0.894 |
+| Physics + GBM (proposed) |           3 |            0.05 |   1   | warm     |  3259 |   2916 |             0.025 |             0.895 |
+| Physics + GBM (proposed) |           3 |            0.02 |   1   | warm     |  3259 |   2919 |             0.024 |             0.896 |
+| Physics + GBM (proposed) |           2 |            0.05 |   1   | warm     |  3259 |   2924 |             0.025 |             0.897 |
+| Physics + GBM (proposed) |           5 |            0.02 |   1   | warm     |  3259 |   2929 |             0.024 |             0.899 |
+| Physics + GBM (proposed) |           3 |            0.05 |   0.5 | warm     |  3259 |   2956 |             0.027 |             0.907 |
+
+
+## Physics parameters with 95% day-block bootstrap CIs (main-split training data)
+
+|   mode | parameter                  |   estimate |     ci_lo |     ci_hi |
+|-------:|:---------------------------|-----------:|----------:|----------:|
+|      3 | a_per_degC                 |   4.23e-04 |  9.48e-05 |  7.02e-04 |
+|      3 | b                          |   6.33e-03 |  3.71e-03 |  1.78e-02 |
+|      3 | Tc_degC                    |   1.11e+00 | -5.05e-01 |  2.19e+00 |
+|      3 | df_over_f_per_degC (= a/2) |   2.11e-04 |  4.74e-05 |  3.51e-04 |
+|      5 | a_per_degC                 |  -1.97e-04 | -4.50e-04 |  6.15e-05 |
+|      5 | b                          |   2.20e-03 |  1.06e-03 |  9.12e-03 |
+|      5 | Tc_degC                    |   1.17e+00 | -9.04e-01 |  2.37e+00 |
+|      5 | df_over_f_per_degC (= a/2) |  -9.86e-05 | -2.25e-04 |  3.08e-05 |
+|      6 | a_per_degC                 |  -2.56e-04 | -3.85e-04 | -9.96e-05 |
+|      6 | b                          |   3.15e-03 |  1.91e-03 |  1.07e-02 |
+|      6 | Tc_degC                    |   1.36e+00 | -5.63e-01 |  2.38e+00 |
+|      6 | df_over_f_per_degC (= a/2) |  -1.28e-04 | -1.92e-04 | -4.98e-05 |
+|      9 | a_per_degC                 |  -2.57e-04 | -3.07e-04 | -2.00e-04 |
+|      9 | b                          |   1.04e-03 |  6.75e-04 |  2.72e-03 |
+|      9 | Tc_degC                    |   1.25e+00 | -3.93e-01 |  2.04e+00 |
+|      9 | df_over_f_per_degC (= a/2) |  -1.29e-04 | -1.53e-04 | -9.99e-05 |
+|     13 | a_per_degC                 |  -5.83e-04 | -7.92e-04 | -2.77e-04 |
+|     13 | b                          |   9.73e-03 |  5.88e-03 |  8.88e-02 |
+|     13 | Tc_degC                    |   1.18e+00 | -1.42e+00 |  2.44e+00 |
+|     13 | df_over_f_per_degC (= a/2) |  -2.91e-04 | -3.96e-04 | -1.38e-04 |

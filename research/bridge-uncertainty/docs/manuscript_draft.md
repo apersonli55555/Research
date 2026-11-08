@@ -1,7 +1,7 @@
 # Do conformal error bars survive an unseen season? Physics-guided temperature compensation of bridge natural frequencies on the KW51 railway bridge
 
 *[Your name]¹ — ¹[High school], Austin, Texas, USA*
-*DRAFT v0.3, 2026-11-08. Every number below comes from `results/` in this repository at the commit that contains this file. Items marked **[TODO]** need your own work or verification before submission.*
+*DRAFT v0.4, 2026-11-08. Every number below comes from `results/` in this repository at the commit that contains this file. Items marked **[TODO]** need your own work or verification before submission.*
 
 ---
 
@@ -180,6 +180,18 @@ The designed folds F2 + F3 give the same ordering and similar effect sizes. In f
 > **Figure 7** (`fig7_rolling_origin.pdf`). Rolling-origin coverage on out-of-range hours: (a) warm side, (b) cold side.
 > **Figure 8** (`fig8_paired_differences.pdf`). Paired coverage differences with 95 % day-block bootstrap CIs.
 
+### 5.2c Reviewer checks: width and tuning
+**Width.** On warm-side out-of-range hours of the forward rolling windows, the proposed model has the narrowest median interval of all nine models. The others are 0.5 % (GBM) to 26 % (Linear) wider. Its higher coverage therefore does not come from wider intervals.
+
+**Tuning.** We re-ran the forward rolling windows for 9 residual-learner settings (maximum depth 2, 3 or 5 × learning rate 0.02, 0.05 or 0.1), applied identically to the proposed model and to the physics-free GBM.
+
+| | Warm-side pooled coverage (range over 9 settings) |
+|---|---|
+| Proposed model | 0.883–0.899 |
+| GBM | 0.770–0.826 |
+
+Every setting of the proposed model therefore exceeds every setting of the GBM. Varying the hinge width *s* gives 0.907 (0.5 °C), 0.895 (1 °C, default) and 0.838 (2 °C). The default was fixed before these runs and is not the best-performing value. The degradation at *s* = 2 °C is consistent with the mechanism of Sec. 5.3: a wider hinge spreads the cold-regime stiffening into the warm-side slope. Inside the training range, coverage is 0.908–0.918 for all settings of both models (`results/sensitivity.csv`).
+
 ### 5.3 Why: the cold term de-confounds the warm-side slope
 The two ablations isolate the source of the gain. Adding a linear trend to the GBM (Linear + GBM) does *not* help: median 0.66 on warm-side out-of-range hours, versus 0.77 for the GBM alone. Removing the cold term from the physics model drops it from 0.90 to 0.75.
 
@@ -211,17 +223,22 @@ On the main split, the proposed model has the best or near-best interval score i
 ACI gives coverage between 0.889 and 0.907 for every model and mode on the main split, at the cost of wider intervals for weaker models. ACI uses the true frequency at every hour to adjust its level. During a real structural change it would widen until the change is absorbed, which defeats detection. ACI provides calibrated *forecasts*; fixed, physics-guided intervals provide *alarms*.
 
 ### 5.7 Physical parameters
-Fitted on main-split training data only:
+Fitted on main-split training data only, with 95 % day-block bootstrap CIs (300 resamples; `results/physics_parameter_ci.csv`):
 
-| Mode | a (1/°C) | ½a = (df/f)/°C | T_c (°C) | b |
+| Mode | (df/f)/°C = ½a | 95 % CI | T_c (°C) | 95 % CI |
 |---|---|---|---|---|
-| 3 | +4.2e-4 | +2.1e-4 | 1.11 | 6.3e-3 |
-| 5 | −2.0e-4 | −1.0e-4 | 1.17 | 2.2e-3 |
-| 6 | −2.6e-4 | −1.3e-4 | 1.36 | 3.2e-3 |
-| 9 | −2.6e-4 | −1.3e-4 | 1.25 | 1.0e-3 |
-| 13 | −5.8e-4 | −2.9e-4 | 1.18 | 9.7e-3 |
+| 3 | +2.1e-4 | [+4.7e-5, +3.5e-4] | 1.11 | [−0.5, 2.2] |
+| 5 | −9.9e-5 | [−2.3e-4, +3.1e-5] | 1.17 | [−0.9, 2.4] |
+| 6 | −1.3e-4 | [−1.9e-4, −5.0e-5] | 1.36 | [−0.6, 2.4] |
+| 9 | −1.3e-4 | [−1.5e-4, −1.0e-4] | 1.25 | [−0.4, 2.0] |
+| 13 | −2.9e-4 | [−4.0e-4, −1.4e-4] | 1.18 | [−1.4, 2.4] |
 
-*a* < 0 in four of five modes. The positive value for mode 3 is not consistent with thermal softening of steel alone. *T_c* ≈ 1.1–1.4 °C is consistent across modes and similar in character to the 2–3 °C kink reported by Wittenberg et al. (2025a).
+- **Sign:** the temperature coefficient is negative, as thermal softening of steel predicts, with CIs excluding zero for modes 6, 9 and 13. It is indistinguishable from zero for mode 5.
+- **Mode 3:** the coefficient is positive with a CI excluding zero, which steel softening alone cannot explain **[TODO: discuss candidate mechanisms]**.
+- **Freezing threshold:** the *T_c* CIs overlap across modes and all include 0 °C. That is consistent with a freezing-related mechanism, but does not establish it. The same regime appears as a 2–3 °C kink in Wittenberg et al. (2025a).
+- **Not validated out of sample:** no test hour of the main split fell below 0 °C, so the cold term is not validated out-of-sample there (see Sec. 5.4).
+
+**[TODO: compare ½a with a handbook value of (dE/dT)/E for structural steel.]**
 
 ### 5.8 Retrofit detection
 Median post-retrofit residuals (Physics + GBM) are +0.061 Hz on mode 6 (+2.1 %), −0.031 Hz on mode 9 and +0.097 Hz on mode 13, and below 0.01 Hz on modes 3 and 5. For modes 6, 9 and 13, every model alarms on 100 % of post-retrofit days.

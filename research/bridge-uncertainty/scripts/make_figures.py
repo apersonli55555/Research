@@ -342,6 +342,15 @@ def summary_md(cov, cond, det, phys, aci):
         pt = pd.read_csv(RES / "paired_tests.csv")
         L += ["\n## Paired coverage differences (proposed - comparator), day-block bootstrap\n",
               pt.round(3).to_markdown(index=False), ""]
+    if (RES / "sensitivity.csv").exists():
+        sv = pd.read_csv(RES / "sensitivity.csv")
+        L += ["\n## Sensitivity: pooled coverage on forward rolling windows for every setting tried "
+              "(scripts/run_sensitivity.py; defaults: depth 3, lr 0.05, s 1.0)\n",
+              sv.sort_values(["region", "model", "pooled_coverage"]).round(3).to_markdown(index=False), ""]
+    if (RES / "physics_parameter_ci.csv").exists():
+        pc = pd.read_csv(RES / "physics_parameter_ci.csv")
+        L += ["\n## Physics parameters with 95% day-block bootstrap CIs (main-split training data)\n",
+              pc.to_markdown(index=False, floatfmt=".2e"), ""]
     (RES / "summary.md").write_text("\n".join(L))
 
 
