@@ -34,7 +34,9 @@ if (!window.__fallKeys) {
 
 
 class Labeler:
-    def __init__(self, oops_dir, labeler_id="me"):
+    def __init__(self, oops_dir, labeler_id="me", start_with="test"):
+        """start_with="test" (default) shows the test-set clips first; "train" skips straight
+        to the training-pool clips (test clips come after)."""
         self.dir = oops_dir
         self.path = os.path.join(oops_dir, "labels.csv")
         self.labeler_id = labeler_id
@@ -46,8 +48,9 @@ class Labeler:
         top = [r for r in rows if r["random_sample"] == "0"]
         random.Random(0).shuffle(rnd)
         random.Random(1).shuffle(top)   # shuffled so labels are not ordered by model score
-        self.queue = rnd + top
+        self.queue = top + rnd if start_with == "train" else rnd + top
         self.n_random = len(rnd)
+        self.test_names = {r["name"] for r in rnd}
         self.labels = {}
         if os.path.exists(self.path):
             with open(self.path) as fh:
@@ -106,7 +109,7 @@ class Labeler:
 
     def _render(self):
         r = self._next()
-        done_rand = sum(1 for q in self.queue[:self.n_random] if q["name"] in self.labels)
+        done_rand = sum(1 for q in self.queue if q["name"] in self.test_names and q["name"] in self.labels)
         done_all = sum(1 for q in self.queue if q["name"] in self.labels)
         status = (f"<b>Test set (random sample):</b> {done_rand}/{self.n_random} &nbsp;·&nbsp; "
                   f"<b>all clips:</b> {done_all}/{len(self.queue)}")
