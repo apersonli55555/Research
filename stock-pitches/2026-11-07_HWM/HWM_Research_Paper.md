@@ -1,6 +1,6 @@
 # Pricing a Peak Year as Permanent: A Valuation Study of Howmet Aerospace (NYSE: HWM)
 
-**[Your Name]**
+**Ethan Li**
 Independent equity research | November 8, 2026
 *Market data as of the November 6, 2026 close*
 

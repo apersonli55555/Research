@@ -2,6 +2,8 @@
 
 ### A great business at the wrong price. Short, 12-month target $167.
 
+**By Ethan Li** | November 8, 2026
+
 | | |
 |---|---|
 | **Recommendation** | SHORT (valuation-driven, moderate conviction) |
