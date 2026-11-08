@@ -7,7 +7,8 @@ Tick each box. Keep a dated lab notebook (paper or a Google Doc) and write every
 - [ ] **Run the project on your laptop.** Download it (see the README), install it, and run `python -m pytest -q`. If something breaks, write down the error and how you fixed it.
 - [ ] **Read** Angelopoulos & Bates (arXiv 2107.07511), sections 1–2. Write half a page: what does conformal prediction guarantee, and when does it break?
 - [ ] **Task 1:** find the retrofit dates in Maes & Lombaert (2021) or Maes et al. (2022). If they aren't 15 May–27 Sep 2019, fix `RETROFIT_START`/`RETROFIT_END` in `src/kw51uq/data.py` and tell me.
-- [ ] **Send the LUMO email** (`docs/lumo_data_request_email.md`) from your own email address.
+- [ ] **Register for the Z24 data** at bwk.kuleuven.be/bwm/z24 with your school email (see "Get a second structure yourself" below).
+- [ ] **Send the LUMO email** (`docs/lumo_data_request_email.md`) from your own email address. This is a backup second structure.
 - [ ] **Find your fair's dates** (GARSEF registration and deadlines) and write them at the top of your notebook.
 
 ## Week 2: your own experiment (about 6–8 hours)
@@ -35,6 +36,41 @@ Tick each box. Keep a dated lab notebook (paper or a Google Doc) and write every
 - **Task 5, cross-season cold prior:** fit the freezing parameters on one winter and reuse them on warm-trained models. Does that fix the cold-side failure?
 - **PINN residual model:** replace the trees with a small neural network trained with a physics penalty. This builds on your earlier paper.
 - **LUMO second structure:** if they send the data.
+
+
+## The goal: RSI (and why it changes the priorities)
+RSI looks for evidence that **you** can do research: the project, your own decisions, and recommendation letters from people who watched you work. **Check the official requirements and deadline at cee.org/research-science-institute.** Third-party sites disagree, so don't trust them. The items below matter more for RSI than any further polishing of the KW51 analysis.
+
+### 1. Get a second structure yourself: the Z24 bridge (highest value)
+- **What it is:** the most-cited benchmark in vibration-based monitoring (Switzerland, 1997–98).
+  - It has a year of hourly vibration recordings and detailed temperatures (deck, pavement, soil).
+  - It has the famous **freezing-asphalt stiffening below 0 °C**, which is exactly where your cold-side result says every model fails.
+  - It was also progressively damaged before demolition. That is *real damage*, unlike KW51's retrofit.
+- **How to get it:**
+  - Fill in the registration form at **bwk.kuleuven.be/bwm/z24** ("Registration") using your **school email address**. In the Comments box, say in 2–3 sentences what you'll use it for.
+  - KU Leuven reviews the request and, if accepted, emails you a temporary account within a few working days.
+- **Terms (follow them exactly):**
+  - non-commercial research only;
+  - acknowledge the KU Leuven Structural Mechanics Section;
+  - cite their Z24 papers;
+  - the data **may not be passed to anyone else**. So the Z24 files must **never** go into the public GitHub repo. Only your code and results go there. Add the data folder to `.gitignore`.
+- **What you'll probably need to learn:** the Z24 download may contain raw accelerations rather than ready-made frequencies. If so, you'd identify the natural frequencies yourself (operational modal analysis, e.g. stochastic subspace identification). That's harder, but it's precisely the kind of real measurement-science skill RSI and a mentor will notice. A professor's help here would be ideal.
+- **Not yet verified:** the exact file contents behind the login. Tell me what you receive and we'll plan from there.
+
+### 2. Do your own experiments
+The minimum-detectable-shift study (Week 2) and the cold-prior idea (Task 5) are *your* contributions. Z24 gives the cold-prior idea a real test.
+
+### 3. Turn a professor contact into a mentor
+- Email when you have **your own** result: your MDS figure, or Z24 access.
+- In the email, ask one specific technical question, for example about the cold-stiffening mechanism or how to identify Z24's modes.
+- A mentor who has *worked with you for months* writes the letter RSI values. One who only read your PDF doesn't.
+
+### 4. Keep the evidence trail
+- Keep a dated lab notebook.
+- Make your own Git commits from your own GitHub account.
+- Write an honest AI-use disclosure.
+
+If anyone asks "what did you do?", you should be able to point to dates, code and notes.
 
 ## When to come back to me
 - When a TODO is done and you want a review.
