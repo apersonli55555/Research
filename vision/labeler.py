@@ -1,0 +1,121 @@
+"""In-notebook labelling tool for the OOPS! candidate clips (works in Google Colab).
+
+    from labeler import Labeler
+    Labeler("/content/drive/MyDrive/fall-cvpr/oops").show()
+
+Clips from the unbiased random sample come first (they form the test set and must all be
+labelled); the high-scoring candidates follow. Every click is written to labels.csv right
+away, so you can stop and resume any time.
+
+Definition used (WHO): a fall is "an event which results in a person coming to rest
+inadvertently on the ground or floor or other lower level". Count it only if a person
+(not an animal or object) falls, and the fall happens inside the clip.
+"""
+import base64, csv, os, random
+
+LABELS = {"fall": "Fall", "not_fall": "Not a fall", "unsure": "Unsure / can't tell"}
+
+
+class Labeler:
+    def __init__(self, oops_dir, labeler_id="me"):
+        self.dir = oops_dir
+        self.path = os.path.join(oops_dir, "labels.csv")
+        self.labeler_id = labeler_id
+        with open(os.path.join(oops_dir, "scores.csv")) as fh:
+            rows = [r for r in csv.DictReader(fh) if r["kept"] == "1"]
+        clip_dir = os.path.join(oops_dir, "clips")
+        rows = [r for r in rows if os.path.exists(os.path.join(clip_dir, r["name"].replace("/", "_") + ".mp4"))]
+        rnd = [r for r in rows if r["random_sample"] == "1"]
+        top = [r for r in rows if r["random_sample"] == "0"]
+        random.Random(0).shuffle(rnd)
+        random.Random(1).shuffle(top)   # shuffled so labels are not ordered by model score
+        self.queue = rnd + top
+        self.n_random = len(rnd)
+        self.labels = {}
+        if os.path.exists(self.path):
+            with open(self.path) as fh:
+                for r in csv.DictReader(fh):
+                    self.labels[r["name"]] = r["label"]
+        self.history = []
+
+    def _save(self, name, label):
+        self.labels[name] = label
+        new = not os.path.exists(self.path)
+        with open(self.path, "a", newline="") as fh:
+            w = csv.writer(fh)
+            if new:
+                w.writerow(["name", "label", "labeler"])
+            w.writerow([name, label, self.labeler_id])   # later rows override earlier ones
+
+    def _next(self):
+        for r in self.queue:
+            if r["name"] not in self.labels:
+                return r
+        return None
+
+    def show(self):
+        import ipywidgets as W
+        from IPython.display import display
+        try:
+            from google.colab import output
+            output.enable_custom_widget_manager()
+        except Exception:
+            pass
+        self.video = W.HTML()
+        self.info = W.HTML()
+        buttons = []
+        for key, text in LABELS.items():
+            b = W.Button(description=text, button_style={"fall": "danger", "not_fall": "success"}.get(key, ""),
+                         layout=W.Layout(width="170px", height="48px"))
+            b.on_click(lambda _b, k=key: self._label(k))
+            buttons.append(b)
+        back = W.Button(description="← Undo last", layout=W.Layout(width="120px", height="48px"))
+        back.on_click(lambda _b: self._undo())
+        display(W.VBox([self.info, self.video, W.HBox(buttons + [back])]))
+        self._render()
+
+    def _render(self):
+        r = self._next()
+        done_rand = sum(1 for q in self.queue[:self.n_random] if q["name"] in self.labels)
+        done_all = sum(1 for q in self.queue if q["name"] in self.labels)
+        status = (f"<b>Test set (random sample):</b> {done_rand}/{self.n_random} &nbsp;·&nbsp; "
+                  f"<b>all clips:</b> {done_all}/{len(self.queue)}")
+        if r is None:
+            self.info.value = status + "<br><b>All clips labelled. 🎉</b>"
+            self.video.value = ""
+            return
+        self.current = r
+        part = "TEST SET clip" if r["random_sample"] == "1" else "training-pool clip"
+        self.info.value = (status + f"<br><small>{part} · the accident happens around the middle (2 s).<br>"
+                           "Fall = a <b>person</b> unintentionally ends up on the ground/floor/lower level.</small>")
+        with open(os.path.join(self.dir, "clips", r["name"].replace("/", "_") + ".mp4"), "rb") as fh:
+            b64 = base64.b64encode(fh.read()).decode()
+        self.video.value = (f'<video src="data:video/mp4;base64,{b64}" autoplay loop muted controls '
+                            f'playsinline style="max-width:480px;max-height:360px;background:#000"></video>')
+
+    def _label(self, key):
+        if getattr(self, "current", None) is None:
+            return
+        self._save(self.current["name"], key)
+        self.history.append(self.current["name"])
+        self._render()
+
+    def _undo(self):
+        if not self.history:
+            return
+        name = self.history.pop()
+        self.labels.pop(name, None)
+        self._save(name, "")          # empty label = removed
+        self.labels.pop(name, None)
+        self._render()
+
+
+def load_labels(oops_dir):
+    """name -> label, last write wins; empty labels (undone) dropped."""
+    out = {}
+    path = os.path.join(oops_dir, "labels.csv")
+    if os.path.exists(path):
+        with open(path) as fh:
+            for r in csv.DictReader(fh):
+                out[r["name"]] = r["label"]
+    return {k: v for k, v in out.items() if v}
