@@ -193,7 +193,7 @@
 
     <section id="monitorView">
       <div class="panel">
-        <p class="sub" style="margin:0;">Watching live. Walk around, then try a controlled drop (a pillow holding the phone works well) to see the rule-based detector fire. Train an AI model in the Train tab to see it predict alongside the rule.</p>
+        <p class="sub" style="margin:0;">Watching live. Walk around, then try a controlled drop (a pillow holding the phone works well) and leave it lying still for 5 seconds to see the rule-based detector fire. Train an AI model in the Train tab to see it predict alongside the rule.</p>
         <p class="sub" style="margin:10px 0 0; color:var(--signal);">Tip: place the phone down gently on hard surfaces (tables, counters) — a hard drop can still read as a real fall.</p>
       </div>
     </section>
@@ -227,12 +227,12 @@
       <summary>How this works</summary>
       <p>On first launch the app spends 2 seconds calibrating your phone's own resting baseline (tap "recalibrate baseline" any time you change how you're holding it). If you entered a height, it uses a standard waist-height ratio to estimate your phone's typical fall distance and widens or narrows the detection window slightly — a real but modest refinement, since the surface you land on matters far more than fall height and that part we can't measure.</p>
       <p>The AI model fuses <b>three sensors</b> — accelerometer, gyroscope rotation, and (if enabled) microphone level — plus whether the phone ends up lying flat, nine features total. It's a small neural network (one hidden layer), not plain logistic regression, written in plain JavaScript and gradient-checked before shipping, since a simpler linear model has a hard ceiling on how well it can separate messy real-world motion no matter how much data you give it. Training combines your real recorded samples (weighted 4x so they dominate) with a simulated bootstrap set covering falls, walking, sitting, hard set-downs, and car braking — not a real imported dataset, since there's no network access here to fetch one and public datasets use different sensor placements anyway, but a stand-in grounded in the same patterns. Recording now waits 1 second after you tap so your reaction time doesn't push the motion to the wrong part of the window, and captures for the same duration the live monitor uses, so training and live detection see the same shape of data.</p>
-      <p>When a fall is flagged, nothing happens immediately — it first has to survive a <b>5-second stillness check</b>: the phone must stay within a small tolerance of your baseline (tiny movements like breathing are fine; anything bigger resets it, since that's more consistent with still being upright than being down and not getting up). Only after that does the 15-second "Are you okay?" check-in start.</p>
+      <p>The rule-based detector works in three steps. <b>Impact:</b> a jolt above about 2 g. <b>Settle, then hold:</b> within 3 seconds you have to come to rest, and stay still (near your baseline; breathing is fine) for <b>5 seconds</b>. <b>Posture change:</b> the phone's orientation while still has to differ by at least 30° from just before the impact, since someone who fell is no longer in the position they were in. Only after all three does the 15-second "Are you okay?" check-in start. Earlier versions demanded stillness within 1.5 seconds of the impact. Tested on 1,798 recorded falls from the public SisFall dataset, that version caught only 18%, because a body is still bouncing in that time. This version caught about 94% of falls from people it wasn't tuned on, while staying quiet for about 95% of everyday activities. Those were staged falls with a waist-worn sensor. Treat this as a safety aid, never a guarantee.</p>
       <p>Every stage now announces itself out loud, not just the check-in: "Fall detected" the moment the 5-second confirmation starts, the full question when check-in begins, and the warning when it escalates. Speaking out loud works reliably everywhere, including iOS Safari. Listening for your spoken answer is best-effort only: browser speech-to-text support is genuinely inconsistent, and iOS Safari specifically has known bugs with it — so the on-screen buttons and every timeout still work no matter what, exactly so voice is a bonus, never the only way to respond.</p>
       <p><b>"Listen for help"</b> (separate toggle, off by default) runs independently of motion entirely — say "help me" or "I'm not okay" at any point and it jumps straight to the check-in, no fall needed first. It listens for full phrases rather than single words like "no" or "help" alone, since without the context of just having asked a question, single common words would misfire on ordinary conversation. It automatically pauses during an active check-in or alert (so it isn't fighting that stage's own listener for the microphone) and resumes right after.</p>
       <p>If nothing cancels it, "Notify Emergency Contact" grabs your GPS and opens your phone's share sheet, and (if enabled) the flashlight blinks slowly — a real distress signal, not a rapid strobe, since fast flashing is a genuine photosensitive-seizure risk. Flashlight control only reads the camera's torch capability, never a video frame. Note: it doesn't work in iOS Safari — a real platform limitation, not a bug — but works on Android Chrome.</p>
       <p>For car false-positives: record a few "phone braking hard in a cupholder" clips as <b>Normal</b>. A real fall ends in near-total stillness; a car keeps vibrating — the model learns that difference from your data.</p>
-      <p><b>Sound is a learned signal now, not a required one.</b> Earlier this hard-required a sound spike, which reliably stopped table set-downs but risked missing real falls that aren't loud — a landing on carpet, a fall with no scream. The AI model still gets peak sound level and how sustained it is as 2 of its 9 features, and is trained on falls across a range of volumes (a quiet carpeted fall, a fall with a cry, a loud tumble), so it can weigh sound when it's a genuine tell without requiring it. The honest tradeoff: the rule-based detector's defense against hard table drops is weaker than it was with the hard gate, since it's back to peak-and-stillness only. Your height still scales the peak bar: a taller person's real fall free-falls further and hits harder, while a table set-down doesn't get harder just because you're taller.</p>
+      <p><b>Sound is a learned signal now, not a required one.</b> Earlier this hard-required a sound spike, which reliably stopped table set-downs but risked missing real falls that aren't loud — a landing on carpet, a fall with no scream. The AI model still gets peak sound level and how sustained it is as 2 of its 9 features, and is trained on falls across a range of volumes (a quiet carpeted fall, a fall with a cry, a loud tumble), so it can weigh sound when it's a genuine tell without requiring it. A phone set down on a table usually doesn't trip the rule: it is no longer in a pocket or hand, but its tilt often barely changes, and the posture check needs a change of 30° or more. A phone tossed onto a table so it lands at a different angle can still trigger it. Your height still scales the peak bar: a taller person's real fall free-falls further and hits harder, while a table set-down doesn't get harder just because you're taller.</p>
     </details>
   </main>
 </div>
@@ -398,6 +398,7 @@ let calibrationSamples = [];
 function startCalibration(){
   isCalibrating = true;
   calibrationSamples = [];
+  if(typeof fallDetector!=='undefined'){ fallDetector.reset(); hideConfirmBanner(); }
   document.getElementById('calibBanner').style.display = 'block';
   setTimeout(finishCalibration, 2000);
 }
@@ -440,11 +441,12 @@ function onMotion(e){
 
   if(isRecording) recordBuffer.push({t,mag,rotMag,sound});
 
-  if(confirmingFall){
-    checkFallConfirmation(mag);
-  } else if(mode==='monitor' && !isRecording){
-    runLiveDetection();
+  // The fall rule keeps running across tab switches once it has seen an impact, so switching
+  // to Train mid-fall can't silently drop a confirmation that is already under way.
+  if(!isRecording && !alertActive && (mode==='monitor' || fallDetector.state!=='idle')){
+    handleFallEvent(fallDetector.step({t,mag,x,y,z}, restingBaseline, heightScaleFactor));
   }
+  if(mode==='monitor' && !isRecording) runLiveDetection();
 }
 
 function getCSS(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
@@ -505,22 +507,92 @@ function computeFeatures(samples){
 }
 function extractVector(f){ return [f.peakMag, f.varMag, f.stillness, f.baselineDev, f.peakRot, f.rotVar, f.peakSound, f.soundVar, f.endFlat]; }
 
-// ---------- threshold detector ----------
-// Sound is no longer a hard requirement here -- it was catching table set-downs, but at the
-// cost of a real risk: falls aren't always loud (carpeted landings, a fall that doesn't involve
-// a scream). The AI model still SEES sound as 2 of its 9 features and learns when it matters,
-// which is the "train it on fall sound" approach rather than a rigid human-set gate. The trade
-// this brings back: the rule alone has less defense against hard table drops than it did with
-// the gate. See "Table set-downs" note below for the honest tradeoff.
-const PEAK_THRESHOLD_BASE = 24;
-const STILLNESS_THRESHOLD = 2.5;
-function currentPeakThreshold(){
-  return PEAK_THRESHOLD_BASE * heightScaleFactor;
+// ---------- fall rule v2: impact -> settle -> hold -> posture change ----------
+// The original rule required peak > 24 m/s² AND low variance in the same 1.5 s window, then
+// 5 s within 1.5 m/s² of baseline starting immediately. Replayed on the public SisFall dataset
+// (research/benchmark_sisfall.py) it caught only 18% of 1,798 falls: the body is still bouncing
+// in the 1.5 s after impact, so the stillness gate and the strict confirmation cancelled most
+// real falls. This rule waits for the body to settle first, then also requires that the phone's
+// orientation has changed (someone who fell is no longer in the posture they were in before).
+// Tuned on 18 SisFall subjects, tested once on 20 others: 93.9% sensitivity, 95.5% specificity
+// (research/rule_v2.py, research/MANUSCRIPT.md). Those were simulated falls with a waist-worn
+// sensor, not real falls with a phone in a pocket -- treat the numbers as a lab result.
+//
+// BEGIN fall-rule-v2 -- pure logic, no DOM; replayed against SisFall by research/validate_js_rule.mjs
+const FALL_V2 = {
+  PEAK: 20,          // m/s², impact threshold (multiplied by the height scale factor)
+  SETTLE_MS: 3000,   // the still period must begin within this long after the last impact
+  TOL: 3.0,          // m/s² of wiggle room around the resting baseline that still counts as "still"
+  HOLD_MS: 5000,     // ...and it must last this long without interruption
+  ANGLE_DEG: 30,     // gravity direction during the hold vs. just before impact
+  PRE_FROM_MS: 1000, PRE_TO_MS: 200, // pre-impact posture = mean vector over [impact-1000, impact-200] ms
+};
+function createFallDetectorV2(P = FALL_V2){
+  let st = null;      // null = idle; otherwise {impactT, peaks, pre, source, holdStart, sum, n}
+  const hist = [];    // last ~1.2 s of samples, for the pre-impact gravity direction
+  const angleDeg = (a,b)=>{
+    const na = Math.hypot(a[0],a[1],a[2]), nb = Math.hypot(b[0],b[1],b[2]);
+    if(!na || !nb) return 180;
+    const c = (a[0]*b[0]+a[1]*b[1]+a[2]*b[2])/(na*nb);
+    return Math.acos(Math.max(-1, Math.min(1, c))) * 180/Math.PI;
+  };
+  // Mean gravity vector over [t-1000, t-200] ms. null when there is no history yet (e.g. right
+  // after calibration): the posture gate is then skipped rather than risk suppressing a real fall.
+  function preAt(t){
+    const pre = [0,0,0]; let n = 0;
+    for(const h of hist){
+      if(h.t >= t-P.PRE_FROM_MS && h.t <= t-P.PRE_TO_MS){ pre[0]+=h.x; pre[1]+=h.y; pre[2]+=h.z; n++; }
+    }
+    return n ? pre : null;
+  }
+  function startWatch(t, source){
+    st = { impactT:t, peaks:[{t, pre:preAt(t)}], pre:null, source, holdStart:null, sum:[0,0,0], n:0 };
+  }
+  return {
+    get state(){ return !st ? 'idle' : (st.holdStart===null ? 'settling' : 'holding'); },
+    holdRemainingMs(t){ return st && st.holdStart!==null ? Math.max(0, P.HOLD_MS-(t-st.holdStart)) : null; },
+    reset(){ st = null; },
+    // External trigger (the trained AI model). It still has to pass settle/hold/posture.
+    trigger(t, source){ if(!st) startWatch(t, source); },
+    // s = {t (ms), mag, x, y, z} in m/s² including gravity. Returns an event object or null.
+    step(s, baseline, scale = 1){
+      hist.push(s);
+      while(hist.length && hist[0].t < s.t - P.PRE_FROM_MS - 200) hist.shift();
+      const peak = P.PEAK * scale;
+      if(!st){
+        if(s.mag > peak){ startWatch(s.t, 'RULE-BASED'); return {type:'impact'}; }
+        return null;
+      }
+      if(Math.abs(s.mag - baseline) <= P.TOL){
+        if(st.holdStart===null){
+          if(s.t - st.impactT > P.SETTLE_MS){ st = null; return {type:'expired'}; }
+          st.holdStart = s.t; st.sum = [s.x,s.y,s.z]; st.n = 1;
+          // Posture reference = before the earliest impact that this still period can belong to.
+          const ref = st.peaks.find(p => s.t - p.t <= P.SETTLE_MS) || st.peaks[st.peaks.length-1];
+          st.pre = ref.pre;
+          return {type:'hold-start', postureLikely: !st.pre || angleDeg(st.pre,[s.x,s.y,s.z]) >= P.ANGLE_DEG};
+        }
+        st.sum[0]+=s.x; st.sum[1]+=s.y; st.sum[2]+=s.z; st.n++;
+        if(s.t - st.holdStart >= P.HOLD_MS){
+          const angle = st.pre ? angleDeg(st.pre, st.sum) : 180;
+          const source = st.source; st = null;
+          return angle >= P.ANGLE_DEG ? {type:'fall', source, angle} : {type:'rejected-posture', angle};
+        }
+        return null;
+      }
+      const wasHolding = st.holdStart!==null;
+      st.holdStart = null;
+      if(s.mag > peak){                                  // another impact extends the settle window
+        st.impactT = s.t;
+        st.peaks.push({t:s.t, pre:preAt(s.t)});
+        while(st.peaks.length > 1 && s.t - st.peaks[0].t > P.SETTLE_MS) st.peaks.shift();
+      }
+      else if(s.t - st.impactT > P.SETTLE_MS){ st = null; return {type:'expired'}; }
+      return wasHolding ? {type:'hold-broken'} : null;
+    },
+  };
 }
-function thresholdDetect(f){
-  if(!f) return false;
-  return f.peakMag > currentPeakThreshold() && f.stillness < STILLNESS_THRESHOLD;
-}
+// END fall-rule-v2
 
 // ---------- trainable model: small MLP, plain JS, no external ML library ----------
 // Upgraded from plain logistic regression, which can only draw a straight decision
@@ -616,62 +688,54 @@ function generateSyntheticSamples(){
 let model = null;
 let alertActive = false;
 
-// A raw peak alone isn't enough — require 5s of sustained stillness afterward before
-// this counts as a real fall. Tiny movements (sensor noise, breathing) are tolerated;
-// anything bigger resets the confirmation, since that's more consistent with someone
-// still moving/upright than someone down and not getting up.
-let confirmingFall = false, confirmStartTime = null, confirmSource = null;
-const CONFIRM_DURATION_MS = 5000;
-const STILLNESS_TOLERANCE = 1.5; // m/s² of wiggle room allowed around baseline during confirmation
+const fallDetector = createFallDetectorV2();
 
-function startFallConfirmation(source){
-  if(confirmingFall || alertActive) return;
-  confirmingFall = true;
-  confirmStartTime = Date.now();
-  confirmSource = source;
-  document.getElementById('confirmBanner').style.display = 'block';
-  document.getElementById('confirmCount').textContent = '5';
-  if(navigator.vibrate) navigator.vibrate(80);
-  speak('Fall detected. Checking.');
-}
-function cancelFallConfirmation(){
-  confirmingFall = false;
-  document.getElementById('confirmBanner').style.display = 'none';
-}
-function checkFallConfirmation(mag){
-  if(Math.abs(mag - restingBaseline) > STILLNESS_TOLERANCE){
-    cancelFallConfirmation(); // moved again beyond the tolerance -- doesn't count as a confirmed fall
-    return;
+function hideConfirmBanner(){ document.getElementById('confirmBanner').style.display = 'none'; }
+function handleFallEvent(ev){
+  if(!ev) return;
+  const banner = document.getElementById('confirmBanner');
+  if(ev.type==='hold-start'){
+    banner.style.display = 'block';
+    document.getElementById('confirmCount').textContent = Math.ceil(FALL_V2.HOLD_MS/1000);
+    // Only announce out loud when the posture already looks changed -- otherwise every brisk
+    // sit-down would make the phone say "fall detected".
+    if(ev.postureLikely){
+      if(navigator.vibrate) navigator.vibrate(80);
+      speak('Fall detected. Checking.');
+    }
+  } else if(ev.type==='fall'){
+    hideConfirmBanner();
+    fallDetector.reset();
+    triggerAlert(ev.source);
+  } else if(ev.type==='hold-broken' || ev.type==='expired' || ev.type==='rejected-posture'){
+    hideConfirmBanner();
   }
-  const elapsed = Date.now() - confirmStartTime;
-  const remaining = Math.max(0, Math.ceil((CONFIRM_DURATION_MS-elapsed)/1000));
-  document.getElementById('confirmCount').textContent = remaining;
-  if(elapsed >= CONFIRM_DURATION_MS){
-    const src = confirmSource;
-    cancelFallConfirmation();
-    triggerAlert(src);
+  if(fallDetector.state==='holding'){
+    document.getElementById('confirmCount').textContent = Math.ceil(fallDetector.holdRemainingMs(Date.now())/1000);
   }
 }
 
 function runLiveDetection(){
-  const f = computeFeatures(buffer);
-  const ruleFall = thresholdDetect(f);
   const ruleChip = document.getElementById('ruleChip');
-  ruleChip.innerHTML = '<span class="chip-label">Rule-based</span>' + (ruleFall?'FALL':'normal');
-  ruleChip.className = 'chip ' + (ruleFall?'chip-alert':'chip-ok');
+  const st = fallDetector.state;
+  const label = st==='idle' ? 'normal' : st==='settling' ? 'impact' : 'still…';
+  ruleChip.innerHTML = '<span class="chip-label">Rule-based</span>' + label;
+  ruleChip.className = 'chip ' + (st==='idle' ? 'chip-ok' : 'chip-alert');
 
   const aiChip = document.getElementById('aiChip');
+  const f = model ? computeFeatures(buffer) : null;
   if(model && f){
     const p = predictModel(extractVector(f), model);
     aiChip.innerHTML = '<span class="chip-label">AI model</span>' + Math.round(p*100)+'%';
     aiChip.className = 'chip ' + (p>0.5?'chip-alert':'chip-ok');
-    if(p>0.5 && !alertActive && !confirmingFall) startFallConfirmation('AI MODEL');
+    // The AI model can open a watch, but the fall still has to settle, hold still for 5 s and
+    // show a posture change. On SisFall the synthetic-bootstrap model alone fired on ~99% of
+    // everyday activities, so it is not allowed to raise an alert by itself.
+    if(p>0.5 && !alertActive) fallDetector.trigger(Date.now(), 'AI MODEL');
   } else {
     aiChip.innerHTML = '<span class="chip-label">AI model</span>—';
     aiChip.className = 'chip chip-muted';
   }
-
-  if(ruleFall && !alertActive && !confirmingFall) startFallConfirmation('RULE-BASED');
 }
 
 let activeAlertSource = null;
@@ -679,6 +743,8 @@ let checkinVibrateInterval = null, alertVibrateInterval = null;
 function triggerAlert(source){
   if(alertActive) return;
   alertActive = true;
+  fallDetector.reset();   // whatever triggered this, don't resume a half-finished watch afterwards
+  hideConfirmBanner();
   activeAlertSource = source;
   pauseAmbientForAlert();
   document.getElementById('checkinSource').textContent = source + ' detected';
@@ -815,7 +881,6 @@ function startAmbientListening(){
     ambientRecognition.onresult = (e)=>{
       const transcript = (e.results[0][0].transcript||'').toLowerCase();
       if(AMBIENT_HELP_PATTERN.test(transcript) && !alertActive){
-        if(confirmingFall) cancelFallConfirmation();
         triggerAlert('VOICE: HEARD "'+transcript+'"');
       } else if(ambientListening){
         try{ ambientRecognition.start(); }catch(e){}

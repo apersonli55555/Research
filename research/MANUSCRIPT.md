@@ -96,6 +96,13 @@ On the dev subjects, the selected v2 setting scored 0.903 sensitivity and 0.954 
 
 Remaining v2 false positives were concentrated in D11, *"trying to get up and collapse into a chair"* (48 % positive). This activity is arguably a near-fall. All other ADL types were ≤ 9 % positive. Per-fall-type sensitivity ranged from 85 % (F02, backward slip) to 100 % (F05, F11, F12, F14).
 
+### 3.4 The deployed JavaScript matches the evaluated rule
+Rule v2 now ships in `index.html` as a self-contained block with no page code, between the `BEGIN fall-rule-v2` and `END fall-rule-v2` markers. `research/validate_js_rule.mjs` extracts that exact block from the page and replays SisFall through it in Node.js.
+
+It agreed with the Python reference on **4,485 of 4,500** trials (99.7 %). On the held-out subjects the shipped JavaScript reached 93.8 % sensitivity (n = 898 falls) and 95.6 % specificity (n = 1,416 ADLs). The remaining differences come from streaming bookkeeping: a sample-level difference in the hold-length boundary, and how impacts are skipped after a posture-gate rejection.
+
+`research/browser_smoke.cjs` drives the full page in headless Chromium with synthetic motion events. It checks that the end-to-end check-in fires for impact-then-lying, and stays silent for impact-then-upright and for a tilt without impact, both with and without the trained AI model.
+
 ## 4. Discussion
 
 **Principal finding.** A widely used pattern, impact threshold plus immediate stillness, can look reasonable when tested on one's own phone and still miss most falls. The stillness check sits inside the same short window as the impact. Moving the check to after a settling period, and requiring a change in body orientation, recovered most of the lost sensitivity without giving up specificity. Every change is implementable in the existing browser code.

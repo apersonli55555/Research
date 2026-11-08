@@ -105,7 +105,7 @@ def pooled(d):
 
 def main():
     root = sys.argv[1]
-    trials = [dict(act=a, subj=s, fall=a[0] == "F", acc=load_vec(p))
+    trials = [dict(id=os.path.basename(p)[:-4], act=a, subj=s, fall=a[0] == "F", acc=load_vec(p))
               for a, s, r, p in iter_dataset(root)]
     trials = [t for t in trials if len(t["acc"]) > 3 * FS]
     dev = [t for t in trials if t["subj"] in DEV]
@@ -144,6 +144,10 @@ def main():
                          test_elderly_adl_specificity=cluster_boot({k: v for k, v in a.items() if k.startswith("SE")}),
                          test_per_activity_positive_rate={k: v[0] / v[1] for k, v in sorted(act.items())})
     os.makedirs(os.path.join(os.path.dirname(__file__), "results"), exist_ok=True)
+    # per-trial decisions of the selected rule, for checking the JavaScript port against
+    g = best[0]
+    with open(os.path.join(os.path.dirname(__file__), "results", "rule_v2_trials.json"), "w") as fh:
+        json.dump({t["id"]: bool(detect(t["acc"], *g)) for t in trials}, fh)
     with open(os.path.join(os.path.dirname(__file__), "results", "rule_v2.json"), "w") as fh:
         json.dump(out, fh, indent=1)
     for name in ("v2_posture", "v2_no_posture"):
