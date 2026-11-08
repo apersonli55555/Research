@@ -16,10 +16,10 @@ Open [`fall_cvpr.ipynb`](fall_cvpr.ipynb) in Google Colab: *File → Open notebo
 | File | Purpose |
 |---|---|
 | `common.py` | frame sampling, clip export, frozen CLIP encoder and zero-shot prompts |
-| `oops_mine.py` | streams the 48 GB OOPS! archive once; scores, embeds and keeps candidate clips; resumable |
-| `labeler.py` | in-Colab labelling tool (test-set clips first; saves each click) |
+| `oops_mine.py` | streams the 48 GB OOPS! archive once (decoding in background threads); saves 8 ordered frame embeddings per clip; keeps candidate clips; resumable |
+| `labeler.py` | in-Colab labelling tool: test-set clips first, keyboard shortcuts F/N/U/Z, saves every label |
 | `urfall_prep.py` | UR Fall clips: falls (side and ceiling cameras), pre-fall and everyday activity |
-| `experiment.py` | staged → real evaluation: AUROC, AP and recall at 5% FPR with video-level bootstrap CIs |
+| `experiment.py` | staged → real evaluation with *appearance* (mean-frame) and *temporal* (motion-aware) probes: AUROC, AP and recall at 5% FPR with video-level bootstrap CIs, an ROC chart, and the worst errors |
 
 ## Data and licences
 - **UR Fall Detection Dataset**: Kwolek & Kepski, *CMPB* 2014. CC BY-NC-SA 4.0, non-commercial academic use.

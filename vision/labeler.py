@@ -13,7 +13,24 @@ inadvertently on the ground or floor or other lower level". Count it only if a p
 """
 import base64, csv, os, random
 
-LABELS = {"fall": "Fall", "not_fall": "Not a fall", "unsure": "Unsure / can't tell"}
+LABELS = {"fall": "Fall  [F]", "not_fall": "Not a fall  [N]", "unsure": "Unsure  [U]"}
+KEYS = {"f": "fall", "n": "not_fall", "u": "unsure"}
+
+# Keyboard shortcuts in Colab: JS in the output frame calls back into Python. Only active
+# after you click inside the labeller's output area (the browser sends keys to that frame).
+_KEY_JS = """
+if (!window.__fallKeys) {
+  window.__fallKeys = true;
+  document.addEventListener('keydown', (e) => {
+    if (e.repeat || (e.target && ['INPUT', 'TEXTAREA'].includes(e.target.tagName))) return;
+    const k = (e.key || '').toLowerCase();
+    if (['f', 'n', 'u', 'z'].includes(k)) {
+      e.preventDefault();
+      google.colab.kernel.invokeFunction('fallLabeler.key', [k], {});
+    }
+  });
+}
+"""
 
 
 class Labeler:
@@ -69,10 +86,23 @@ class Labeler:
                          layout=W.Layout(width="170px", height="48px"))
             b.on_click(lambda _b, k=key: self._label(k))
             buttons.append(b)
-        back = W.Button(description="← Undo last", layout=W.Layout(width="120px", height="48px"))
+        back = W.Button(description="← Undo  [Z]", layout=W.Layout(width="120px", height="48px"))
         back.on_click(lambda _b: self._undo())
         display(W.VBox([self.info, self.video, W.HBox(buttons + [back])]))
+        try:                                   # keyboard shortcuts (Colab only)
+            from google.colab import output
+            from IPython.display import Javascript
+            output.register_callback("fallLabeler.key", self._key)
+            display(Javascript(_KEY_JS))
+        except Exception:
+            pass
         self._render()
+
+    def _key(self, k):
+        if k == "z":
+            self._undo()
+        elif k in KEYS:
+            self._label(KEYS[k])
 
     def _render(self):
         r = self._next()
@@ -87,7 +117,9 @@ class Labeler:
         self.current = r
         part = "TEST SET clip" if r["random_sample"] == "1" else "training-pool clip"
         self.info.value = (status + f"<br><small>{part} · the accident happens around the middle (2 s).<br>"
-                           "Fall = a <b>person</b> unintentionally ends up on the ground/floor/lower level.</small>")
+                           "Fall = a <b>person</b> unintentionally ends up on the ground/floor/lower level.<br>"
+                           "Keyboard: click once inside this area, then press <b>F</b> / <b>N</b> / <b>U</b>, "
+                           "<b>Z</b> to undo.</small>")
         with open(os.path.join(self.dir, "clips", r["name"].replace("/", "_") + ".mp4"), "rb") as fh:
             b64 = base64.b64encode(fh.read()).decode()
         self.video.value = (f'<video src="data:video/mp4;base64,{b64}" autoplay loop muted controls '

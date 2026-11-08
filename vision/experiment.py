@@ -2,23 +2,25 @@
 """Staged-to-real experiment: do fall detectors trained on lab falls work on real falls?
 
 Inputs
-  --staged   urfall.npz from urfall_prep.py           (staged lab falls + ADLs)
-  --oops     directory from oops_mine.py + labels.csv  (real in-the-wild clips)
+  --staged   urfall.npz from urfall_prep.py                       (staged lab falls + ADLs)
+  --oops     directory from oops_mine.py, with labels.csv          (real in-the-wild clips)
 
 Real-world TEST set = OOPS! clips in the hash-based random sample that a human labelled:
   positives: event clips labelled "fall"
   negatives: event clips labelled "not_fall" (other accidents: hard negatives)
              + pre-event clips of those same videos (ordinary real-world activity)
-"unsure" clips are excluded. The real TRAINING pool (for the in-domain reference) is the
+"unsure" clips are excluded. The real TRAINING pool (for real-trained probes) is the
 labelled top-K candidates, which never overlap the random sample.
 
-Methods (all on frozen CLIP clip embeddings)
-  zero-shot       : CLIP text-prompt margin (no training)
-  staged probe    : logistic regression trained on UR Fall
-  real probe      : logistic regression trained on the real training pool (in-domain reference)
-  staged+real     : both
-Metrics: AUROC, average precision, recall at 5% false-positive rate; 95% CIs from a
-video-level bootstrap.
+Clip representations (from the same frozen CLIP encoder, 8 ordered frames per clip)
+  appearance : mean frame embedding (what is in the clip)
+  temporal   : [mean, late-minus-early frames, mean |frame-to-frame change|]
+               (how the clip changes over time: a fall is a motion, not a pose)
+
+Methods: zero-shot CLIP prompts, and logistic-regression probes trained on staged, real,
+or staged+real data. Metrics: AUROC, average precision, recall at 5% false-positive rate,
+with 95% CIs from a video-level bootstrap. Writes JSON, a markdown table, an ROC figure,
+and the real-test clips each staged-trained probe gets most wrong.
 """
 import argparse, csv, json, os, sys
 
@@ -26,6 +28,23 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(__file__))
 from labeler import load_labels  # noqa: E402
+from oops_mine import load_frames  # noqa: E402
+
+
+def l2n(x):
+    return x / (np.linalg.norm(x, axis=-1, keepdims=True) + 1e-8)
+
+
+def featurize(frames, kind):
+    """frames: (n, T, d) ordered frame embeddings."""
+    f = l2n(frames.astype(np.float32))
+    mean = l2n(f.mean(1))
+    if kind == "appearance":
+        return mean
+    k = max(1, f.shape[1] // 3)
+    delta = f[:, -k:].mean(1) - f[:, :k].mean(1)
+    change = np.abs(np.diff(f, axis=1)).mean(1)
+    return np.concatenate([mean, delta, change], 1)
 
 
 def metrics(y, s):
@@ -55,7 +74,9 @@ def boot(y, s, groups, n=1000, seed=0):
 
 def probe():
     from sklearn.linear_model import LogisticRegression
-    return LogisticRegression(C=1.0, max_iter=5000, class_weight="balanced")
+    from sklearn.pipeline import make_pipeline
+    from sklearn.preprocessing import StandardScaler
+    return make_pipeline(StandardScaler(), LogisticRegression(C=0.1, max_iter=5000, class_weight="balanced"))
 
 
 def main():
@@ -69,27 +90,25 @@ def main():
     os.makedirs(out, exist_ok=True)
 
     S = np.load(a.staged)
-    Xs, ys, gs, ms = S["emb"], S["label"], S["group"], S["margin"]
+    Fs, ys, gs, ms = S["frames"], S["label"], S["group"], S["margin"]
 
     labels = load_labels(a.oops)
     with open(os.path.join(a.oops, "scores.csv")) as fh:
         meta = {r["name"]: r for r in csv.DictReader(fh)}
-    Z = np.load(os.path.join(a.oops, "embeddings.npz"))
-
+    frames = load_frames(a.oops)
     test, train = [], []
-    for name, seg, e in zip(Z["name"], Z["seg"], Z["emb"].astype(np.float32)):
+    for (name, seg), fr in frames.items():
         lab = labels.get(name)
-        if lab not in ("fall", "not_fall"):
+        if lab not in ("fall", "not_fall") or name not in meta:
             continue
         r = meta[name]
         y = 1 if (seg == "event" and lab == "fall") else 0
         m = float(r["event_margin"] if seg == "event" else r["pre_margin"])
-        item = (e, y, name, m)
-        (test if r["random_sample"] == "1" else train).append(item)
+        (test if r["random_sample"] == "1" else train).append((fr, y, name, seg, m))
     if not test:
-        sys.exit("no labelled test clips yet: label the random-sample clips first")
-    Xt = np.array([t[0] for t in test]); yt = np.array([t[1] for t in test])
-    gt = np.array([t[2] for t in test]); mt = np.array([t[3] for t in test])
+        sys.exit("no labelled test clips yet: label the random-sample (test set) clips first")
+    Ft = np.array([t[0] for t in test]); yt = np.array([t[1] for t in test])
+    gt = np.array([t[2] for t in test]); segt = [t[3] for t in test]; mt = np.array([t[4] for t in test])
     print(f"real test set: {len(test)} clips from {len(set(gt))} videos, {yt.sum()} falls")
     if yt.sum() < a.min_test_pos:
         print(f"WARNING: only {yt.sum()} real falls in the test set; results will be very noisy")
@@ -99,26 +118,36 @@ def main():
                  "real_test_videos": int(len(set(gt))), "real_train_clips": len(train),
                  "real_train_falls": int(sum(t[1] for t in train))},
            "model": str(S["model"]) if "model" in S.files else "", "staged": {}, "real": {}}
+    scores = {}
 
     # ---- in-domain staged performance: 5-fold cross-validation grouped by sequence ----
     from sklearn.model_selection import GroupKFold
-    p = np.zeros(len(ys))
-    for tr, te in GroupKFold(5).split(Xs, ys, gs):
-        p[te] = probe().fit(Xs[tr], ys[tr]).predict_proba(Xs[te])[:, 1]
-    res["staged"]["staged_probe_cv"] = boot(ys, p, gs)
     res["staged"]["zero_shot"] = boot(ys, ms, gs)
+    for kind in ("appearance", "temporal"):
+        X = featurize(Fs, kind)
+        p = np.zeros(len(ys))
+        for tr, te in GroupKFold(5).split(X, ys, gs):
+            p[te] = probe().fit(X[tr], ys[tr]).predict_proba(X[te])[:, 1]
+        res["staged"][f"staged_probe_{kind}_cv"] = boot(ys, p, gs)
 
     # ---- staged -> real ----
-    res["real"]["zero_shot"] = boot(yt, mt, gt)
-    res["real"]["staged_probe"] = boot(yt, probe().fit(Xs, ys).predict_proba(Xt)[:, 1], gt)
-    if train and len({t[1] for t in train}) == 2:
-        Xr = np.array([t[0] for t in train]); yr = np.array([t[1] for t in train])
-        res["real"]["real_probe"] = boot(yt, probe().fit(Xr, yr).predict_proba(Xt)[:, 1], gt)
-        res["real"]["staged_plus_real_probe"] = boot(
-            yt, probe().fit(np.vstack([Xs, Xr]), np.concatenate([ys, yr])).predict_proba(Xt)[:, 1], gt)
-    else:
+    res["real"]["zero_shot"] = boot(yt, mt, gt); scores["zero_shot"] = mt
+    have_real = bool(train) and len({t[1] for t in train}) == 2
+    if not have_real:
         print("no labelled training-pool clips with both classes: skipping real-trained probes")
+    for kind in ("appearance", "temporal"):
+        Xs, Xt = featurize(Fs, kind), featurize(Ft, kind)
+        s = probe().fit(Xs, ys).predict_proba(Xt)[:, 1]
+        res["real"][f"staged_probe_{kind}"] = boot(yt, s, gt); scores[f"staged_probe_{kind}"] = s
+        if have_real:
+            Xr = featurize(np.array([t[0] for t in train]), kind); yr = np.array([t[1] for t in train])
+            s = probe().fit(Xr, yr).predict_proba(Xt)[:, 1]
+            res["real"][f"real_probe_{kind}"] = boot(yt, s, gt); scores[f"real_probe_{kind}"] = s
+            s = probe().fit(np.vstack([Xs, Xr]), np.concatenate([ys, yr])).predict_proba(Xt)[:, 1]
+            res["real"][f"staged_plus_real_probe_{kind}"] = boot(yt, s, gt)
+            scores[f"staged_plus_real_probe_{kind}"] = s
 
+    # ---- outputs ----
     with open(os.path.join(out, "staged_to_real.json"), "w") as fh:
         json.dump(res, fh, indent=1)
     lines = ["| Evaluated on | Method | AUROC | AP | Recall @ 5% FPR |", "|---|---|---|---|---|"]
@@ -128,9 +157,40 @@ def main():
             lines.append(f"| {dom} | {k} | {f('auroc')} | {f('ap')} | {f('recall_at_fpr5')} |")
     table = "\n".join(lines)
     with open(os.path.join(out, "staged_to_real.md"), "w") as fh:
-        fh.write(json.dumps(res["n"]) + "\n\n" + table + "\n")
-    print(json.dumps(res["n"]))
+        fh.write("Counts: " + json.dumps(res["n"]) + "\n\n" + table + "\n")
+
+    # the real-test clips a staged-trained probe gets most wrong (for qualitative analysis)
+    with open(os.path.join(out, "worst_errors.csv"), "w", newline="") as fh:
+        w = csv.writer(fh)
+        w.writerow(["method", "error", "score", "name", "segment", "label"])
+        for k in ("staged_probe_appearance", "staged_probe_temporal"):
+            s = scores[k]
+            fn = [i for i in np.argsort(s) if yt[i] == 1][:15]
+            fp = [i for i in np.argsort(-s) if yt[i] == 0][:15]
+            for err, ids in (("missed fall", fn), ("false alarm", fp)):
+                for i in ids:
+                    w.writerow([k, err, f"{s[i]:.4f}", gt[i], segt[i], int(yt[i])])
+
+    try:
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+        from sklearn.metrics import roc_curve
+        fig, ax = plt.subplots(figsize=(4.5, 4.5))
+        for k, s in scores.items():
+            fpr, tpr, _ = roc_curve(yt, s)
+            ax.plot(fpr, tpr, label=f"{k} ({res['real'][k]['auroc'][0]:.2f})")
+        ax.plot([0, 1], [0, 1], ":", color="grey")
+        ax.set_xlabel("false-positive rate"); ax.set_ylabel("true-positive rate (recall)")
+        ax.set_title("Real-world falls (OOPS! test set)")
+        ax.legend(fontsize=7, loc="lower right")
+        fig.tight_layout(); fig.savefig(os.path.join(out, "roc_real.png"), dpi=200)
+    except ImportError:
+        pass
+
+    print("Counts:", json.dumps(res["n"]))
     print(table)
+    print(f"\nwrote {out}/staged_to_real.md, .json, roc_real.png, worst_errors.csv")
 
 
 if __name__ == "__main__":

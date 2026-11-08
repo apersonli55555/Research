@@ -43,38 +43,55 @@ def transition_time(entry):
     return float(np.median(ts)) if len(ts) >= 2 else None
 
 
+def decode_job(data, t):
+    """Runs in a worker thread: decode the event (and pre-event) frames of one video."""
+    ev = read_frames(data, max(0.0, t - 1), t + 1)
+    pre = read_frames(data, t - 3.5, t - 1.5) if t >= PRE_MIN_T else None
+    return ev, pre
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", required=True)
     ap.add_argument("--url", default=URL)
     ap.add_argument("--keep", type=int, default=3000, help="top-K event clips saved for labelling")
     ap.add_argument("--random-n", type=int, default=600, help="approx. size of the unbiased random sample")
-    ap.add_argument("--limit", type=int, default=0, help="stop after N videos (testing)")
+    ap.add_argument("--limit", type=int, default=0, help="stop after N new videos (quick test)")
     ap.add_argument("--save-every", type=int, default=500)
+    ap.add_argument("--workers", type=int, default=max(2, (os.cpu_count() or 2)))
     ap.add_argument("--model", default="ViT-L-14")
     ap.add_argument("--pretrained", default="datacomp_xl_s13b_b90k")
     ap.add_argument("--device", default="cuda")
     a = ap.parse_args()
 
-    os.makedirs(os.path.join(a.out, "clips"), exist_ok=True)
+    clip_dir, emb_dir = os.path.join(a.out, "clips"), os.path.join(a.out, "frames")
+    os.makedirs(clip_dir, exist_ok=True); os.makedirs(emb_dir, exist_ok=True)
     rows_path = os.path.join(a.out, "scores.csv")
-    emb_path = os.path.join(a.out, "embeddings.npz")
-    done, rows, emb = set(), [], {"name": [], "seg": [], "emb": []}
+    rows = []
     if os.path.exists(rows_path):                      # resume
         with open(rows_path) as fh:
             rows = list(csv.DictReader(fh))
-        done = {r["name"] for r in rows}
-        z = np.load(emb_path, allow_pickle=False)
-        emb = {"name": list(z["name"]), "seg": list(z["seg"]), "emb": list(z["emb"])}
-        print(f"resuming: {len(done)} videos already processed")
-    # min-heap of (score, name) for the clips currently kept on disk
+        print(f"resuming: {len(rows)} videos already processed")
+    done = {r["name"] for r in rows}
     kept = [(float(r["event_margin"]), r["name"]) for r in rows if r["kept"] == "1" and r["random_sample"] == "0"]
-    heapq.heapify(kept)
+    heapq.heapify(kept)                                # min-heap of the top-K clips on disk
+    shard_ids = [int(f[6:11]) for f in os.listdir(emb_dir) if f.startswith("shard_")]
+    next_shard = max(shard_ids) + 1 if shard_ids else 0
+    buf = {"name": [], "seg": [], "frames": []}       # per-frame embeddings not yet written
 
     enc = ClipEncoder(a.model, a.pretrained, a.device)
     ann, split = None, {}
+    clip_path = lambda n: os.path.join(clip_dir, n.replace("/", "_") + ".mp4")
+    writes = {}                                        # name -> pending write_clip future
 
     def save():
+        nonlocal next_shard
+        if buf["name"]:                                # frames first, then the CSV that references them
+            np.savez(os.path.join(emb_dir, f"shard_{next_shard:05d}.npz"), name=np.array(buf["name"]),
+                     seg=np.array(buf["seg"]), frames=np.array(buf["frames"], dtype=np.float16))
+            next_shard += 1
+            for k in buf:
+                buf[k].clear()
         fields = ["name", "split", "t", "len", "event_fall_prob", "event_margin",
                   "pre_fall_prob", "pre_margin", "random_sample", "kept"]
         keep_names = {n for _, n in kept}
@@ -82,14 +99,67 @@ def main():
             r["kept"] = "1" if (r["name"] in keep_names or r["random_sample"] == "1") else "0"
         with open(rows_path + ".tmp", "w", newline="") as fh:
             w = csv.DictWriter(fh, fieldnames=fields); w.writeheader(); w.writerows(rows)
-        np.savez(emb_path + ".tmp.npz", name=np.array(emb["name"]), seg=np.array(emb["seg"]),
-                 emb=np.array(emb["emb"], dtype=np.float16).reshape(len(emb["name"]), -1))
         os.replace(rows_path + ".tmp", rows_path)
-        os.replace(emb_path + ".tmp.npz", emb_path)
 
+    def handle(name, t, data, fut):
+        """Main thread: embed decoded frames, score, decide what to keep."""
+        try:
+            ev_frames, pre_frames = fut.result()
+            ev = enc.encode_images(ev_frames)
+            p_ev, m_ev = enc.zero_shot(ev)
+            p_pre = m_pre = ""
+            pre = None
+            if pre_frames is not None:
+                pre = enc.encode_images(pre_frames)
+                pp, mp = enc.zero_shot(pre)
+                p_pre, m_pre = f"{pp:.5f}", f"{mp:.4f}"
+        except Exception as e:                         # corrupt / undecodable clip
+            print("skip", name, type(e).__name__, e)
+            return False
+        buf["name"].append(name); buf["seg"].append("event"); buf["frames"].append(ev)
+        if pre is not None:
+            buf["name"].append(name); buf["seg"].append("pre"); buf["frames"].append(pre)
+        rnd = in_random_sample(name, a.random_n)
+        top = not rnd and (len(kept) < a.keep or m_ev > kept[0][0])
+        if rnd or top:
+            writes[name] = pool.submit(write_clip, data, max(0.0, t - 2), t + 2, clip_path(name))
+        if top:
+            if len(kept) >= a.keep:
+                _, drop = heapq.heappop(kept)
+                if drop in writes:
+                    writes.pop(drop).result()          # never delete a file that is still being written
+                try:
+                    os.remove(clip_path(drop))
+                except FileNotFoundError:
+                    pass
+            heapq.heappush(kept, (m_ev, name))
+        rows.append(dict(name=name, split=split.get(name, ""), t=f"{t:.3f}", len=ann[name]["len"],
+                         event_fall_prob=f"{p_ev:.5f}", event_margin=f"{m_ev:.4f}",
+                         pre_fall_prob=p_pre, pre_margin=m_pre,
+                         random_sample="1" if rnd else "0", kept="1" if (rnd or top) else "0"))
+        done.add(name)
+        for n in [n for n, f in writes.items() if f.done()]:
+            writes.pop(n).result()                     # surface write errors
+        return True
+
+    from collections import deque
+    from concurrent.futures import ThreadPoolExecutor
+    pool = ThreadPoolExecutor(a.workers)
+    pending = deque()                                  # (name, t, data, future) in stream order
     curl = subprocess.Popen(["curl", "-sL", "--retry", "5", a.url], stdout=subprocess.PIPE, bufsize=1 << 20)
     outer = tarfile.open(fileobj=curl.stdout, mode="r|gz")
     n_seen, n_new, t0 = 0, 0, time.time()
+
+    def drain_one():
+        nonlocal n_new
+        if handle(*pending.popleft()):
+            n_new += 1
+            if n_new % 50 == 0:
+                print(f"{len(done)} processed ({n_seen} seen in archive) "
+                      f"{n_new / (time.time() - t0):.2f} videos/s", flush=True)
+            if n_new % a.save_every == 0:
+                save()
+
     for m in outer:
         if m.name.endswith("annotations.tar.gz"):
             inner = tarfile.open(fileobj=outer.extractfile(m), mode="r|gz")
@@ -116,55 +186,40 @@ def main():
                 continue
             name = os.path.basename(vm.name)[:-4]
             n_seen += 1
+            if n_seen % 2000 == 0 and n_new == 0:
+                print(f"skipping already-processed videos... {n_seen} seen", flush=True)
             if name in done or name not in ann:
                 continue
             t = transition_time(ann[name])
             if t is None:
                 continue
             data = vids.extractfile(vm).read()
-            try:
-                ev_frames = read_frames(data, max(0.0, t - 1), t + 1)
-                ev = enc.encode_images(ev_frames)
-                p_ev, m_ev = enc.zero_shot(ev)
-                emb["name"].append(name); emb["seg"].append("event"); emb["emb"].append(enc.clip_embedding(ev))
-                p_pre = m_pre = ""
-                if t >= PRE_MIN_T:
-                    pre = enc.encode_images(read_frames(data, t - 3.5, t - 1.5))
-                    pp, mp = enc.zero_shot(pre)
-                    p_pre, m_pre = f"{pp:.5f}", f"{mp:.4f}"
-                    emb["name"].append(name); emb["seg"].append("pre"); emb["emb"].append(enc.clip_embedding(pre))
-            except Exception as e:                       # corrupt / undecodable clip
-                print("skip", name, type(e).__name__, e)
-                continue
-            rnd = in_random_sample(name, a.random_n)
-            top = not rnd and (len(kept) < a.keep or m_ev > kept[0][0])
-            keep = rnd or top
-            if keep:
-                safe = name.replace("/", "_")
-                write_clip(data, max(0.0, t - 2), t + 2, os.path.join(a.out, "clips", safe + ".mp4"))
-            if top:
-                if len(kept) >= a.keep:
-                    _, drop = heapq.heappop(kept)
-                    try:
-                        os.remove(os.path.join(a.out, "clips", drop.replace("/", "_") + ".mp4"))
-                    except FileNotFoundError:
-                        pass
-                heapq.heappush(kept, (m_ev, name))
-            rows.append(dict(name=name, split=split.get(name, ""), t=f"{t:.3f}", len=ann[name]["len"],
-                             event_fall_prob=f"{p_ev:.5f}", event_margin=f"{m_ev:.4f}",
-                             pre_fall_prob=p_pre, pre_margin=m_pre,
-                             random_sample="1" if rnd else "0", kept="1" if keep else "0"))
-            done.add(name); n_new += 1
-            if n_new % 50 == 0:
-                print(f"{len(done)} processed ({n_seen} seen) {n_new / (time.time() - t0):.1f} vid/s", flush=True)
-            if n_new % a.save_every == 0:
-                save()
+            pending.append((name, t, data, pool.submit(decode_job, data, t)))
+            while len(pending) > 4 * a.workers:
+                drain_one()
             if a.limit and n_new >= a.limit:
                 break
         break
+    while pending and not (a.limit and n_new >= a.limit):
+        drain_one()
     curl.kill()
+    for f in writes.values():
+        f.result()
+    pool.shutdown()
     save()
-    print(f"done: {len(done)} videos, {len(kept)} candidate clips in {a.out}/clips")
+    print(f"done: {len(done)} videos, {len(kept)} top candidates + random sample in {clip_dir}")
+
+
+def load_frames(oops_dir):
+    """All saved per-frame embeddings: dict (name, seg) -> (8, d) float32. Later shards win."""
+    out = {}
+    d = os.path.join(oops_dir, "frames")
+    for f in sorted(os.listdir(d)):
+        if f.startswith("shard_") and f.endswith(".npz"):
+            z = np.load(os.path.join(d, f))
+            for n, s, fr in zip(z["name"], z["seg"], z["frames"]):
+                out[(str(n), str(s))] = fr.astype(np.float32)
+    return out
 
 
 if __name__ == "__main__":

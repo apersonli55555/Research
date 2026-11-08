@@ -80,15 +80,16 @@ def main():
     print(f"{len(clips)} clips: {sum(c[3] for c in clips)} fall, {sum(1 - c[3] for c in clips)} non-fall")
 
     enc = ClipEncoder(a.model, a.pretrained, a.device)
-    emb, margin = [], []
+    emb, frames, margin = [], [], []
     for i, (path, s, e, *_rest) in enumerate(clips):
         fe = enc.encode_images(read_frames(path, s, e, crop=RGB_CROP))
         emb.append(enc.clip_embedding(fe))
+        frames.append(fe)
         margin.append(enc.zero_shot(fe)[1])
         if (i + 1) % 50 == 0:
             print(f"  {i + 1}/{len(clips)}", flush=True)
     os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True)
-    np.savez(a.out, emb=np.array(emb, np.float32), margin=np.array(margin, np.float32),
+    np.savez(a.out, emb=np.array(emb, np.float32), frames=np.array(frames, np.float16), margin=np.array(margin, np.float32),
              label=np.array([c[3] for c in clips]), group=np.array([c[4] for c in clips]),
              source=np.array([c[5] for c in clips]), seg=np.array([c[6] for c in clips]),
              start=np.array([c[1] for c in clips], np.float32),
