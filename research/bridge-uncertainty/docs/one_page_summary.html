@@ -1,13 +1,13 @@
 <!doctype html><html><head><meta charset="utf-8"><title>One-page summary</title>
 <style>
 @page{size:Letter;margin:0.45in 0.55in}
-body{font-family:"DejaVu Serif",Georgia,serif;font-size:9.4pt;line-height:1.28;color:#111;margin:0}
+body{font-family:"DejaVu Serif",Georgia,serif;font-size:9.2pt;line-height:1.26;color:#111;margin:0}
 h1{font-family:"DejaVu Sans",Arial,sans-serif;font-size:13.5pt;line-height:1.2;margin:0 0 3pt}
 .by{font-family:"DejaVu Sans",Arial,sans-serif;font-size:8.8pt;color:#52514e;margin-bottom:8pt}
 h2{font-family:"DejaVu Sans",Arial,sans-serif;font-size:9.6pt;text-transform:uppercase;letter-spacing:.04em;color:#2a78d6;margin:6pt 0 2pt}
 p{margin:0 0 4pt}
 ul{margin:0 0 4pt 14pt;padding:0} li{margin:0 0 2pt}
-figure{margin:6pt 0 2pt} figure img{width:84%;display:block;margin:0 auto}
+figure{margin:6pt 0 2pt} figure img{width:80%;display:block;margin:0 auto}
 figcaption{font-family:"DejaVu Sans",Arial,sans-serif;font-size:7.9pt;color:#333;line-height:1.3}
 .small{font-size:8.3pt;color:#52514e}
 </style></head><body>
@@ -15,10 +15,10 @@ figcaption{font-family:"DejaVu Sans",Arial,sans-serif;font-size:7.9pt;color:#333
 <div class="by">[Your name] · [High school], Austin, TX · [email] · Code and data pipeline: [GitHub link] · Draft, November 2026</div>
 
 <h2>Problem</h2>
-<p>Structural health monitoring tracks a bridge's natural frequencies, because damage lowers stiffness and therefore frequency. Temperature changes frequency by a similar amount, so the measurement must be <i>compensated</i>, and the alarm threshold is only as trustworthy as its uncertainty band. Conformal prediction gives bands with a coverage guarantee, but only if past and future data are exchangeable. Seasonal data are not. <b>How much does coverage degrade when a model must predict a season it has not seen, and does a physics prior help?</b></p>
+<p>Bridges are monitored by tracking natural frequencies, which fall when damage lowers stiffness. Temperature shifts them by a similar amount, so alarms depend on a temperature-compensated uncertainty band. Conformal prediction guarantees coverage only if past and future data are exchangeable; seasonal data are not. <b>How much does coverage degrade when a model must predict a season it has not seen, and does a physics prior help?</b></p>
 
 <h2>Data and method</h2>
-<p>I used the public KW51 dataset (Maes &amp; Lombaert, Zenodo): hourly natural frequencies of a steel railway bridge in Leuven, Belgium, Oct 2018–Jan 2020, retrofitted in May–Sep 2019. No new experiments were run. I trained on Nov–Jan, calibrated on Feb, and tested on Mar–mid-May, when temperatures reached 26 °C against a training maximum of 13.6 °C. The proposed model is a 4-parameter thermo-elastic curve, <i>f = f₀√(1+aΔT)</i> plus a cold-stiffening term, with a small gradient-boosted model fitted to its residuals. It was compared with linear, cubic, Gaussian-process and physics-free boosted-tree baselines, all wrapped in the same split-conformal procedure. Five vibration modes were analysed, with 9 models including ablations and 5 seasonal folds.</p>
+<p>I used the public KW51 dataset (Maes &amp; Lombaert, Zenodo): hourly natural frequencies of a steel railway bridge in Leuven, Belgium, Oct 2018–Jan 2020, retrofitted in May–Sep 2019. No new experiments were run. I trained on Nov–Jan, calibrated on Feb, and tested on Mar–mid-May, when temperatures reached 26 °C against a training maximum of 13.6 °C. The proposed model is a 4-parameter thermo-elastic curve, <i>f = f₀√(1+aΔT)</i> plus a cold-stiffening term, with a small gradient-boosted model fitted to its residuals. It was compared with linear, cubic, Gaussian-process and physics-free boosted-tree baselines, all wrapped in the same split-conformal procedure. Five vibration modes were analysed, with 9 models including ablations, 5 designed folds and 22 rolling windows.</p>
 
 <figure><img src="key_figure.png">
 <figcaption><b>Key figure.</b> (a) Mode 6 during a warm spell in the test period: the Gaussian-process 90 % band drifts away from the measurements, while the physics-guided band follows them. (b) Empirical coverage of nominal 90 % intervals by test temperature, averaged over 5 modes (bars: min–max across modes). Training never exceeded 13.6 °C.</figcaption></figure>
@@ -26,13 +26,13 @@ figcaption{font-family:"DejaVu Sans",Arial,sans-serif;font-size:7.9pt;color:#333
 <h2>Results so far</h2>
 <ul>
 <li>With a random (exchangeable) split, all 9 models were calibrated (0.90 ± 0.01), as theory predicts.</li>
-<li>On test hours warmer than anything in training (2 seasonal folds × 5 modes), the physics-guided model covered a median of <b>0.90 (worst 0.84)</b>. Physics-free boosted trees covered 0.77 (worst 0.59), a GP with a trend kernel 0.69, and a standard GP 0.36.</li>
-<li>Ablations show <i>why</i>: the cold-stiffening term keeps the freeze-induced frequency jump out of the warm-weather slope. Without it, the fitted slope is up to about 2× too steep and coverage drops to 0.75. Adding a plain linear trend did not help.</li>
-<li><b>Negative result:</b> trained on spring and tested on winter, every model, including mine, failed below 0 °C. Physics cannot extrapolate into a mechanism the data never showed.</li>
-<li>Frozen bands flagged the 2019 retrofit on every post-retrofit day for 3 modes, with 0–1.3 % false-alarm days.</li>
+<li>On test hours warmer than anything in training, across 22 systematic rolling windows × 5 modes, the physics-guided model held a median of <b>0.91</b> coverage (80 % of cells ≥ 0.85). In paired tests it beat all 8 alternatives: +0.08 [0.05, 0.12] over physics-free boosted trees and +0.36 over a GP (Holm-adjusted p ≤ 0.002).</li>
+<li>Ablations show <i>why</i>: the cold-stiffening term keeps the freeze-induced frequency jump out of the warm-weather slope. Without it, the fitted slope is up to about 2× too steep and median warm-side coverage drops from 0.91 to 0.83. Adding a plain linear trend did not help.</li>
+<li><b>Negative result:</b> tested on colder hours than training, every model, mine included, failed (median coverage 0.50–0.62), and after the retrofit mine was significantly worse than simple baselines. Physics cannot extrapolate into a mechanism the data never showed.</li>
+<li>Frozen bands flagged the 2019 retrofit on every post-retrofit day for 3 modes (0–1.3 % false-alarm days).</li>
 </ul>
 
 <h2>Limitations and next steps</h2>
-<p>This is one bridge, and out-of-range samples are small (90–379 h per fold). The retrofit was a large stiffening, not damage, so a minimum-detectable-shift study is needed. Next: a cross-season prior for the cold term, a second structure (LUMO), and a physics-informed neural-network residual. <b>I would value feedback on the physical cause of the cold stiffening and on evaluation design.</b></p>
+<p>This is one bridge and one season, so the rolling windows overlap. The retrofit was a large stiffening, not damage, so a minimum-detectable-shift study is needed. Next: a cross-season prior for the cold term, a second structure (LUMO), and a physics-informed neural-network residual. <b>I would value feedback on the physical cause of the cold stiffening and on evaluation design.</b></p>
 <p class="small">All numbers are reproducible from the project repository. Prior work on KW51 (Maes et al. 2022; Wittenberg et al. 2025; Neumann et al. 2025–26) covers environmental compensation and monitoring. In my search I did not find conformal coverage evaluated under seasonal shift for this dataset.</p>
 </body></html>

@@ -109,13 +109,24 @@ Split conformal (Angelopoulos & Bates 2021, arXiv:2107.07511):
 9. **Retrofit detection:** about +0.06 Hz on mode 6, −0.03 Hz on mode 9 and +0.10 Hz on mode 13. All models detect it on 100 % of post-retrofit days for those modes. False-alarm days before the retrofit: Physics+GBM 0–1.3 %, GBM 0–2.7 %, Linear/Cubic/GP/GP+linear kernel up to 7–19 %. The retrofit is too large to rank methods by detection power, so the minimum-detectable-shift study (task 4) is still needed.
 10. **Fitted physics:** *a* < 0 for modes 5, 6, 9 and 13 and positive (unexplained) for mode 3; *T_c* ≈ 1.1–1.4 °C for all modes.
 
+### v3: systematic rolling windows and paired statistical tests
+- **Rolling-origin study** (`scripts/run_rolling.py`): 22 windows (8-week train, 3-week calibration, 4-week test, stepped weekly), 11 forward and 11 backward, × 5 modes × 9 models. No split is chosen by hand.
+  - *Forward windows, test hours warmer than training* (55 window×mode cells): the proposed model's median coverage is **0.907**, its worst cell 0.67, and 80 % of cells reach ≥ 0.85. Best alternatives: Physics only 0.903 (65 % of cells ≥ 0.85), GBM 0.884 (55 %), GP 0.79, Linear + GBM 0.77, Cubic 0.32.
+  - *Backward windows, test hours colder than training* (35 cells): **every model fails** (medians 0.50–0.62; worst 0.05).
+  - *Inside the training range*: all models have medians of 0.90–0.92.
+- **Paired tests** (`scripts/paired_tests.py`): the coverage difference (proposed − other) is computed on the same hours. CIs come from resampling whole calendar days, and a Holm correction covers the 8 comparisons.
+  - Warm side, rolling windows (3,259 hours): +0.031 vs Physics only [0.009, 0.059], +0.084 vs GBM [0.051, 0.115], +0.16 vs Physics(no cold)+GBM, +0.20 vs GP+linear kernel, +0.24 vs Linear+GBM, +0.36 vs GP, +0.38 vs Linear, +0.61 vs Cubic. **All Holm-adjusted p ≤ 0.002.** The designed folds F2+F3 give the same picture.
+  - Cold side, rolling windows: no significant differences (all CIs include 0, except a −0.019 [−0.032, −0.004] *disadvantage* vs Physics only).
+  - Post-retrofit fold Q1: the proposed model is **significantly worse** than five comparators (−0.11 to −0.13; pooled coverage 0.78 vs 0.89–0.91).
+- **Bottom line, now statistically backed:** the physics-guided model is the only model that keeps nominal coverage when extrapolating to warmer temperatures, and the gain is significant against every alternative. It does not help, and can hurt, when the freezing regime is unseen or unidentifiable.
+
 ## Honest limitations
 1. **Cold regime:** no method handles sub-zero temperatures when trained without them. This is the biggest open problem.
 2. **Small extrapolation samples:** outside-range samples are small (median 96–379 hours per fold; the >20 °C bin is 8 days).
 3. **One bridge.** Generalization to other structures is unknown.
 4. **The retrofit is a stiffening, not damage.** Say "state change".
 5. **Inherited mode tracking:** frequencies come from the dataset authors' mode identification and tracking.
-6. **Fold design:** the folds were fixed before their results were seen, but they are still a handful of hand-picked splits rather than a systematic rolling-origin scheme.
+6. **Window design:** the rolling windows cover only one pre-retrofit season (Nov 2018–May 2019), so they overlap heavily and are not independent replications. The paired tests account for shared days, but not for the fact that it is one winter and one spring.
 
 ## Your tasks (this is the part that makes the project yours)
 1. **Verify** the retrofit dates (15 May–27 Sep 2019) in Maes & Lombaert (2021) or Maes et al. (2022). Fix `data.py` if they differ.

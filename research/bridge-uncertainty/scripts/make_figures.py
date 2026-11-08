@@ -268,7 +268,7 @@ def fig_rolling(cells):
         ax.set_title(title, loc="left", fontsize=7.8)
         ax.set_xlim(-0.02, 1.02); ax.grid(axis="y", visible=False)
         n_cells = c.groupby("model").size().max() if len(c) else 0
-        ax.set_xlabel(f"Coverage of 90% interval (n = {n_cells} window×mode cells)")
+        ax.set_xlabel(f"Coverage of 90% interval ({n_cells} window×mode cells)", fontsize=7)
     axes[0].set_yticks(range(len(ORDER9)), ORDER9)
     save(fig, "fig7_rolling_origin")
 

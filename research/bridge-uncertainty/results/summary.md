@@ -266,3 +266,125 @@
 | Physics(no cold) + GBM   | 0.21 | 0.53 | 0.05 | 0.44 | 0.01 |
 
 (n hours below 0 °C per mode: [101, 129, 130, 131, 131]; days: [11, 11, 11, 11, 11])
+
+
+## Rolling-origin, forward windows, region = warm (cells with >= 24 h)
+
+| model                    |   cells |   median |   worst |   share of cells >= 0.85 |
+|:-------------------------|--------:|---------:|--------:|-------------------------:|
+| Cubic(T)                 |      55 |    0.323 |   0     |                    0.164 |
+| Linear(T)                |      55 |    0.674 |   0     |                    0.309 |
+| Linear + GBM             |      55 |    0.771 |   0.026 |                    0.364 |
+| GP                       |      55 |    0.791 |   0.01  |                    0.436 |
+| GP + linear kernel       |      55 |    0.824 |   0.011 |                    0.382 |
+| Physics(no cold) + GBM   |      55 |    0.833 |   0.141 |                    0.418 |
+| GBM (no physics)         |      55 |    0.884 |   0.578 |                    0.545 |
+| Physics only             |      55 |    0.903 |   0.512 |                    0.655 |
+| Physics + GBM (proposed) |      55 |    0.907 |   0.674 |                    0.8   |
+
+
+## Rolling-origin, backward windows, region = cold (cells with >= 24 h)
+
+| model                    |   cells |   median |   worst |   share of cells >= 0.85 |
+|:-------------------------|--------:|---------:|--------:|-------------------------:|
+| GBM (no physics)         |      35 |    0.502 |   0.051 |                    0.257 |
+| GP + linear kernel       |      35 |    0.517 |   0.051 |                    0.229 |
+| Linear(T)                |      35 |    0.529 |   0.051 |                    0.229 |
+| Physics + GBM (proposed) |      35 |    0.562 |   0.051 |                    0.257 |
+| Linear + GBM             |      35 |    0.573 |   0.051 |                    0.257 |
+| Physics only             |      35 |    0.578 |   0.051 |                    0.229 |
+| Physics(no cold) + GBM   |      35 |    0.578 |   0.051 |                    0.257 |
+| Cubic(T)                 |      35 |    0.611 |   0.051 |                    0.229 |
+| GP                       |      35 |    0.622 |   0.051 |                    0.229 |
+
+
+## Rolling-origin, forward windows, region = inside (cells with >= 24 h)
+
+| model                    |   cells |   median |   worst |   share of cells >= 0.85 |
+|:-------------------------|--------:|---------:|--------:|-------------------------:|
+| Physics(no cold) + GBM   |      55 |    0.9   |   0.819 |                    0.909 |
+| Linear + GBM             |      55 |    0.902 |   0.824 |                    0.909 |
+| Physics + GBM (proposed) |      55 |    0.903 |   0.793 |                    0.927 |
+| GBM (no physics)         |      55 |    0.906 |   0.788 |                    0.909 |
+| GP + linear kernel       |      55 |    0.908 |   0.766 |                    0.8   |
+| GP                       |      55 |    0.908 |   0.771 |                    0.764 |
+| Linear(T)                |      55 |    0.91  |   0.66  |                    0.782 |
+| Physics only             |      55 |    0.912 |   0.838 |                    0.982 |
+| Cubic(T)                 |      55 |    0.915 |   0.858 |                    1     |
+
+
+## Rolling-origin, backward windows, region = inside (cells with >= 24 h)
+
+| model                    |   cells |   median |   worst |   share of cells >= 0.85 |
+|:-------------------------|--------:|---------:|--------:|-------------------------:|
+| GP                       |      55 |    0.908 |   0.792 |                    0.873 |
+| GBM (no physics)         |      55 |    0.911 |   0.826 |                    0.927 |
+| Linear(T)                |      55 |    0.911 |   0.841 |                    0.909 |
+| Physics(no cold) + GBM   |      55 |    0.911 |   0.825 |                    0.927 |
+| Cubic(T)                 |      55 |    0.913 |   0.833 |                    0.927 |
+| GP + linear kernel       |      55 |    0.914 |   0.822 |                    0.964 |
+| Physics only             |      55 |    0.915 |   0.811 |                    0.927 |
+| Linear + GBM             |      55 |    0.915 |   0.829 |                    0.909 |
+| Physics + GBM (proposed) |      55 |    0.918 |   0.825 |                    0.909 |
+
+
+## Paired coverage differences (proposed - comparator), day-block bootstrap
+
+| setting                                          | comparator             |   n_hours |   n_days |   cov_proposed |   cov_other |   delta |   ci_lo |   ci_hi |   p_one_sided |   p_holm |
+|:-------------------------------------------------|:-----------------------|----------:|---------:|---------------:|------------:|--------:|--------:|--------:|--------------:|---------:|
+| Folds F2+F3, warm-side out-of-range              | Physics only           |      2201 |       32 |          0.893 |       0.861 |   0.032 |   0.013 |   0.054 |         0     |    0     |
+| Folds F2+F3, warm-side out-of-range              | GBM (no physics)       |      2201 |       32 |          0.893 |       0.803 |   0.09  |   0.06  |   0.112 |         0     |    0     |
+| Folds F2+F3, warm-side out-of-range              | Physics(no cold) + GBM |      2201 |       32 |          0.893 |       0.721 |   0.172 |   0.101 |   0.227 |         0     |    0     |
+| Folds F2+F3, warm-side out-of-range              | Linear + GBM           |      2201 |       32 |          0.893 |       0.638 |   0.255 |   0.165 |   0.319 |         0     |    0     |
+| Folds F2+F3, warm-side out-of-range              | GP + linear kernel     |      2201 |       32 |          0.893 |       0.593 |   0.3   |   0.208 |   0.361 |         0     |    0     |
+| Folds F2+F3, warm-side out-of-range              | Linear(T)              |      2201 |       32 |          0.893 |       0.546 |   0.347 |   0.253 |   0.407 |         0     |    0     |
+| Folds F2+F3, warm-side out-of-range              | GP                     |      2201 |       32 |          0.893 |       0.519 |   0.374 |   0.32  |   0.409 |         0     |    0     |
+| Folds F2+F3, warm-side out-of-range              | Cubic(T)               |      2201 |       32 |          0.893 |       0.301 |   0.592 |   0.474 |   0.668 |         0     |    0     |
+| Fold B1, cold-side out-of-range                  | Physics only           |      1851 |       24 |          0.566 |       0.586 |  -0.02  |  -0.037 |  -0.003 |         0.99  |    1     |
+| Fold B1, cold-side out-of-range                  | Cubic(T)               |      1851 |       24 |          0.566 |       0.575 |  -0.01  |  -0.024 |   0.003 |         0.929 |    1     |
+| Fold B1, cold-side out-of-range                  | GP + linear kernel     |      1851 |       24 |          0.566 |       0.545 |   0.021 |  -0.031 |   0.067 |         0.224 |    0.748 |
+| Fold B1, cold-side out-of-range                  | Linear(T)              |      1851 |       24 |          0.566 |       0.544 |   0.022 |  -0.026 |   0.065 |         0.187 |    0.748 |
+| Fold B1, cold-side out-of-range                  | Physics(no cold) + GBM |      1851 |       24 |          0.566 |       0.543 |   0.023 |  -0.017 |   0.06  |         0.133 |    0.738 |
+| Fold B1, cold-side out-of-range                  | Linear + GBM           |      1851 |       24 |          0.566 |       0.54  |   0.025 |  -0.016 |   0.065 |         0.123 |    0.738 |
+| Fold B1, cold-side out-of-range                  | GBM (no physics)       |      1851 |       24 |          0.566 |       0.515 |   0.051 |   0.001 |   0.097 |         0.023 |    0.159 |
+| Fold B1, cold-side out-of-range                  | GP                     |      1851 |       24 |          0.566 |       0.479 |   0.087 |   0.033 |   0.137 |         0.001 |    0.008 |
+| Fold Q1 (post-retrofit), out-of-range            | Physics(no cold) + GBM |      1007 |       16 |          0.781 |       0.908 |  -0.127 |  -0.185 |  -0.083 |         1     |    1     |
+| Fold Q1 (post-retrofit), out-of-range            | Linear + GBM           |      1007 |       16 |          0.781 |       0.906 |  -0.125 |  -0.183 |  -0.08  |         1     |    1     |
+| Fold Q1 (post-retrofit), out-of-range            | Linear(T)              |      1007 |       16 |          0.781 |       0.891 |  -0.11  |  -0.174 |  -0.062 |         1     |    1     |
+| Fold Q1 (post-retrofit), out-of-range            | GBM (no physics)       |      1007 |       16 |          0.781 |       0.89  |  -0.109 |  -0.169 |  -0.061 |         1     |    1     |
+| Fold Q1 (post-retrofit), out-of-range            | GP + linear kernel     |      1007 |       16 |          0.781 |       0.888 |  -0.107 |  -0.17  |  -0.058 |         1     |    1     |
+| Fold Q1 (post-retrofit), out-of-range            | GP                     |      1007 |       16 |          0.781 |       0.835 |  -0.055 |  -0.105 |  -0.012 |         0.996 |    1     |
+| Fold Q1 (post-retrofit), out-of-range            | Physics only           |      1007 |       16 |          0.781 |       0.781 |   0     |  -0.021 |   0.019 |         0.528 |    1     |
+| Fold Q1 (post-retrofit), out-of-range            | Cubic(T)               |      1007 |       16 |          0.781 |       0.779 |   0.002 |  -0.022 |   0.029 |         0.487 |    1     |
+| All 5 folds, inside training range               | Cubic(T)               |     31622 |      206 |          0.904 |       0.915 |  -0.011 |  -0.015 |  -0.007 |         1     |    1     |
+| All 5 folds, inside training range               | Physics only           |     31622 |      206 |          0.904 |       0.914 |  -0.01  |  -0.014 |  -0.007 |         1     |    1     |
+| All 5 folds, inside training range               | Linear(T)              |     31622 |      206 |          0.904 |       0.914 |  -0.01  |  -0.016 |  -0.003 |         0.998 |    1     |
+| All 5 folds, inside training range               | GP                     |     31622 |      206 |          0.904 |       0.911 |  -0.007 |  -0.012 |  -0.002 |         0.995 |    1     |
+| All 5 folds, inside training range               | GP + linear kernel     |     31622 |      206 |          0.904 |       0.91  |  -0.006 |  -0.011 |  -0.001 |         0.992 |    1     |
+| All 5 folds, inside training range               | Linear + GBM           |     31622 |      206 |          0.904 |       0.905 |  -0.001 |  -0.003 |   0.001 |         0.817 |    1     |
+| All 5 folds, inside training range               | GBM (no physics)       |     31622 |      206 |          0.904 |       0.904 |   0     |  -0.002 |   0.002 |         0.475 |    1     |
+| All 5 folds, inside training range               | Physics(no cold) + GBM |     31622 |      206 |          0.904 |       0.904 |   0     |  -0.002 |   0.002 |         0.402 |    1     |
+| Rolling forward windows, warm-side out-of-range  | Physics only           |      3259 |       28 |          0.895 |       0.864 |   0.031 |   0.009 |   0.059 |         0.002 |    0.002 |
+| Rolling forward windows, warm-side out-of-range  | GBM (no physics)       |      3259 |       28 |          0.895 |       0.81  |   0.084 |   0.051 |   0.115 |         0     |    0     |
+| Rolling forward windows, warm-side out-of-range  | Physics(no cold) + GBM |      3259 |       28 |          0.895 |       0.734 |   0.161 |   0.093 |   0.219 |         0     |    0     |
+| Rolling forward windows, warm-side out-of-range  | GP + linear kernel     |      3259 |       28 |          0.895 |       0.693 |   0.202 |   0.138 |   0.255 |         0     |    0     |
+| Rolling forward windows, warm-side out-of-range  | Linear + GBM           |      3259 |       28 |          0.895 |       0.656 |   0.239 |   0.166 |   0.301 |         0     |    0     |
+| Rolling forward windows, warm-side out-of-range  | GP                     |      3259 |       28 |          0.895 |       0.534 |   0.361 |   0.292 |   0.413 |         0     |    0     |
+| Rolling forward windows, warm-side out-of-range  | Linear(T)              |      3259 |       28 |          0.895 |       0.517 |   0.378 |   0.285 |   0.452 |         0     |    0     |
+| Rolling forward windows, warm-side out-of-range  | Cubic(T)               |      3259 |       28 |          0.895 |       0.281 |   0.614 |   0.495 |   0.703 |         0     |    0     |
+| Rolling backward windows, cold-side out-of-range | Cubic(T)               |      5244 |       20 |          0.475 |       0.515 |  -0.04  |  -0.097 |   0.018 |         0.909 |    1     |
+| Rolling backward windows, cold-side out-of-range | Physics only           |      5244 |       20 |          0.475 |       0.494 |  -0.019 |  -0.032 |  -0.004 |         0.994 |    1     |
+| Rolling backward windows, cold-side out-of-range | Physics(no cold) + GBM |      5244 |       20 |          0.475 |       0.482 |  -0.007 |  -0.073 |   0.057 |         0.574 |    1     |
+| Rolling backward windows, cold-side out-of-range | Linear(T)              |      5244 |       20 |          0.475 |       0.481 |  -0.006 |  -0.084 |   0.059 |         0.535 |    1     |
+| Rolling backward windows, cold-side out-of-range | Linear + GBM           |      5244 |       20 |          0.475 |       0.48  |  -0.005 |  -0.072 |   0.061 |         0.544 |    1     |
+| Rolling backward windows, cold-side out-of-range | GP                     |      5244 |       20 |          0.475 |       0.471 |   0.004 |  -0.058 |   0.06  |         0.438 |    1     |
+| Rolling backward windows, cold-side out-of-range | GBM (no physics)       |      5244 |       20 |          0.475 |       0.46  |   0.015 |  -0.063 |   0.083 |         0.334 |    1     |
+| Rolling backward windows, cold-side out-of-range | GP + linear kernel     |      5244 |       20 |          0.475 |       0.458 |   0.017 |  -0.069 |   0.085 |         0.321 |    1     |
+| Rolling (all windows), inside training range     | Cubic(T)               |     63778 |      168 |          0.918 |       0.924 |  -0.005 |  -0.01  |  -0     |         0.982 |    1     |
+| Rolling (all windows), inside training range     | Physics only           |     63778 |      168 |          0.918 |       0.922 |  -0.004 |  -0.007 |  -0     |         0.984 |    1     |
+| Rolling (all windows), inside training range     | Linear + GBM           |     63778 |      168 |          0.918 |       0.918 |   0     |  -0.002 |   0.002 |         0.466 |    1     |
+| Rolling (all windows), inside training range     | Physics(no cold) + GBM |     63778 |      168 |          0.918 |       0.918 |   0     |  -0.002 |   0.002 |         0.409 |    1     |
+| Rolling (all windows), inside training range     | GBM (no physics)       |     63778 |      168 |          0.918 |       0.917 |   0.001 |  -0.001 |   0.003 |         0.083 |    0.498 |
+| Rolling (all windows), inside training range     | GP + linear kernel     |     63778 |      168 |          0.918 |       0.913 |   0.006 |  -0     |   0.012 |         0.037 |    0.259 |
+| Rolling (all windows), inside training range     | Linear(T)              |     63778 |      168 |          0.918 |       0.912 |   0.006 |  -0.003 |   0.016 |         0.105 |    0.525 |
+| Rolling (all windows), inside training range     | GP                     |     63778 |      168 |          0.918 |       0.912 |   0.007 |   0     |   0.013 |         0.018 |    0.14  |

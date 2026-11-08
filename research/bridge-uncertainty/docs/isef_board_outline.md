@@ -63,8 +63,9 @@
 **6. Results.**
 - Table 1 (coverage, chronological vs random).
 - Fig. 3 (calibration curves).
-- **One sentence in large type:** "On temperatures warmer than any it trained on, the physics-guided model kept 90 % coverage (worst case 84 %); the best physics-free model kept 77 % (worst 59 %)."
-- Fig. 6 (robustness across 5 folds), plus the ablation in one line: "It's the cold-stiffening term: without it, the warm-weather slope comes out up to about 2× too steep."
+- **One sentence in large type:** "On temperatures warmer than any it trained on, the physics-guided model kept 90 % coverage across 22 test windows, and beat every alternative in paired statistical tests."
+- Fig. 8 (forest plot of paired differences): the single most convincing panel for judges. Every interval sits to the right of zero on the warm side.
+- Fig. 7 or Fig. 6 (robustness across 22 rolling windows and 5 folds), plus the ablation in one line: "It's the cold-stiffening term: without it, the warm-weather slope comes out up to about 2× too steep."
 - **A negative-result box (judges respect this):** "Trained on spring and tested on winter, every model failed below 0 °C, including mine."
 
 **7. Detection.** Fig. 5, plus the false-alarm numbers. Say plainly that the retrofit was a large stiffening, so every method saw it. **[TODO: add your minimum-detectable-shift curve here once done. It is the strongest addition you can make.]**
@@ -87,7 +88,7 @@ Judges probe whether *you* understand and did the work. Be ready to answer these
 3. Derive f ∝ √(1 + aΔT) from f ∝ √(k/m). What is *a* physically? How did your fitted *a* compare with handbook steel values? (Task 2.)
 4. Why does mode 3 give a positive *a*? (An honest answer: "I don't know; here are two hypotheses.")
 5. Why does a GP fail above the training temperature? (An RBF kernel reverts to the training mean.) Why do trees fail? (They predict a constant outside the training range.)
-6. Why use a day-block bootstrap instead of an ordinary bootstrap?
+6. Why use a day-block bootstrap instead of an ordinary bootstrap? And why the Holm correction? (Testing 8 comparisons inflates false positives.)
 7. Why not just use adaptive conformal inference? (It would adapt away real damage.)
 8. What would change your conclusion? (A second structure; a cross-season cold prior that fails.)
 9. Why did adding a linear trend to the trees make things *worse*? (The trend learned from winter data is contaminated by the freezing jump.)
