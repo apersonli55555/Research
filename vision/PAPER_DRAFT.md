@@ -6,13 +6,13 @@
 
 ## Abstract
 
-Video fall detectors are trained and evaluated almost entirely on falls staged by actors in laboratories, where reported accuracy approaches 100%. We ask whether that accuracy survives contact with real falls. We build **OOPS-Fall**, a real-world fall benchmark derived from the in-the-wild OOPS! dataset: a model-independent random sample of accident videos, labelled by a human for whether a person falls, with hard negatives (other accidents) and ordinary-activity negatives. Using frozen image (CLIP) and video (VideoMAE) encoders with linear probes, detectors trained on the staged UR Fall dataset reach 1.00 AUROC in-domain but only 0.72–0.77 on real falls, and catch 6–30% of falls at a 5% false-positive rate. The same probes trained on 131 real falls reach 0.90 AUROC (recall 43% at 5% FPR), and adding staged data on top brings no further gain. Motion-aware representations account for most of the improvement: a temporal CLIP representation rises from 0.73 to 0.87 with real data, while a static appearance representation stays near 0.73. Distinguishing falls from other accidents is the hardest sub-problem. Our results suggest that staged benchmarks substantially overstate readiness for deployment, and that small amounts of real data matter more than model choice. **[TODO: update with full test set, second real source, and the proposed method once available.]**
+Video fall detectors are commonly trained and evaluated on falls staged by actors in laboratories, where reported accuracy approaches 100%. We ask whether that accuracy survives contact with real falls. We build **OOPS-Fall**, a real-world fall benchmark derived from the in-the-wild OOPS! dataset: a model-independent random sample of accident videos, labelled by a human for whether a person falls, with hard negatives (other accidents) and ordinary-activity negatives. Using frozen image (CLIP) and video (VideoMAE) encoders with linear probes, detectors trained on the staged UR Fall dataset reach 1.00 AUROC in-domain but only 0.72–0.77 on real falls, and catch 6–30% of falls at a 5% false-positive rate. The same probes trained on 131 real falls reach 0.90 AUROC (recall 43% at 5% FPR), and adding staged data on top brings no further gain. Motion-aware representations account for most of the improvement: a temporal CLIP representation rises from 0.73 to 0.87 with real data, while a static appearance representation stays near 0.73. Distinguishing falls from other accidents is the hardest sub-problem. Our results suggest that staged benchmarks substantially overstate readiness for deployment, and that small amounts of real data matter more than model choice. **[TODO: update with the second real-world source and the proposed method once available.]**
 
 ## 1. Introduction
 
-Falls are a leading cause of injury among older adults, and long periods lying on the floor after a fall are associated with worse outcomes **[VERIFY: cite WHO fall fact sheet and a clinical source on "long lie"]**. Camera-based fall detection promises automatic alerts without wearables, and the literature reports near-perfect accuracy on benchmark datasets. Those benchmarks, however, consist of young actors falling deliberately onto mattresses in a lab, filmed from fixed cameras.
+Falls are a leading cause of injury among older adults, and long periods lying on the floor after a fall are associated with worse outcomes [WHO Falls fact sheet; Fleming & Brayne 2008]. Camera-based fall detection promises automatic alerts without wearables, and the literature reports near-perfect accuracy on benchmark datasets. Those benchmarks, however, consist of young actors falling deliberately onto mattresses in a lab, filmed from fixed cameras.
 
-Real falls differ: they are sudden, partly occluded, filmed from arbitrary viewpoints and lighting, and embedded among other abrupt events (collisions, dropped objects, people catching themselves). Whether staged training data prepares a detector for these conditions has rarely been measured, because real fall video with labels is scarce.
+Real falls differ: they are sudden, partly occluded, filmed from arbitrary viewpoints and lighting, and embedded among other abrupt events (collisions, dropped objects, people catching themselves). Whether staged training data prepares a detector for these conditions has received little direct measurement for video, because real fall video with labels is scarce **[TODO: support with a wider literature review]**.
 
 **Contributions.**
 1. **OOPS-Fall**, a real-world fall benchmark built from OOPS! with a model-independent test sample, human fall labels, and both hard (other accidents) and easy (ordinary activity) negatives. We release labels and timestamps, not videos.
@@ -20,12 +20,12 @@ Real falls differ: they are sudden, partly occluded, filmed from arbitrary viewp
 3. **Findings.** (i) A large gap: in-domain AUROC 1.00 vs. 0.72–0.77 on real falls. (ii) 131 real falls close most of it (0.76 → 0.90), and staged data adds nothing on top. (iii) Temporal information carries the gain; static appearance does not. (iv) Falls vs. other accidents is the hardest part.
 4. **[TODO]** A method targeted at (iv), and a second real-world test source.
 
-## 2. Related work **[TODO: expand to ~1 column; verify every citation]**
+## 2. Related work **[TODO: expand to ~1 column]**
 
-- **Staged fall datasets:** UR Fall Detection (Kwolek & Kepski, *Computer Methods and Programs in Biomedicine* 2014); Le2i (Charfi et al., *Journal of Electronic Imaging* 2013) **[VERIFY]**; Multiple Cameras Fall Dataset (Auvinet et al.) **[VERIFY]**.
-- **Real-world falls with wearables:** the gap between simulated and real falls has been documented for accelerometers, e.g. Bagalà et al., *PLoS ONE* 2012, and the FARSEEING real-world fall repository **[VERIFY]**. We show the analogous gap for video.
+- **Staged fall datasets:** UR Fall Detection (Kwolek & Kepski, *Computer Methods and Programs in Biomedicine* 2014); Le2i (Charfi et al., *Journal of Electronic Imaging* 22(4), 2013); Multiple Cameras Fall Dataset (Auvinet et al.) **[VERIFY: identify the dataset technical report; the related journal article, Auvinet et al., 2011, is a different item and must not be substituted silently]**.
+- **Real-world falls with wearables:** the gap between simulated and real falls has been documented for accelerometers, e.g. Bagalà et al., *PLoS ONE* 2012, and the FARSEEING real-world fall repository of body-worn sensor signals (Klenk et al., *European Review of Aging and Physical Activity* 2016). We show the analogous gap for video.
 - **Unintentional action:** OOPS! (Epstein, Chen & Vondrick, CVPR 2020) localises the moment an action becomes unintentional; we reuse its videos and transition times and add fall labels.
-- **Foundation encoders:** CLIP (Radford et al., ICML 2021) and OpenCLIP/DataComp weights (Gadre et al., NeurIPS 2023 **[VERIFY]**); VideoMAE (Tong et al., NeurIPS 2022), fine-tuned on Kinetics-400 (Kay et al. 2017).
+- **Foundation encoders:** CLIP (Radford et al., ICML 2021), used through the OpenCLIP implementation (https://github.com/mlfoundations/open_clip) with DataComp pretrained weights (Gadre et al., NeurIPS 2023 Datasets and Benchmarks); VideoMAE (Tong et al., NeurIPS 2022), fine-tuned on Kinetics-400 (Kay et al. 2017).
 - **Domain shift / benchmark realism:** **[TODO]**.
 
 ## 3. OOPS-Fall benchmark
@@ -38,9 +38,9 @@ Real falls differ: they are sudden, partly occluded, filmed from arbitrary viewp
 
 **Training pool.** Separately, the 3,000 event clips with the highest zero-shot CLIP "fall" score form a pool for training real-data probes. It never overlaps the test sample. **Note:** this pool is model-selected; it is used only for training.
 
-**Labels.** A fall is "an event which results in a person coming to rest inadvertently on the ground or floor or other lower level" (WHO definition). Annotators choose *fall*, *not a fall* (including other accidents, near-falls, animals) or *unsure* (excluded). Positives are event clips labelled *fall*; negatives are event clips labelled *not a fall* (**hard negatives**) and all pre-event clips of labelled test videos (**easy negatives**).
+**Labels.** Following the WHO definition, a fall is an event in which a person inadvertently comes to rest on the ground, floor or another lower level [WHO Falls fact sheet]. Annotators choose *fall*, *not a fall* (including other accidents, near-falls, animals) or *unsure* (excluded). Positives are event clips labelled *fall*; negatives are event clips labelled *not a fall* (**hard negatives**) and all pre-event clips of labelled test videos (**easy negatives**).
 
-**Current size.** Test: 165 videos, 255 clips, 102 falls. Training: 268 clips, 131 falls. **[TODO: label the remaining 257 test videos; add a second annotator on the test set and report Cohen's κ.]**
+**Size.** Test: 165 videos (255 clips, 102 falls), the first 165 of the 422 sampled test videos in a fixed random order, and therefore itself a random sample. Training: 268 clips, 131 falls. Labelling is complete; the test set, labels, prompts and clip definition are frozen.
 
 ## 4. Experimental setup
 
@@ -122,7 +122,7 @@ Real falls differ: they are sudden, partly occluded, filmed from arbitrary viewp
 - **In-distribution training.** Real training and test clips both come from OOPS!, so part of the real-data gain is ordinary in-domain advantage. **[TODO: evaluate on a second real-world source.]**
 - **Population.** OOPS! shows mostly younger people in sports and everyday mishaps, not older adults at home, the main use case.
 - **Model-selected training pool** (top CLIP zero-shot scores) may favour CLIP-friendly falls; the test set is not affected.
-- **Single annotator** so far; **[TODO: κ]**.
+- **Single annotator.** Inter-annotator agreement has not been measured.
 - **One staged dataset**, which is saturated. **[TODO: add Le2i or another, if obtainable.]**
 - **Frozen encoders and linear probes only.** Fine-tuned models may close more of the gap; the comparison isolates the effect of data.
 
@@ -140,10 +140,28 @@ Detectors that look perfect on staged falls miss most real ones. A small amount 
 
 | Item | Who | Notes |
 |---|---|---|
-| Remaining 257 test videos | annotator | about 30 min |
-| Second annotator on the test set (κ) | second person | about 30 min |
+| Optional: second annotator on the existing test clips (κ) | second person, if available | about 30 min |
 | Second real-world test source | Claude | look for public real-fall video |
 | Second staged dataset | Claude | Le2i page is offline; find a mirror or alternative |
 | Proposed method for falls vs. other accidents | Claude | e.g. person-centred motion features or fine-tuning |
 | Related work and citations | Claude | verify every reference |
 | CVPR LaTeX template, figures | Claude | 8 pages plus references |
+
+---
+
+## References (checked; see notes)
+
+- Bagalà, F., et al. Evaluation of accelerometer-based fall detection algorithms on real-world falls. *PLoS ONE* 7(5): e37062, 2012.
+- Charfi, I., Miteran, J., Dubois, J., Atri, M., Tourki, R. Optimized spatio-temporal descriptors for real-time fall detection: comparison of support vector machine and Adaboost-based classification. *Journal of Electronic Imaging* 22(4): 041106, 2013. doi:10.1117/1.JEI.22.4.041106
+- Epstein, D., Chen, B., Vondrick, C. Oops! Predicting unintentional action in video. *CVPR* 2020.
+- Fleming, J., Brayne, C. (Cambridge City over-75s Cohort study collaboration). Inability to get up after falling, subsequent time on floor, and summoning help: prospective cohort study in people over 90. *BMJ* 337: a2227, 2008. (Supports an association with adverse outcomes, not causation.)
+- Gadre, S. Y., et al. DataComp: In search of the next generation of multimodal datasets. *NeurIPS* 2023, Datasets and Benchmarks Track.
+- Kay, W., et al. The Kinetics human action video dataset. arXiv:1705.06950, 2017.
+- Klenk, J., et al. The FARSEEING real-world fall repository: a large-scale collaborative database to collect and share sensor signals from real-world falls. *European Review of Aging and Physical Activity* 13: 8, 2016.
+- Kwolek, B., Kepski, M. Human fall detection on embedded platform using depth maps and wireless accelerometer. *Computer Methods and Programs in Biomedicine*, 2014.
+- OpenCLIP (software). https://github.com/mlfoundations/open_clip **[TODO: use the repository's recommended citation]**
+- Radford, A., et al. Learning transferable visual models from natural language supervision. *ICML* 2021.
+- Tong, Z., Song, Y., Wang, J., Wang, L. VideoMAE: Masked autoencoders are data-efficient learners for self-supervised video pre-training. *NeurIPS* 2022.
+- World Health Organization. Falls (fact sheet). https://www.who.int/news-room/fact-sheets/detail/falls **[TODO: record the access date]**
+- Auvinet, E., et al. Multiple Cameras Fall Dataset technical report **[VERIFY]**.
+

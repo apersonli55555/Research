@@ -27,6 +27,7 @@ Data (clips, embeddings, labels, result files) lives on the owner's Google Drive
 ## Current state (keep this section updated)
 
 - **Done:** pipeline; 165 labelled test videos (255 clips, 102 falls); 268 labelled training clips (131 falls); results runs 1–3b; paper draft; OOPS! data-use question resolved by the owner (do not mention it in the paper or elsewhere).
+- **Citations checked** (by ChatGPT, applied by Claude): all fully specified references verified; still open: the Multiple Cameras Fall Dataset report [VERIFY], the OpenCLIP software citation, and a literature review for the domain-shift paragraph and for claims about how rarely real falls are evaluated.
 - **Key results:** see `vision/RESULTS.md`, run 3 and run 3b.
 - **Labelling is finished.** The owner will not label more clips. Do not plan work that needs more labels from them.
 
@@ -37,7 +38,7 @@ Data (clips, embeddings, labels, result files) lives on the owner's Google Drive
 3. **Proposed method** aimed at the hardest sub-problem: telling falls apart from other accidents (`real_hard` results). Explore why VideoMAE alone gains little from real data while CLIP temporal features gain a lot.
 4. **Related work and citations.** Every citation marked [VERIFY] must be checked against the real paper (authors, venue, year).
 5. **CVPR LaTeX version** of the paper with figures (`roc_real.png`, `learning_curve.png` on the owner's Drive).
-6. Optional: a second person labels the test set, so we can report agreement (Cohen's κ).
+6. Optional, only if a second person volunteers: they label the existing test clips so we can report agreement (Cohen's κ). Never ask the owner for more labelling.
 
 ## Rules (these protect the paper's credibility)
 
