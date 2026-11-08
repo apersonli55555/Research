@@ -128,7 +128,7 @@ Real falls differ: they are sudden, partly occluded, filmed from arbitrary viewp
 
 ## 8. Ethics and data
 
-OOPS! videos are public YouTube compilations. The OOPS! authors granted permission to use the dataset for this work (email received November 2026; a copy is kept by the project owner). We release only labels, timestamps and code. UR Fall is CC BY-NC-SA 4.0 for non-commercial academic use.
+OOPS! videos are public YouTube compilations. We release only labels, timestamps and code. UR Fall is CC BY-NC-SA 4.0 for non-commercial academic use.
 
 ## 9. Conclusion
 

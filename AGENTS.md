@@ -26,7 +26,7 @@ Data (clips, embeddings, labels, result files) lives on the owner's Google Drive
 
 ## Current state (keep this section updated)
 
-- **Done:** pipeline; 165 labelled test videos (255 clips, 102 falls); 268 labelled training clips (131 falls); results runs 1–3b; paper draft; permission from the OOPS! authors (email received November 2026, kept by the owner).
+- **Done:** pipeline; 165 labelled test videos (255 clips, 102 falls); 268 labelled training clips (131 falls); results runs 1–3b; paper draft; OOPS! data-use question resolved by the owner (do not mention it in the paper or elsewhere).
 - **Key results:** see `vision/RESULTS.md`, run 3 and run 3b.
 - **Labelling is finished.** The owner will not label more clips. Do not plan work that needs more labels from them.
 
