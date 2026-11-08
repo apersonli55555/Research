@@ -138,7 +138,7 @@ def main():
                  "real_test_clips": int(len(yt)), "real_test_falls": int(yt.sum()),
                  "real_test_videos": int(len(set(gt))), "real_train_clips": len(train),
                  "real_train_falls": int(sum(t[1] for t in train))},
-           "model": str(S["model"]) if "model" in S.files else "", "staged": {}, "real": {}}
+           "model": str(S["model"]) if "model" in S.files else "", "staged": {}, "real": {}, "real_hard": {}}
     scores = {}
 
     # ---- in-domain staged performance: 5-fold cross-validation grouped by sequence ----
@@ -170,11 +170,18 @@ def main():
             res["real"][f"staged_plus_real_probe_{kind}"] = boot(yt, s, gt)
             scores[f"staged_plus_real_probe_{kind}"] = s
 
+    # ---- harder test: falls vs other accidents only (accident-moment clips; the easy
+    #      "normal activity before the accident" negatives are left out) ----
+    ev = np.array([sg == "event" for sg in segt])
+    res["n"]["real_hard_clips"] = int(ev.sum()); res["n"]["real_hard_falls"] = int(yt[ev].sum())
+    for k, sc in scores.items():
+        res["real_hard"][k] = boot(yt[ev], sc[ev], gt[ev])
+
     # ---- outputs ----
     with open(os.path.join(out, "staged_to_real.json"), "w") as fh:
         json.dump(res, fh, indent=1)
     lines = ["| Evaluated on | Method | AUROC | AP | Recall @ 5% FPR |", "|---|---|---|---|---|"]
-    for dom in ("staged", "real"):
+    for dom in ("staged", "real", "real_hard"):
         for k, v in res[dom].items():
             f = lambda m: f"{v[m][0]:.3f} [{v[m][1]:.3f}, {v[m][2]:.3f}]"
             lines.append(f"| {dom} | {k} | {f('auroc')} | {f('ap')} | {f('recall_at_fpr5')} |")
