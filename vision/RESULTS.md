@@ -28,3 +28,27 @@ AUROC, average precision (AP) and recall at 5% false-positive rate, each with a 
 - Real-trained and staged+real probes (need labelled training-pool clips). This decides whether the gap comes from training on staged data or from real falls being intrinsically hard.
 - Falls vs. other accidents only (`real_hard` rows, added after this run).
 - Second-labeller agreement (Cohen's κ).
+
+---
+
+# Run 2: with real training labels
+
+**Labels:** 165 test videos (255 clips, 102 falls); 34 training-pool videos (56 clips, 26 falls). Same encoders and settings as run 1. Values transcribed from the Colab output (AUROC [95% CI]); see `staged_to_real.json` on Drive for the full table.
+
+Real test set, AUROC by training data:
+
+| Representation | Staged-trained (30 lab falls) | Real-trained (26 real falls) | Staged + real |
+|---|---|---|---|
+| CLIP appearance | 0.723 [0.661, 0.788] | 0.718 [0.653, 0.778] | 0.737 [0.671, 0.800] |
+| CLIP temporal | 0.728 [0.667, 0.790] | 0.809 [0.752, 0.862] | 0.793 [0.736, 0.849] |
+| VideoMAE | 0.765 [0.711, 0.820] | 0.726 [0.666, 0.783] | 0.792 [0.738, 0.842] |
+| CLIP + VideoMAE | 0.759 [0.696, 0.820] | 0.832 [0.780, 0.881] | 0.826 [0.771, 0.878] |
+
+Zero-shot CLIP: 0.717. Best recall at 5% FPR: about 0.37 (staged + real VideoMAE).
+
+Falls vs. other accidents only (`real_hard`, 165 clips, 102 falls): AUROC 0.69–0.80 across methods; best staged + real VideoMAE 0.800 [0.725, 0.859].
+
+## Reading
+- With a similar number of falls, real training data beats staged data for the motion-aware representations (CLIP temporal 0.73 → 0.81; CLIP + VideoMAE 0.76 → 0.83). Training on staged data is a large part of the gap. Intervals overlap and n is small, so this needs more training labels to confirm.
+- Even the best real-trained detector stays far below staged performance (0.83 vs. 1.00), so real falls are also harder.
+- Separating falls from other accidents is the hardest sub-problem and the natural target for a method.
