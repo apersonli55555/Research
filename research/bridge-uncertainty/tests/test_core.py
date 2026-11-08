@@ -57,3 +57,22 @@ def test_all_models_fit_and_predict_on_synthetic_data():
         p = m.fit(X, y).predict(X)
         assert np.all(np.isfinite(p)), m.name
         assert metrics.rmse(y, p) < 0.02, m.name
+
+
+def test_paired_bootstrap_detects_known_difference():
+    """Proposed hits 95% of hours, comparator 80%: CI must exclude 0; identical models give delta 0."""
+    import importlib.util
+    import pandas as pd
+    spec = importlib.util.spec_from_file_location(
+        "paired_tests", Path(__file__).resolve().parents[1] / "scripts" / "paired_tests.py")
+    pt = importlib.util.module_from_spec(spec); spec.loader.exec_module(pt)
+    rng = np.random.default_rng(0)
+    t = pd.date_range("2019-03-01", periods=24 * 40, freq="h")
+    rows = []
+    for name, p in [(pt.PROPOSED, 0.95), ("Other", 0.80), ("Same", None)]:
+        h = rng.random(len(t)) < (p if p else 0.95)
+        rows.append(pd.DataFrame({"fold": "x", "mode": 6, "model": name, "time": t, "hit": h}))
+    rows[2]["hit"] = rows[0]["hit"].to_numpy()
+    r = pt.paired(pd.concat(rows), ["fold", "mode"]).set_index("comparator")
+    assert r.loc["Other", "ci_lo"] > 0.08
+    assert r.loc["Same", "delta"] == 0

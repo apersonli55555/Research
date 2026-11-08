@@ -41,7 +41,7 @@ FOLDS = {
 
 def main():
     df = data.add_features(data.load(data.download(ROOT / "data")))
-    rows, cold_rows = [], []
+    rows, cold_rows, hit_rows = [], [], []
     for fold, (trw, caw, tew) in FOLDS.items():
         for mode in MODES:
             y = f"f{mode}"
@@ -55,6 +55,9 @@ def main():
                 m.fit(tr, tr[y].to_numpy())
                 lo, hi, q = conformal.split_conformal(ca[y], m.predict(ca), m.predict(te), ALPHA)
                 hit = pd.Series((te[y] >= lo) & (te[y] <= hi), index=te.index)
+                hit_rows.append(pd.DataFrame({"fold": fold, "mode": mode, "model": m.name,
+                                              "time": te.index, "T": te["T_steel"].to_numpy(),
+                                              "outside": outside.to_numpy(), "hit": hit.to_numpy()}))
                 for region, mask in [("all", np.ones(len(te), bool)), ("inside", ~outside.to_numpy()),
                                      ("outside", outside.to_numpy())]:
                     h = hit[mask]
@@ -76,6 +79,7 @@ def main():
     out = ROOT / "results"
     pd.DataFrame(rows).to_csv(out / "robustness_folds.csv", index=False)
     pd.DataFrame(cold_rows).to_csv(out / "robustness_subzero.csv", index=False)
+    pd.concat(hit_rows).to_csv(out / "robustness_hits.csv.gz", index=False)  # per-hour, for paired tests
     print("done")
 
 

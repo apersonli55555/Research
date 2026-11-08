@@ -4,3 +4,6 @@ results/run.log
 __pycache__/
 *.pyc
 .pytest_cache/
+results/rolling*.log
+results/robust.log
+results/*.shard*

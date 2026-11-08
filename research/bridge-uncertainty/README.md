@@ -7,25 +7,34 @@
 ## Reproduce
 
 ```bash
-python -m venv .venv && source .venv/bin/activate
+python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-python -m pytest -q                  # 5 sanity tests (~1 s)
-python scripts/run_experiments.py    # downloads data (MD5-checked), ~5 min on 4 cores
-python scripts/run_robustness.py     # 5-fold robustness study, ~10 min
+make all            # or: bash scripts/run_all_parallel.sh   (~30-60 min on 4 cores)
+```
+Or step by step:
+```bash
+python -m pytest -q                  # unit + smoke tests
+python scripts/run_experiments.py    # main split, random split, detection (downloads data, MD5-checked)
+python scripts/run_robustness.py     # 5 hand-designed folds (incl. cold-side and post-retrofit)
+python scripts/run_rolling.py        # 22 systematic rolling windows (slow; see Makefile for the parallel version)
+python scripts/paired_tests.py       # paired day-block bootstrap tests of coverage differences
 python scripts/make_figures.py       # figures/ and results/summary.md
 ```
-
-Everything is seeded and deterministic. `results/summary.md` is regenerated from the CSVs, so every number in the paper should be traceable to a CSV row.
+Everything is seeded and deterministic. `results/summary.md` is regenerated from the CSVs, so every number in the paper should be traceable to a CSV row. Tests run automatically on GitHub (`.github/workflows/bridge-uncertainty-tests.yml`).
 
 ## Layout
 ```
-src/kw51uq/data.py        download + load + features (lagged temperature etc.)
-src/kw51uq/models.py      baselines and the proposed physics-guided model
-src/kw51uq/conformal.py   split conformal and adaptive conformal inference (ACI)
-src/kw51uq/metrics.py     coverage, width, interval score, day-block bootstrap CI
-src/kw51uq/detection.py   daily alarm rule and PCA (output-only) baseline
-scripts/run_experiments.py, scripts/make_figures.py
-results/*.csv, results/summary.md, figures/*.pdf|png
+src/kw51uq/data.py          download + load + features (lagged temperature etc.)
+src/kw51uq/models.py        9 models: baselines, ablations, proposed physics-guided model
+src/kw51uq/conformal.py     split conformal and adaptive conformal inference (ACI)
+src/kw51uq/metrics.py       coverage, width, interval score, day-block bootstrap CI
+src/kw51uq/detection.py     daily alarm rule and PCA (output-only) baseline
+scripts/run_experiments.py  main + random split + detection
+scripts/run_robustness.py   5 designed folds
+scripts/run_rolling.py      systematic rolling-origin windows
+scripts/paired_tests.py     paired statistical comparisons
+scripts/make_figures.py     all figures + results/summary.md
+docs/                       one-page summary, manuscript draft, ISEF board outline, LUMO email draft
 ```
 
 ## Methods, explained
