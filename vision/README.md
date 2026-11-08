@@ -23,7 +23,7 @@ Open [`fall_cvpr.ipynb`](fall_cvpr.ipynb) in Google Colab: *File → Open notebo
 
 ## Data and licences
 - **UR Fall Detection Dataset**: Kwolek & Kepski, *CMPB* 2014. CC BY-NC-SA 4.0, non-commercial academic use.
-- **OOPS!**: Epstein, Chen & Vondrick, *CVPR* 2020. The original host is offline, so the notebook streams a third-party Hugging Face mirror (`pengxiang/oops`) whose archive has the original structure. Before publishing, confirm the dataset's terms of use with its authors and cite them. Videos come from public YouTube compilations; release labels and timestamps, not videos.
+- **OOPS!**: Epstein, Chen & Vondrick, *CVPR* 2020. The original host is offline, so the notebook streams a third-party Hugging Face mirror (`pengxiang/oops`) whose archive has the original structure. The OOPS! authors granted permission to use the dataset for this work (email received November 2026; the project owner keeps the copy). Cite them. Videos come from public YouTube compilations; release labels and timestamps, not videos.
 
 ## Known gaps before a submission
 - Only one staged dataset so far. Le2i's original page is offline; add Le2i, the Multiple Cameras Fall dataset, or others if obtainable.
