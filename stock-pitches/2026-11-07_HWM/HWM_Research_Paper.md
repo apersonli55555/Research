@@ -39,7 +39,7 @@ The cost of equity comes from the capital asset pricing model, using a beta of 1
 
 Any argument for overvaluation must first acknowledge what the market gets right. Howmet's profitability is unusually high for a manufacturer, and the evidence suggests it is durable.
 
-![Figure 1](exhibits/ex2_margin.png)
+![Figure 1](exhibits/paper/fig1_margin.png)
 *Figure 1. Howmet's adjusted EBITDA margin, 2024 to 2026. Sources: Howmet Aerospace (2026c, 2026d).*
 
 Three features explain these margins. First, aerospace engine components must be certified separately for each engine program. Switching suppliers is therefore slow and risky for customers. Howmet's annual report lists only a handful of serious competitors in castings and forgings, chief among them Precision Castparts, which is owned by Berkshire Hathaway (Howmet Aerospace, 2026a). Second, Howmet has demonstrated pricing power. Its most recent quarterly report states that price increases were "in excess of material and inflationary cost pass through" (Howmet Aerospace, 2026b). Third, Howmet benefits from demand for replacement engine parts. Management repeatedly credits "engine spares" for its growth, though the company does not report spare-parts revenue separately.
@@ -50,12 +50,12 @@ The company's financial statements support these qualitative claims. Generally a
 
 The first argument concerns which growth rate investors should use. Howmet began 2026 expecting revenue of $9.1 billion and adjusted earnings per share of $4.45 (Howmet Aerospace, 2026c). By October, those figures had risen to $10.3 billion and $5.50 (Howmet Aerospace, 2026d). Part of this increase reflects genuine strength, since organic revenue grew 25% in the third quarter. Part of it was purchased. In 2026 Howmet acquired Consolidated Aerospace Manufacturing from Stanley Black & Decker for about $1.8 billion, and Brunner Manufacturing for about $120 million (Howmet Aerospace, 2026b).
 
-![Figure 2](exhibits/ex1_growth.png)
+![Figure 2](exhibits/paper/fig2_growth.png)
 *Figure 2. Annual revenue growth, including management guidance for 2026 and 2027. Sources: Howmet Aerospace (2026a, 2026d).*
 
 Management's first outlook for 2027 calls for revenue of approximately $11.5 billion, which is growth of 11.7%, compared with 24.8% in 2026 (Howmet Aerospace, 2026d). That is still a healthy rate, but it is less than half of the current one. The choice between these two growth rates determines whether the stock looks cheap or expensive.
 
-![Figure 3](exhibits/ex4_growth_adj.png)
+![Figure 3](exhibits/paper/fig3_growth_adj.png)
 *Figure 3. Enterprise value to EBITDA divided by revenue growth for Howmet and its peers. Sources: U.S. Securities and Exchange Commission (2026); Stock Analysis (2026); author's calculations.*
 
 Figure 3 divides each company's EV/EBITDA multiple by its revenue growth rate, which shows how much an investor pays for each point of growth. Measured against trailing growth, Howmet's ratio of 1.16 is below the peer median of 1.36, so the stock looks inexpensive. Measured against 2027 guided growth, its ratio rises to 1.95, among the highest in the group. One limitation applies: Howmet's forward figure is compared with the peers' trailing figures, because forward estimates for the peers were not available from a primary source. Even so, the comparison shows that the bullish case relies on growth that management itself does not expect to continue.
@@ -66,7 +66,7 @@ The second argument comes from the DCF analysis. The model projects five explici
 
 At a 10.45% WACC, this model values Howmet at $94 per share. A more revealing question is what discount rate would make the model's value equal to the current share price.
 
-![Figure 4](exhibits/ex6_breakeven.png)
+![Figure 4](exhibits/paper/fig4_breakeven.png)
 *Figure 4. Ten-year DCF value per share at different discount rates. Source: author's model.*
 
 As Figure 4 shows, the break-even discount rate is approximately 6.6%. That is less than two percentage points above the 10-year Treasury yield, for a stock whose beta is about 1.2. Investors buying at $205.81 are therefore either accepting a very low expected return or assuming growth well above management's outlook. A reverse DCF reaches a similar conclusion. For the current price to earn the 10.45% cost of capital, the market would still need to value Howmet at about 24 times EBITDA in 2031, after five more years of growth.
@@ -81,14 +81,14 @@ That growth will require investment. Capital expenditures rose from 3.3% of sale
 
 A reasonable objection is that the stock has already fallen. Howmet's shares dropped 22%, from $264.85 on August 28, 2026 to $205.81 on November 6 (Stock Analysis, 2026).
 
-![Figure 5](exhibits/ex3_drawdown.png)
+![Figure 5](exhibits/paper/fig5_drawdown.png)
 *Figure 5. Share price change from August 28 to November 6, 2026. Source: Stock Analysis (2026).*
 
 Comparing Howmet with related stocks helps interpret the decline. Over the same period, Carpenter Technology fell 42% and ATI fell 17%, while TransDigm and HEICO were roughly unchanged and the S&P 500 fell 4%. The decline was concentrated among aerospace metals producers, and Howmet's shares actually rose 5.5% on the day it reported third-quarter results. The decline therefore does not appear to reflect disappointment with Howmet's own performance. No sourced explanation for the sector-wide move was found, so this paper does not assume one. Even after the decline, Howmet trades at 25.9 times management's 2026 EBITDA guidance, a 23% premium to its peers' median multiple. The correction has started, but by these measures it is not complete.
 
 ## 8. Valuation Results
 
-![Figure 6](exhibits/ex5_valuation.png)
+![Figure 6](exhibits/paper/fig6_valuation.png)
 *Figure 6. Value per share by valuation method. Source: author's model.*
 
 All four methods produce values below the current share price. The ten-year DCF gives $94. The five-year DCF, using an exit multiple of 18 times 2031 EBITDA, gives $160. Applying the peer median EV/EBITDA multiple of 22.9 gives $165, and applying the peer median price-to-earnings multiple of 36.3 gives $185. Weighting the four equally produces a fair value of $151 per share. Rolling that value forward one year at the 10.8% cost of equity and subtracting $0.56 of expected dividends gives a twelve-month price target of **$167**, about 19% below the current price.
