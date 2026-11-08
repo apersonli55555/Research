@@ -86,6 +86,24 @@ def boot(y, s, groups, n=1000, seed=0):
             for k in est}
 
 
+def paired(y, s1, s2, groups, n=2000, seed=0):
+    """AUROC(s1) - AUROC(s2) on the same clips, with a video-level paired bootstrap.
+    Returns [diff, ci_low, ci_high, p] where p is a two-sided bootstrap p-value."""
+    from sklearn.metrics import roc_auc_score
+    rng = np.random.default_rng(seed)
+    ug = np.unique(groups)
+    idx = {g: np.where(groups == g)[0] for g in ug}
+    est = roc_auc_score(y, s1) - roc_auc_score(y, s2)
+    d = []
+    for _ in range(n):
+        pick = np.concatenate([idx[g] for g in rng.choice(ug, len(ug))])
+        if len(set(y[pick])) == 2:
+            d.append(roc_auc_score(y[pick], s1[pick]) - roc_auc_score(y[pick], s2[pick]))
+    d = np.array(d)
+    p = min(1.0, 2 * min((d <= 0).mean(), (d >= 0).mean()))
+    return [float(est), float(np.percentile(d, 2.5)), float(np.percentile(d, 97.5)), float(p)]
+
+
 def probe():
     from sklearn.linear_model import LogisticRegression
     from sklearn.pipeline import make_pipeline
@@ -170,6 +188,48 @@ def main():
             res["real"][f"staged_plus_real_probe_{kind}"] = boot(yt, s, gt)
             scores[f"staged_plus_real_probe_{kind}"] = s
 
+    # ---- head-to-head comparisons on the same test clips ----
+    res["paired"] = {}
+    pairs = []
+    for kind in reps:
+        for a_, b_ in ((f"real_probe_{kind}", f"staged_probe_{kind}"),
+                       (f"staged_plus_real_probe_{kind}", f"staged_probe_{kind}")):
+            pairs.append((a_, b_))
+    pairs += [(f"staged_probe_{r}", "staged_probe_clip_appearance") for r in reps if r != "clip_appearance"]
+    for a_, b_ in pairs:
+        if a_ in scores and b_ in scores:
+            res["paired"][f"{a_} vs {b_}"] = paired(yt, scores[a_], scores[b_], gt)
+
+    # ---- learning curve: real training videos -> test AUROC ----
+    if have_real:
+        from sklearn.metrics import roc_auc_score
+        kind = "clip+videomae" if "clip+videomae" in reps else "clip_temporal"
+        tr_names = sorted({t[2] for t in train})
+        Xr_all = featurize(np.array([t[0] for t in train]), kind,
+                           np.array([t[5] for t in train]) if videos else None)
+        yr_all = np.array([t[1] for t in train]); nr_all = np.array([t[2] for t in train])
+        Xs_k, Xt_k = featurize(Fs, kind, Vs), featurize(Ft, kind, Vt)
+        sizes = sorted({n for n in (5, 10, 20, 40, 80, 160, 320) if n < len(tr_names)} | {len(tr_names)})
+        curve = []
+        rng = np.random.default_rng(0)
+        for n_v in sizes:
+            real_auc, both_auc, falls = [], [], []
+            for _ in range(10 if n_v < len(tr_names) else 1):
+                pick = set(rng.choice(tr_names, n_v, replace=False))
+                m = np.array([nm in pick for nm in nr_all])
+                if len(set(yr_all[m])) < 2:
+                    continue
+                falls.append(int(yr_all[m].sum()))
+                real_auc.append(roc_auc_score(yt, probe().fit(Xr_all[m], yr_all[m]).predict_proba(Xt_k)[:, 1]))
+                both_auc.append(roc_auc_score(yt, probe().fit(np.vstack([Xs_k, Xr_all[m]]),
+                                np.concatenate([ys, yr_all[m]])).predict_proba(Xt_k)[:, 1]))
+            if real_auc:
+                curve.append(dict(videos=n_v, falls=float(np.mean(falls)), real=float(np.mean(real_auc)),
+                                  real_sd=float(np.std(real_auc)), both=float(np.mean(both_auc)),
+                                  both_sd=float(np.std(both_auc))))
+        res["learning_curve"] = {"representation": kind, "staged_only": res["real"][f"staged_probe_{kind}"][ "auroc"][0],
+                                 "points": curve}
+
     # ---- harder test: falls vs other accidents only (accident-moment clips; the easy
     #      "normal activity before the accident" negatives are left out) ----
     ev = np.array([sg == "event" for sg in segt])
@@ -186,6 +246,19 @@ def main():
             f = lambda m: f"{v[m][0]:.3f} [{v[m][1]:.3f}, {v[m][2]:.3f}]"
             lines.append(f"| {dom} | {k} | {f('auroc')} | {f('ap')} | {f('recall_at_fpr5')} |")
     table = "\n".join(lines)
+    extra = ["", "Head-to-head (same test clips): AUROC difference [95% CI], p", "",
+             "| Comparison | AUROC diff | 95% CI | p |", "|---|---|---|---|"]
+    for k, (d_, lo, hi, pv) in res["paired"].items():
+        extra.append(f"| {k} | {d_:+.3f} | [{lo:+.3f}, {hi:+.3f}] | {pv:.3f} |")
+    if "learning_curve" in res:
+        lc = res["learning_curve"]
+        extra += ["", f"Learning curve ({lc['representation']}; staged-only AUROC {lc['staged_only']:.3f})", "",
+                  "| real training videos | real falls (avg) | real-trained AUROC | staged + real AUROC |",
+                  "|---|---|---|---|"]
+        for pt in lc["points"]:
+            extra.append(f"| {pt['videos']} | {pt['falls']:.0f} | {pt['real']:.3f} ± {pt['real_sd']:.3f} | "
+                         f"{pt['both']:.3f} ± {pt['both_sd']:.3f} |")
+    table = table + "\n" + "\n".join(extra)
     with open(os.path.join(out, "staged_to_real.md"), "w") as fh:
         fh.write("Counts: " + json.dumps(res["n"]) + "\n\n" + table + "\n")
 
@@ -215,6 +288,16 @@ def main():
         ax.set_title("Real-world falls (OOPS! test set)")
         ax.legend(fontsize=7, loc="lower right")
         fig.tight_layout(); fig.savefig(os.path.join(out, "roc_real.png"), dpi=200)
+        if "learning_curve" in res and res["learning_curve"]["points"]:
+            lc = res["learning_curve"]; pts = lc["points"]
+            x = [p_["falls"] for p_ in pts]
+            fig, ax = plt.subplots(figsize=(4.5, 3.6))
+            ax.errorbar(x, [p_["real"] for p_ in pts], yerr=[p_["real_sd"] for p_ in pts], marker="o", label="real only", capsize=3)
+            ax.errorbar(x, [p_["both"] for p_ in pts], yerr=[p_["both_sd"] for p_ in pts], marker="s", label="staged + real", capsize=3)
+            ax.axhline(lc["staged_only"], ls="--", color="grey", label="staged only")
+            ax.set_xscale("log"); ax.set_xlabel("real training falls"); ax.set_ylabel("AUROC on real test falls")
+            ax.set_title(f"How much real data? ({lc['representation']})", fontsize=10); ax.legend(fontsize=8)
+            fig.tight_layout(); fig.savefig(os.path.join(out, "learning_curve.png"), dpi=200)
     except ImportError:
         pass
 
