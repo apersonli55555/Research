@@ -52,3 +52,28 @@ Falls vs. other accidents only (`real_hard`, 165 clips, 102 falls): AUROC 0.69�
 - With a similar number of falls, real training data beats staged data for the motion-aware representations (CLIP temporal 0.73 → 0.81; CLIP + VideoMAE 0.76 → 0.83). Training on staged data is a large part of the gap. Intervals overlap and n is small, so this needs more training labels to confirm.
 - Even the best real-trained detector stays far below staged performance (0.83 vs. 1.00), so real falls are also harder.
 - Separating falls from other accidents is the hardest sub-problem and the natural target for a method.
+
+---
+
+# Run 3: 268 training clips (final labelling)
+
+**Labels:** 165 test videos (255 clips, 102 falls); training pool 268 clips with 131 falls. Same settings. Transcribed from the Colab output; the head-to-head and learning-curve tables were not produced in this run (it used the code from before they were added).
+
+Real test set, AUROC [95% CI]; recall at 5% FPR in the last column for the best rows:
+
+| Representation | Staged-trained | Real-trained | Staged + real |
+|---|---|---|---|
+| CLIP appearance | 0.723 [0.661, 0.788] | 0.732 [0.667, 0.793] | 0.741 [0.677, 0.802] |
+| CLIP temporal | 0.728 [0.667, 0.790] | 0.866 [0.818, 0.907] | 0.857 [0.807, 0.899] |
+| VideoMAE | 0.765 [0.711, 0.820] | 0.787 [0.732, 0.841] | 0.803 [0.747, 0.854] |
+| CLIP + VideoMAE | 0.759 [0.696, 0.820] | **0.899 [0.859, 0.934]** | 0.892 [0.850, 0.929] |
+
+Recall at 5% FPR: CLIP + VideoMAE staged-trained 0.167 [0.098, 0.375] vs. real-trained 0.431 [0.325, 0.670].
+
+Falls vs. other accidents (`real_hard`, 165 clips, 102 falls), AUROC: CLIP + VideoMAE staged-trained 0.715 [0.633, 0.795] vs. real-trained 0.860 [0.794, 0.914]; CLIP temporal real-trained 0.835 [0.765, 0.891].
+
+## Reading
+- **Training data, not model capacity, drives the gap.** With the same frozen features and a linear probe, 131 real falls lift CLIP + VideoMAE from 0.76 to 0.90 AUROC; the intervals do not overlap.
+- **Staged data adds nothing once real data exists** (0.892 with both vs. 0.899 real only).
+- **Temporal information matters, and the two encoders are complementary.** CLIP appearance barely benefits from real data (0.72 → 0.73), CLIP temporal gains most (0.73 → 0.87), and CLIP temporal + VideoMAE is best.
+- **Caveat: "real-trained" is in-distribution.** Training and test clips both come from OOPS!, so part of the gain is ordinary in-domain advantage. A second real-world test source is needed to separate "real vs. staged" from "same vs. different dataset". The training pool was also pre-selected by CLIP zero-shot score (the test set was not).
