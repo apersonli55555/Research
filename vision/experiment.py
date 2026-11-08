@@ -61,13 +61,39 @@ def _featurize_clip(frames, kind):
     return np.concatenate([mean, delta, change], 1)
 
 
+def _auroc(y, s):
+    """AUROC via the rank-sum (Mann-Whitney) statistic, ties averaged. Equals sklearn's roc_auc_score."""
+    order = np.argsort(s, kind="mergesort")
+    ss = s[order]
+    ranks = np.empty(len(s))
+    _, start_idx, counts = np.unique(ss, return_index=True, return_counts=True)
+    avg = np.repeat(start_idx + (counts + 1) / 2.0, counts)
+    ranks[order] = avg
+    npos = y.sum(); nneg = len(y) - npos
+    return (ranks[y == 1].sum() - npos * (npos + 1) / 2.0) / (npos * nneg)
+
+
+def _roc_points(y, s):
+    """Distinct-threshold ROC points (fpr, tpr) and AP, as sklearn computes them."""
+    order = np.argsort(-s, kind="mergesort")
+    ys, ss = y[order], s[order]
+    last = np.r_[np.where(np.diff(ss))[0], len(ss) - 1]       # last index of each tie group
+    tps = np.cumsum(ys)[last].astype(float)
+    fps = (last + 1 - tps)
+    P, N = tps[-1], fps[-1]
+    tpr = np.r_[0.0, tps / P]; fpr = np.r_[0.0, fps / N]
+    precision = tps / (tps + fps)
+    recall = tps / P
+    ap = float(np.sum(np.diff(np.r_[0.0, recall]) * precision))
+    return fpr, tpr, ap
+
+
 def metrics(y, s):
-    from sklearn.metrics import average_precision_score, roc_auc_score, roc_curve
-    if len(set(y)) < 2:
+    y = np.asarray(y); s = np.asarray(s, dtype=float)
+    if len(set(y.tolist())) < 2:
         return dict(auroc=float("nan"), ap=float("nan"), recall_at_fpr5=float("nan"))
-    fpr, tpr, _ = roc_curve(y, s)
-    return dict(auroc=float(roc_auc_score(y, s)), ap=float(average_precision_score(y, s)),
-                recall_at_fpr5=float(np.interp(0.05, fpr, tpr)))
+    fpr, tpr, ap = _roc_points(y, s)
+    return dict(auroc=float(_auroc(y, s)), ap=ap, recall_at_fpr5=float(np.interp(0.05, fpr, tpr)))
 
 
 def boot(y, s, groups, n=1000, seed=0):
@@ -89,7 +115,7 @@ def boot(y, s, groups, n=1000, seed=0):
 def paired(y, s1, s2, groups, n=2000, seed=0):
     """AUROC(s1) - AUROC(s2) on the same clips, with a video-level paired bootstrap.
     Returns [diff, ci_low, ci_high, p] where p is a two-sided bootstrap p-value."""
-    from sklearn.metrics import roc_auc_score
+    roc_auc_score = _auroc
     rng = np.random.default_rng(seed)
     ug = np.unique(groups)
     idx = {g: np.where(groups == g)[0] for g in ug}
@@ -117,6 +143,7 @@ def main():
     ap.add_argument("--oops", required=True)
     ap.add_argument("--out", default=None)
     ap.add_argument("--min-test-pos", type=int, default=20)
+    ap.add_argument("--synthetic", default="", help="ofsyn.npz from ofsyn_prep.py (optional)")
     a = ap.parse_args()
     out = a.out or os.path.join(a.oops, "results")
     os.makedirs(out, exist_ok=True)
@@ -188,9 +215,37 @@ def main():
             res["real"][f"staged_plus_real_probe_{kind}"] = boot(yt, s, gt)
             scores[f"staged_plus_real_probe_{kind}"] = s
 
+    # ---- synthetic (OmniFall OF-Syn) -> real ----
+    Y = np.load(a.synthetic) if a.synthetic else None
+    if Y is not None:
+        Fy, yy = Y["frames"], Y["label"]
+        Vy = Y["video"] if "video" in Y.files else None
+        res["n"]["synthetic_clips"] = int(len(yy)); res["n"]["synthetic_falls"] = int(yy.sum())
+        for kind in reps:
+            if "videomae" in kind and Vy is None:
+                continue
+            Xy, Xt = featurize(Fy, kind, Vy), featurize(Ft, kind, Vt)
+            s = probe().fit(Xy, yy).predict_proba(Xt)[:, 1]
+            res["real"][f"synthetic_probe_{kind}"] = boot(yt, s, gt); scores[f"synthetic_probe_{kind}"] = s
+            Xs = featurize(Fs, kind, Vs)
+            s = probe().fit(np.vstack([Xs, Xy]), np.concatenate([ys, yy])).predict_proba(Xt)[:, 1]
+            res["real"][f"staged_plus_synthetic_probe_{kind}"] = boot(yt, s, gt)
+            scores[f"staged_plus_synthetic_probe_{kind}"] = s
+            if have_real:
+                Xr = featurize(np.array([t[0] for t in train]), kind,
+                               np.array([t[5] for t in train]) if videos else None)
+                yr = np.array([t[1] for t in train])
+                s = probe().fit(np.vstack([Xy, Xr]), np.concatenate([yy, yr])).predict_proba(Xt)[:, 1]
+                res["real"][f"synthetic_plus_real_probe_{kind}"] = boot(yt, s, gt)
+                scores[f"synthetic_plus_real_probe_{kind}"] = s
+
     # ---- head-to-head comparisons on the same test clips ----
     res["paired"] = {}
     pairs = []
+    for kind in reps:
+        pairs += [(f"real_probe_{kind}", f"synthetic_probe_{kind}"),
+                  (f"synthetic_probe_{kind}", f"staged_probe_{kind}"),
+                  (f"synthetic_plus_real_probe_{kind}", f"real_probe_{kind}")]
     for kind in reps:
         for a_, b_ in ((f"real_probe_{kind}", f"staged_probe_{kind}"),
                        (f"staged_plus_real_probe_{kind}", f"staged_probe_{kind}")):
@@ -230,6 +285,42 @@ def main():
         res["learning_curve"] = {"representation": kind, "staged_only": res["real"][f"staged_probe_{kind}"][ "auroc"][0],
                                  "points": curve}
 
+    # ---- equal budget: same number of training falls from each source ----
+    if Y is not None:
+        from sklearn.metrics import roc_auc_score
+        kind = "clip+videomae" if ("clip+videomae" in reps and Vy is not None) else "clip_temporal"
+        Xt_k = featurize(Ft, kind, Vt)
+        sources = {"staged": (featurize(Fs, kind, Vs), ys), "synthetic": (featurize(Fy, kind, Vy), yy)}
+        if have_real:
+            sources["real"] = (featurize(np.array([t[0] for t in train]), kind,
+                                         np.array([t[5] for t in train]) if videos else None),
+                               np.array([t[1] for t in train]))
+        budgets = (4, 8, 15, 30, 60, 125, 250, 500, 1000, 2000)
+        rng = np.random.default_rng(1)
+        eb = {}
+        for src, (X, y) in sources.items():
+            pos, neg = np.where(y == 1)[0], np.where(y == 0)[0]
+            pts = []
+            for k in budgets + (len(pos),):
+                if k > len(pos) or (pts and pts[-1]["falls"] == k):
+                    continue
+                aucs = []
+                for _ in range((10 if k <= 60 else 3) if k < len(pos) else 1):
+                    pi = rng.choice(pos, k, replace=False)
+                    ni = rng.choice(neg, min(k, len(neg)), replace=False)  # balanced: as many non-falls
+                    idx = np.concatenate([pi, ni])
+                    aucs.append(roc_auc_score(yt, probe().fit(X[idx], y[idx]).predict_proba(Xt_k)[:, 1]))
+                pts.append(dict(falls=int(k), auroc=float(np.mean(aucs)), sd=float(np.std(aucs))))
+            eb[src] = pts
+        best_real = max((p_["auroc"] for p_ in eb.get("real", [])), default=None)
+        match = None
+        if best_real is not None:
+            hit = [p_["falls"] for p_ in eb["synthetic"] if p_["auroc"] >= best_real]
+            match = hit[0] if hit else None
+        res["equal_budget"] = {"representation": kind, "points": eb,
+                               "real_max_falls": max((p_["falls"] for p_ in eb.get("real", [])), default=None),
+                               "synthetic_falls_to_match_all_real": match}
+
     # ---- harder test: falls vs other accidents only (accident-moment clips; the easy
     #      "normal activity before the accident" negatives are left out) ----
     ev = np.array([sg == "event" for sg in segt])
@@ -258,6 +349,20 @@ def main():
         for pt in lc["points"]:
             extra.append(f"| {pt['videos']} | {pt['falls']:.0f} | {pt['real']:.3f} ± {pt['real_sd']:.3f} | "
                          f"{pt['both']:.3f} ± {pt['both_sd']:.3f} |")
+    if "equal_budget" in res:
+        eb = res["equal_budget"]
+        extra += ["", f"Equal budget ({eb['representation']}): AUROC on real test falls, k training falls + k non-falls "
+                      "from one source (mean ± s.d. over 10 random draws; 3 above 60 falls)", ""]
+        ks = sorted({p_["falls"] for pts in eb["points"].values() for p_ in pts})
+        extra.append("| source | " + " | ".join(str(k) for k in ks) + " |")
+        extra.append("|---|" + "---|" * len(ks))
+        for src, pts in eb["points"].items():
+            d = {p_["falls"]: f"{p_['auroc']:.3f} ± {p_['sd']:.3f}" for p_ in pts}
+            extra.append(f"| {src} | " + " | ".join(d.get(k, "–") for k in ks) + " |")
+        m = eb["synthetic_falls_to_match_all_real"]
+        extra.append("")
+        extra.append(f"Synthetic falls needed to match {eb['real_max_falls']} real falls: "
+                     + (str(m) if m else "not reached with the synthetic falls available"))
     table = table + "\n" + "\n".join(extra)
     with open(os.path.join(out, "staged_to_real.md"), "w") as fh:
         fh.write("Counts: " + json.dumps(res["n"]) + "\n\n" + table + "\n")
@@ -288,6 +393,18 @@ def main():
         ax.set_title("Real-world falls (OOPS! test set)")
         ax.legend(fontsize=7, loc="lower right")
         fig.tight_layout(); fig.savefig(os.path.join(out, "roc_real.png"), dpi=200)
+        if "equal_budget" in res:
+            eb = res["equal_budget"]
+            fig, ax = plt.subplots(figsize=(4.8, 3.6))
+            for src, mk in (("real", "o"), ("synthetic", "^"), ("staged", "s")):
+                pts = eb["points"].get(src)
+                if pts:
+                    ax.errorbar([p_["falls"] for p_ in pts], [p_["auroc"] for p_ in pts],
+                                yerr=[p_["sd"] for p_ in pts], marker=mk, capsize=3, label=src)
+            ax.set_xscale("log"); ax.set_xlabel("training falls (+ equal number of non-falls)")
+            ax.set_ylabel("AUROC on real test falls")
+            ax.set_title(f"Real vs synthetic vs staged ({eb['representation']})", fontsize=10); ax.legend(fontsize=8)
+            fig.tight_layout(); fig.savefig(os.path.join(out, "equal_budget.png"), dpi=200)
         if "learning_curve" in res and res["learning_curve"]["points"]:
             lc = res["learning_curve"]; pts = lc["points"]
             x = [p_["falls"] for p_ in pts]

@@ -19,6 +19,7 @@ Open [`fall_cvpr.ipynb`](fall_cvpr.ipynb) in Google Colab: *File → Open notebo
 | `oops_mine.py` | streams the 48 GB OOPS! archive once (decoding in background threads); saves 8 ordered frame embeddings per clip; keeps candidate clips; resumable |
 | `labeler.py` | in-Colab labelling tool: test-set clips first, keyboard shortcuts F/N/U/Z, saves every label |
 | `urfall_prep.py` | UR Fall clips: falls (side and ceiling cameras), pre-fall and everyday activity |
+| `ofsyn_prep.py` | OmniFall synthetic videos (OF-Syn): streams the 9.7 GB archive, one 2 s clip per video (fall-centred, or a hash-sampled non-fall), same encoders |
 | `experiment.py` | staged → real evaluation of four representations (CLIP appearance, CLIP temporal, VideoMAE, CLIP+VideoMAE): AUROC, AP and recall at 5% FPR with video-level bootstrap CIs, an ROC chart, and the worst errors |
 
 ## Data and licences
