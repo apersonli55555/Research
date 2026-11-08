@@ -12,10 +12,11 @@ Real-world TEST set = OOPS! clips in the hash-based random sample that a human l
 "unsure" clips are excluded. The real TRAINING pool (for real-trained probes) is the
 labelled top-K candidates, which never overlap the random sample.
 
-Clip representations (from the same frozen CLIP encoder, 8 ordered frames per clip)
-  appearance : mean frame embedding (what is in the clip)
-  temporal   : [mean, late-minus-early frames, mean |frame-to-frame change|]
-               (how the clip changes over time: a fall is a motion, not a pose)
+Clip representations (all from frozen, pretrained encoders)
+  clip_appearance : CLIP image model, mean of 8 frame embeddings (what is in the clip)
+  clip_temporal   : CLIP, [mean, late-minus-early frames, mean |frame-to-frame change|]
+  videomae        : VideoMAE video model over 16 frames (attends across time: motion)
+  clip+videomae   : clip_temporal and videomae concatenated
 
 Methods: zero-shot CLIP prompts, and logistic-regression probes trained on staged, real,
 or staged+real data. Metrics: AUROC, average precision, recall at 5% false-positive rate,
@@ -31,11 +32,24 @@ from labeler import load_labels  # noqa: E402
 from oops_mine import load_frames  # noqa: E402
 
 
+REPRESENTATIONS = ["clip_appearance", "clip_temporal", "videomae", "clip+videomae"]
+
+
 def l2n(x):
     return x / (np.linalg.norm(x, axis=-1, keepdims=True) + 1e-8)
 
 
-def featurize(frames, kind):
+def featurize(frames, kind, video=None):
+    """kind in REPRESENTATIONS. frames: (n, 8, d) CLIP frame embeddings; video: (n, d') VideoMAE."""
+    if kind == "videomae":
+        return l2n(video.astype(np.float32))
+    if kind == "clip+videomae":
+        return np.concatenate([featurize(frames, "clip_temporal"), l2n(video.astype(np.float32))], 1)
+    kind = kind.replace("clip_", "")
+    return _featurize_clip(frames, kind)
+
+
+def _featurize_clip(frames, kind):
     """frames: (n, T, d) ordered frame embeddings."""
     f = l2n(frames.astype(np.float32))
     mean = l2n(f.mean(1))
@@ -91,11 +105,14 @@ def main():
 
     S = np.load(a.staged)
     Fs, ys, gs, ms = S["frames"], S["label"], S["group"], S["margin"]
+    Vs = S["video"] if "video" in S.files else None
 
     labels = load_labels(a.oops)
     with open(os.path.join(a.oops, "scores.csv")) as fh:
         meta = {r["name"]: r for r in csv.DictReader(fh)}
     frames = load_frames(a.oops)
+    videos = load_frames(a.oops, "video")
+    reps = [r for r in REPRESENTATIONS if "videomae" not in r or (Vs is not None and videos)]
     test, train = [], []
     for (name, seg), fr in frames.items():
         lab = labels.get(name)
@@ -104,10 +121,14 @@ def main():
         r = meta[name]
         y = 1 if (seg == "event" and lab == "fall") else 0
         m = float(r["event_margin"] if seg == "event" else r["pre_margin"])
-        (test if r["random_sample"] == "1" else train).append((fr, y, name, seg, m))
+        v = videos.get((name, seg))
+        if videos and v is None:
+            continue
+        (test if r["random_sample"] == "1" else train).append((fr, y, name, seg, m, v))
     if not test:
         sys.exit("no labelled test clips yet: label the random-sample (test set) clips first")
     Ft = np.array([t[0] for t in test]); yt = np.array([t[1] for t in test])
+    Vt = np.array([t[5] for t in test]) if videos else None
     gt = np.array([t[2] for t in test]); segt = [t[3] for t in test]; mt = np.array([t[4] for t in test])
     print(f"real test set: {len(test)} clips from {len(set(gt))} videos, {yt.sum()} falls")
     if yt.sum() < a.min_test_pos:
@@ -123,8 +144,8 @@ def main():
     # ---- in-domain staged performance: 5-fold cross-validation grouped by sequence ----
     from sklearn.model_selection import GroupKFold
     res["staged"]["zero_shot"] = boot(ys, ms, gs)
-    for kind in ("appearance", "temporal"):
-        X = featurize(Fs, kind)
+    for kind in reps:
+        X = featurize(Fs, kind, Vs)
         p = np.zeros(len(ys))
         for tr, te in GroupKFold(5).split(X, ys, gs):
             p[te] = probe().fit(X[tr], ys[tr]).predict_proba(X[te])[:, 1]
@@ -135,12 +156,14 @@ def main():
     have_real = bool(train) and len({t[1] for t in train}) == 2
     if not have_real:
         print("no labelled training-pool clips with both classes: skipping real-trained probes")
-    for kind in ("appearance", "temporal"):
-        Xs, Xt = featurize(Fs, kind), featurize(Ft, kind)
+    for kind in reps:
+        Xs, Xt = featurize(Fs, kind, Vs), featurize(Ft, kind, Vt)
         s = probe().fit(Xs, ys).predict_proba(Xt)[:, 1]
         res["real"][f"staged_probe_{kind}"] = boot(yt, s, gt); scores[f"staged_probe_{kind}"] = s
         if have_real:
-            Xr = featurize(np.array([t[0] for t in train]), kind); yr = np.array([t[1] for t in train])
+            Xr = featurize(np.array([t[0] for t in train]), kind,
+                           np.array([t[5] for t in train]) if videos else None)
+            yr = np.array([t[1] for t in train])
             s = probe().fit(Xr, yr).predict_proba(Xt)[:, 1]
             res["real"][f"real_probe_{kind}"] = boot(yt, s, gt); scores[f"real_probe_{kind}"] = s
             s = probe().fit(np.vstack([Xs, Xr]), np.concatenate([ys, yr])).predict_proba(Xt)[:, 1]
@@ -163,7 +186,7 @@ def main():
     with open(os.path.join(out, "worst_errors.csv"), "w", newline="") as fh:
         w = csv.writer(fh)
         w.writerow(["method", "error", "score", "name", "segment", "label"])
-        for k in ("staged_probe_appearance", "staged_probe_temporal"):
+        for k in [f"staged_probe_{r}" for r in reps]:
             s = scores[k]
             fn = [i for i in np.argsort(s) if yt[i] == 1][:15]
             fp = [i for i in np.argsort(-s) if yt[i] == 0][:15]

@@ -25,7 +25,7 @@ import argparse, csv, hashlib, heapq, io, json, os, subprocess, sys, tarfile, ti
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(__file__))
-from common import ClipEncoder, read_frames, write_clip  # noqa: E402
+from common import VIDEO_MODEL, ClipEncoder, VideoEncoder, clip_subset, sample_clip, write_clip  # noqa: E402
 
 URL = "https://huggingface.co/datasets/pengxiang/oops/resolve/main/video_and_anns.tar.gz"
 PRE_MIN_T = 3.5
@@ -96,8 +96,8 @@ class ResumableStream(io.RawIOBase):
 
 def decode_job(data, t):
     """Runs in a worker thread: decode the event (and pre-event) frames of one video."""
-    ev = read_frames(data, max(0.0, t - 1), t + 1)
-    pre = read_frames(data, t - 3.5, t - 1.5) if t >= PRE_MIN_T else None
+    ev = sample_clip(data, max(0.0, t - 1), t + 1)
+    pre = sample_clip(data, t - 3.5, t - 1.5) if t >= PRE_MIN_T else None
     return ev, pre
 
 
@@ -113,6 +113,7 @@ def main():
     ap.add_argument("--model", default="ViT-L-14")
     ap.add_argument("--pretrained", default="datacomp_xl_s13b_b90k")
     ap.add_argument("--device", default="cuda")
+    ap.add_argument("--video-model", default=VIDEO_MODEL, help="'' to skip the video model")
     a = ap.parse_args()
 
     clip_dir, emb_dir = os.path.join(a.out, "clips"), os.path.join(a.out, "frames")
@@ -128,9 +129,10 @@ def main():
     heapq.heapify(kept)                                # min-heap of the top-K clips on disk
     shard_ids = [int(f[6:11]) for f in os.listdir(emb_dir) if f.startswith("shard_")]
     next_shard = max(shard_ids) + 1 if shard_ids else 0
-    buf = {"name": [], "seg": [], "frames": []}       # per-frame embeddings not yet written
+    buf = {"name": [], "seg": [], "frames": [], "video": []}   # embeddings not yet written
 
     enc = ClipEncoder(a.model, a.pretrained, a.device)
+    venc = VideoEncoder(a.video_model, a.device) if a.video_model else None
     ann, split = None, {}
     clip_path = lambda n: os.path.join(clip_dir, n.replace("/", "_") + ".mp4")
     writes = {}                                        # name -> pending write_clip future
@@ -138,8 +140,9 @@ def main():
     def save():
         nonlocal next_shard
         if buf["name"]:                                # frames first, then the CSV that references them
+            extra = {"video": np.array(buf["video"], dtype=np.float16)} if venc else {}
             np.savez(os.path.join(emb_dir, f"shard_{next_shard:05d}.npz"), name=np.array(buf["name"]),
-                     seg=np.array(buf["seg"]), frames=np.array(buf["frames"], dtype=np.float16))
+                     seg=np.array(buf["seg"]), frames=np.array(buf["frames"], dtype=np.float16), **extra)
             next_shard += 1
             for k in buf:
                 buf[k].clear()
@@ -156,20 +159,25 @@ def main():
         """Main thread: embed decoded frames, score, decide what to keep."""
         try:
             ev_frames, pre_frames = fut.result()
-            ev = enc.encode_images(ev_frames)
+            ev = enc.encode_images(clip_subset(ev_frames))
             p_ev, m_ev = enc.zero_shot(ev)
             p_pre = m_pre = ""
             pre = None
             if pre_frames is not None:
-                pre = enc.encode_images(pre_frames)
+                pre = enc.encode_images(clip_subset(pre_frames))
                 pp, mp = enc.zero_shot(pre)
                 p_pre, m_pre = f"{pp:.5f}", f"{mp:.4f}"
+            vids = venc.encode([ev_frames] + ([pre_frames] if pre_frames is not None else [])) if venc else None
         except Exception as e:                         # corrupt / undecodable clip
             print("skip", name, type(e).__name__, e)
             return False
         buf["name"].append(name); buf["seg"].append("event"); buf["frames"].append(ev)
+        if venc:
+            buf["video"].append(vids[0])
         if pre is not None:
             buf["name"].append(name); buf["seg"].append("pre"); buf["frames"].append(pre)
+            if venc:
+                buf["video"].append(vids[1])
         rnd = in_random_sample(name, a.random_n)
         top = not rnd and (len(kept) < a.keep or m_ev > kept[0][0])
         if rnd or top:
@@ -269,14 +277,17 @@ def main():
               f"{len(kept)} top candidates + random sample in {clip_dir}", flush=True)
 
 
-def load_frames(oops_dir):
-    """All saved per-frame embeddings: dict (name, seg) -> (8, d) float32. Later shards win."""
+def load_frames(oops_dir, key="frames"):
+    """Saved embeddings: dict (name, seg) -> array. key="frames": (8, d) CLIP frame
+    embeddings; key="video": (d,) VideoMAE clip embedding. Later shards win."""
     out = {}
     d = os.path.join(oops_dir, "frames")
     for f in sorted(os.listdir(d)):
         if f.startswith("shard_") and f.endswith(".npz"):
             z = np.load(os.path.join(d, f))
-            for n, s, fr in zip(z["name"], z["seg"], z["frames"]):
+            if key not in z.files:
+                continue
+            for n, s, fr in zip(z["name"], z["seg"], z[key]):
                 out[(str(n), str(s))] = fr.astype(np.float32)
     return out
 

@@ -18,7 +18,7 @@ from collections import OrderedDict
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(__file__))
-from common import CLIP_SECONDS, ClipEncoder, read_frames  # noqa: E402
+from common import CLIP_SECONDS, VIDEO_MODEL, ClipEncoder, VideoEncoder, clip_subset, sample_clip  # noqa: E402
 
 BASE = "https://fenix.ur.edu.pl/~mkepski/ds/data/"
 FPS = 30.0
@@ -48,6 +48,7 @@ def main():
     ap.add_argument("--model", default="ViT-L-14")
     ap.add_argument("--pretrained", default="datacomp_xl_s13b_b90k")
     ap.add_argument("--device", default="cuda")
+    ap.add_argument("--video-model", default=VIDEO_MODEL, help="'' to skip the video model")
     a = ap.parse_args()
     os.makedirs(a.cache, exist_ok=True)
 
@@ -80,16 +81,21 @@ def main():
     print(f"{len(clips)} clips: {sum(c[3] for c in clips)} fall, {sum(1 - c[3] for c in clips)} non-fall")
 
     enc = ClipEncoder(a.model, a.pretrained, a.device)
-    emb, frames, margin = [], [], []
+    venc = VideoEncoder(a.video_model, a.device) if a.video_model else None
+    emb, frames, margin, video = [], [], [], []
     for i, (path, s, e, *_rest) in enumerate(clips):
-        fe = enc.encode_images(read_frames(path, s, e, crop=RGB_CROP))
+        f16 = sample_clip(path, s, e, crop=RGB_CROP)
+        fe = enc.encode_images(clip_subset(f16))
+        if venc:
+            video.append(venc.encode([f16])[0])
         emb.append(enc.clip_embedding(fe))
         frames.append(fe)
         margin.append(enc.zero_shot(fe)[1])
         if (i + 1) % 50 == 0:
             print(f"  {i + 1}/{len(clips)}", flush=True)
     os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True)
-    np.savez(a.out, emb=np.array(emb, np.float32), frames=np.array(frames, np.float16), margin=np.array(margin, np.float32),
+    extra = {"video": np.array(video, np.float16)} if venc else {}
+    np.savez(a.out, **extra, emb=np.array(emb, np.float32), frames=np.array(frames, np.float16), margin=np.array(margin, np.float32),
              label=np.array([c[3] for c in clips]), group=np.array([c[4] for c in clips]),
              source=np.array([c[5] for c in clips]), seg=np.array([c[6] for c in clips]),
              start=np.array([c[1] for c in clips], np.float32),

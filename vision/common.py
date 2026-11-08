@@ -10,7 +10,19 @@ from dataclasses import dataclass
 import numpy as np
 
 CLIP_SECONDS = 2.0      # length of one clip
-FRAMES_PER_CLIP = 8     # frames sampled per clip
+VIDEO_FRAMES = 16       # frames decoded per clip (VideoMAE input)
+FRAMES_PER_CLIP = 8     # frames the image model (CLIP) sees: every other decoded frame
+VIDEO_MODEL = "MCG-NJU/videomae-base-finetuned-kinetics"
+
+
+def sample_clip(src, start_s, end_s, crop=None):
+    """The 16 frames of one clip. Both datasets go through here so they are sampled identically."""
+    return read_frames(src, start_s, end_s, n=VIDEO_FRAMES, crop=crop)
+
+
+def clip_subset(frames16):
+    """The 8 frames the image model sees."""
+    return frames16[1::2]
 
 # Zero-shot prompts. Fixed before looking at any labels; do not tune them on the test set.
 FALL_PROMPTS = [
@@ -158,3 +170,41 @@ class ClipEncoder:
     def clip_embedding(self, frame_emb):
         m = frame_emb.mean(0)
         return m / (np.linalg.norm(m) + 1e-8)
+
+
+@dataclass
+class VideoEncoder:
+    """Frozen VideoMAE (ViT-B, fine-tuned on Kinetics-400): one embedding per 16-frame clip.
+
+    Unlike CLIP, which sees frames one at a time, VideoMAE attends across time, so its
+    embedding encodes motion. Feature = the model's own pooled representation (mean of
+    patch tokens + fc_norm, the input to its classifier), L2-normalised.
+    """
+    model_name: str = VIDEO_MODEL
+    device: str = "cuda"
+    batch_size: int = 8
+
+    def __post_init__(self):
+        import torch
+        from transformers import VideoMAEForVideoClassification, VideoMAEImageProcessor
+        if self.device == "cuda" and not torch.cuda.is_available():
+            self.device = "cpu"
+        self.torch = torch
+        self.processor = VideoMAEImageProcessor.from_pretrained(self.model_name)
+        self.model = VideoMAEForVideoClassification.from_pretrained(self.model_name).to(self.device).eval()
+        if self.device == "cuda":
+            self.model.half()
+
+    def encode(self, clips):
+        """clips: list of 16-frame PIL lists -> (n, d) float32 numpy."""
+        torch = self.torch
+        outs = []
+        for i in range(0, len(clips), self.batch_size):
+            x = self.processor([list(c) for c in clips[i:i + self.batch_size]], return_tensors="pt")["pixel_values"]
+            x = x.to(self.device, dtype=next(self.model.parameters()).dtype)
+            with torch.no_grad():
+                h = self.model.videomae(x)[0].mean(1)
+                if getattr(self.model, "fc_norm", None) is not None:
+                    h = self.model.fc_norm(h)
+            outs.append(torch.nn.functional.normalize(h.float(), dim=-1).cpu())
+        return torch.cat(outs).numpy()
