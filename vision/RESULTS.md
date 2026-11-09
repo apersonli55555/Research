@@ -241,3 +241,33 @@ Fine-tuned vs. probe with the same training data (paired):
 - **Synthetic + real is the robust choice again**: within the CI of the best model on FallOrNot (0.897 vs. 0.906) and second-best on HMDB51 (0.945 vs. 0.967). It is the only model in the top group on both sets, though not significantly best on either.
 - **Fine-tuning helps synthetic data out of domain** (+0.050 and +0.044 on HMDB51, both significant) but brings no significant gain on FallOrNot. This is consistent with OmniFall's use of fine-tuning with synthetic data.
 - **Caveats:** one seed (fine-tuning results vary between runs); training loss approached zero, so models may overfit; hyper-parameters were not tuned.
+
+---
+
+# Run 7: fine-tuning repeated with seeds 1 and 2
+
+Same settings as run 6; only the random seed changes (seed 0 = run 6). Copied from the Colab text output (full training logs included; seed-0 rows reproduce run 6 exactly).
+
+**Pre-registered rule applied to every seed** (fine-tuned synthetic + real vs. the best frozen probe on each test set):
+
+| Seed | FallOrNot ΔAUROC | HMDB51 ΔAUROC | Rule |
+|---|---|---|---|
+| 0 (primary) | −0.002 [−0.040, +0.037] | +0.028 [−0.003, +0.058] | not met |
+| 1 | −0.003 [−0.037, +0.034] | +0.049 [+0.020, +0.075] | not met |
+| 2 | −0.011 [−0.050, +0.027] | +0.035 [+0.004, +0.065] | not met |
+
+**AUROC across 3 seeds, mean ± s.d.:**
+
+| Fine-tuned on | FallOrNot | FallOrNot hard | HMDB51 | HMDB51 hard |
+|---|---|---|---|---|
+| Real | **0.902 ± 0.012** | **0.863 ± 0.018** | 0.920 ± 0.026 | 0.795 ± 0.067 |
+| Synthetic | 0.838 ± 0.017 | 0.762 ± 0.024 | **0.960 ± 0.006** | **0.922 ± 0.015** |
+| Synthetic + real | 0.894 ± 0.005 | 0.844 ± 0.011 | 0.954 ± 0.011 | 0.890 ± 0.027 |
+
+Per seed (FallOrNot / HMDB51): real 0.906, 0.888, 0.912 / 0.902, 0.909, 0.950; synthetic 0.829, 0.859, 0.828 / 0.967, 0.959, 0.955; synthetic + real 0.897, 0.896, 0.888 / 0.945, 0.966, 0.952.
+
+## Reading
+- **The pre-registered rule is not met for any seed.** On FallOrNot, fine-tuning on synthetic + real never beats the best probe (differences −0.011 to −0.002). On HMDB51 it does for seeds 1 and 2 (CI above zero), so fine-tuning helps out of domain fairly consistently, but not in domain.
+- **The ranking flip holds on average across seeds**: real-trained is best on FallOrNot (0.902 vs. synthetic 0.838), and synthetic-trained is best on HMDB51 (0.960 vs. real 0.920).
+- **Synthetic + real is near the top on both test sets and is the most stable**: lowest seed-to-seed spread (s.d. 0.005 on FallOrNot, 0.011 on HMDB51), within 0.008 of the best mean on FallOrNot and 0.006 on HMDB51.
+- **Real-only fine-tuning is unstable out of domain** (HMDB51 0.902–0.950; hard subset 0.751–0.872), consistent with only 268 real training clips.

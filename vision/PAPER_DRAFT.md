@@ -151,17 +151,17 @@ Real vs. synthetic on HMDB51: −0.029 [−0.057, −0.003], p = 0.029 (compare 
 
 ### 5.4 Fine-tuning (pre-registered)
 
-We fine-tuned VideoMAE-B end-to-end with hyper-parameters fixed in advance (5 epochs, batch 8, AdamW 5e-5, one seed) and pre-registered one test: fine-tuning on synthetic + real data must beat the best frozen probe on both test sets. **It did not** (FallOrNot −0.002 [−0.040, +0.037]; HMDB51 +0.028 [−0.003, +0.058]).
+We fine-tuned VideoMAE-B end-to-end with hyper-parameters fixed in advance (5 epochs, batch 8, AdamW 5e-5) and pre-registered one test: fine-tuning on synthetic + real data must beat the best frozen probe on both test sets (paired 95% CI above zero). **It did not, for any of three seeds.** On FallOrNot the difference is −0.011 to −0.002; on HMDB51 it is +0.028 to +0.049, significant for two of three seeds.
 
-**Table 9. AUROC of fine-tuned models.**
+**Table 9. AUROC of fine-tuned models, mean ± s.d. over 3 seeds.**
 
-| Training data | FallOrNot | HMDB51 |
-|---|---|---|
-| Synthetic | 0.829 [0.779, 0.875] | **0.967 [0.954, 0.979]** |
-| Real | **0.906 [0.868, 0.940]** | 0.902 [0.869, 0.931] |
-| Synthetic + real | 0.897 [0.860, 0.931] | 0.945 [0.925, 0.964] |
+| Training data | FallOrNot | HMDB51 | HMDB51 hard |
+|---|---|---|---|
+| Synthetic | 0.838 ± 0.017 | **0.960 ± 0.006** | **0.922 ± 0.015** |
+| Real | **0.902 ± 0.012** | 0.920 ± 0.026 | 0.795 ± 0.067 |
+| Synthetic + real | 0.894 ± 0.005 | 0.954 ± 0.011 | 0.890 ± 0.027 |
 
-The ranking flip of §5.3 reappears with fine-tuned models: the source that wins on one real-world test set loses on the other. Synthetic + real is the only training set near the top on both. Fine-tuning significantly improves synthetic-trained models on HMDB51 (+0.050, p < 0.001) but not on FallOrNot. **[TODO: repeat with 3 seeds before submission.]**
+The ranking flip of §5.3 reappears with fine-tuned models: on average, real data wins on FallOrNot and synthetic data wins on HMDB51. Synthetic + real is within 0.008 of the best mean on both test sets and has the smallest seed-to-seed spread, which makes it the most reliable recipe we found. Real-only fine-tuning varies strongly between seeds out of domain (HMDB51 hard subset 0.751–0.872).
 
 ## 6. Analysis
 

@@ -30,16 +30,17 @@ Data (clips, embeddings, labels, result files) lives on the owner's Google Drive
 
 ## Current state (keep this section updated)
 
-- **Done:** pipeline; 165 labelled test videos (255 clips, 102 falls); 268 labelled training clips (131 falls); results runs 1–6 (run 4 = real vs. synthetic vs. staged; run 5 = external HMDB51 test; run 6 = fine-tuning, pre-registered test not met); paper draft; OOPS! data-use question resolved by the owner (do not mention it in the paper or elsewhere).
+- **Done:** pipeline; 165 labelled test videos (255 clips, 102 falls); 268 labelled training clips (131 falls); results runs 1–7 (run 4 = real vs. synthetic vs. staged; run 5 = external HMDB51 test; runs 6–7 = fine-tuning over 3 seeds, pre-registered test not met); paper draft; OOPS! data-use question resolved by the owner (do not mention it in the paper or elsewhere).
 - **Citations checked** (by ChatGPT, applied by Claude): all fully specified references verified; still open: the Multiple Cameras Fall Dataset report [VERIFY], the OpenCLIP software citation, and a literature review for the domain-shift paragraph and for claims about how rarely real falls are evaluated.
-- **Key results:** see `vision/RESULTS.md`, runs 3, 3b, 4, 5 and 6.
+- **Key results:** see `vision/RESULTS.md`, runs 3, 3b, 4, 5, 6 and 7.
+- **Annotators:** the test set was labelled by a single annotator. No second-annotator labels have been provided; do not report inter-annotator agreement unless a second label file is analysed with `vision/agreement.py`.
 - **Labelling is finished.** The owner will not label more clips. Do not plan work that needs more labels from them.
 
 ## Remaining work, in priority order
 
 1. **Second real-world test source: done (HMDB51, run 5).** A third source of real accident falls (closer to OOPS! than HMDB51's movie falls) would further help separate "real vs. synthetic" from "which benchmark".
 2. **Second staged dataset.** UR Fall is saturated (AUROC 1.00 in-domain). The original Le2i page is offline; find a legitimate mirror or another staged dataset.
-3. **Fine-tuning experiment: done (run 6). Pre-registered rule NOT MET** (FallOrNot −0.002, p = 0.93; HMDB51 +0.028, p = 0.074). Report it as not met. Exploratory: the ranking flip also holds for fine-tuned models, and synthetic + real is the only model near the top on both test sets. One seed only.
+3. **Fine-tuning experiment: done (runs 6 and 7, 3 seeds). Pre-registered rule NOT MET for any seed.** Exploratory: the ranking flip holds on average across seeds; synthetic + real is near the top on both test sets with the smallest seed spread.
 4. **Proposed method** aimed at the hardest sub-problem: telling falls apart from other accidents (`real_hard` results). Explore why VideoMAE alone gains little from real data while CLIP temporal features gain a lot.
 5. **Related work and citations.** Every citation marked [VERIFY] must be checked against the real paper (authors, venue, year).
 6. **CVPR LaTeX version** of the paper with figures (`roc_real.png`, `learning_curve.png` on the owner's Drive).
