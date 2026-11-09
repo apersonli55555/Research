@@ -113,3 +113,54 @@ Learning curve, CLIP + VideoMAE (staged-only AUROC 0.759); mean ± s.d. over 10 
 - **Under staged training, the choice of encoder makes no significant difference** (all p ≥ 0.26).
 - **About 8 real falls match the 30 staged falls (60 clips)**, about 15 beat them, and AUROC is still rising at 131, so more real data would likely help further.
 - **Staged data helps only when real data is tiny** (4 real falls: 0.784 with staged vs. 0.725 without); from about 15 real falls on, it adds nothing.
+
+---
+
+# Run 4: real vs. synthetic vs. staged (OmniFall OF-Syn)
+
+**Synthetic data:** OmniFall OF-Syn, one 2 s clip per video: all 2,136 videos with a fall segment (clip centred on the fall) and 3,000 hash-sampled videos without one (5,136 clips). Same encoders (CLIP ViT-L-14 DataComp, VideoMAE-B K400), same probes, same real test set (255 clips, 165 videos, 102 falls). Copied from the Colab text output (exact).
+
+Real test set, AUROC [95% CI] (full table: `staged_to_real.md` on Drive):
+
+| Representation | Staged | Synthetic (2,136 falls) | Real (131 falls) | Synthetic + real |
+|---|---|---|---|---|
+| CLIP appearance | 0.723 [0.661, 0.788] | 0.728 [0.670, 0.783] | 0.732 [0.667, 0.793] | 0.800 [0.749, 0.855] |
+| CLIP temporal | 0.728 [0.667, 0.790] | 0.795 [0.738, 0.849] | 0.866 [0.818, 0.907] | 0.823 [0.767, 0.871] |
+| VideoMAE | 0.765 [0.711, 0.820] | 0.789 [0.734, 0.838] | 0.787 [0.732, 0.841] | 0.842 [0.796, 0.883] |
+| CLIP + VideoMAE | 0.759 [0.696, 0.820] | 0.814 [0.760, 0.864] | **0.899 [0.859, 0.934]** | 0.872 [0.827, 0.911] |
+
+Staged + synthetic: CLIP + VideoMAE 0.809 [0.758, 0.861] (no gain over synthetic alone).
+Falls vs. other accidents (`real_hard`), CLIP + VideoMAE: synthetic 0.772 [0.696, 0.844], real 0.860 [0.794, 0.914], synthetic + real 0.848 [0.786, 0.906].
+
+Head-to-head (paired video-level bootstrap):
+
+| Comparison | ΔAUROC | 95% CI | p |
+|---|---|---|---|
+| CLIP + VideoMAE: real (131) vs. synthetic (2,136) | **+0.085** | [+0.037, +0.137] | < 0.001 |
+| CLIP + VideoMAE: synthetic vs. staged | +0.054 | [+0.001, +0.108] | 0.045 |
+| CLIP + VideoMAE: synthetic + real vs. real | −0.027 | [−0.066, +0.010] | 0.166 |
+| CLIP temporal: real vs. synthetic | +0.071 | [+0.018, +0.129] | 0.008 |
+| CLIP temporal: synthetic vs. staged | +0.067 | [+0.011, +0.124] | 0.018 |
+| CLIP temporal: synthetic + real vs. real | −0.043 | [−0.092, +0.005] | 0.081 |
+| CLIP appearance: real vs. synthetic | +0.004 | [−0.069, +0.073] | 0.920 |
+| CLIP appearance: synthetic + real vs. real | +0.068 | [+0.008, +0.134] | 0.024 |
+| VideoMAE: real vs. synthetic | −0.002 | [−0.063, +0.056] | 0.959 |
+| VideoMAE: synthetic + real vs. real | +0.055 | [+0.008, +0.103] | 0.024 |
+
+Equal budget, CLIP + VideoMAE: k training falls + k non-falls from one source; AUROC on the real test set, mean ± s.d. over 10 random draws (3 draws above 60 falls; 1 at the full set):
+
+| Training falls | 4 | 8 | 15 | 30 | 60 | 125 | 131 | 250 | 500 | 1000 | 2000 | 2136 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Staged | 0.751 ± 0.020 | 0.745 ± 0.014 | 0.744 ± 0.009 | 0.752 ± 0.008 | 0.754 | – | – | – | – | – | – | – |
+| Synthetic | 0.723 ± 0.025 | 0.724 ± 0.020 | 0.742 ± 0.011 | 0.768 ± 0.024 | 0.786 ± 0.024 | 0.825 ± 0.018 | – | 0.818 ± 0.017 | 0.819 ± 0.004 | 0.818 ± 0.024 | 0.817 ± 0.006 | 0.812 |
+| Real | 0.670 ± 0.130 | 0.772 ± 0.028 | 0.789 ± 0.027 | 0.836 ± 0.018 | 0.862 ± 0.013 | 0.896 ± 0.003 | 0.895 | – | – | – | – | – |
+
+"Synthetic falls needed to match 131 real falls: not reached with the 2,136 available."
+
+## Reading
+- **Synthetic data plateaus.** AUROC rises to about 0.82 by 125 synthetic falls and stays there up to 2,136 (0.812–0.825). Real data keeps rising: 30 real falls (0.836 ± 0.018) already exceed every synthetic budget, and 131 real falls reach 0.899.
+- **Real beats synthetic at the full budget** (+0.085, p < 0.001) with 16× fewer falls, and on falls vs. other accidents (0.860 vs. 0.772).
+- **We replicate OmniFall's finding that synthetic beats staged** (+0.054, p = 0.045; staged stays flat at about 0.75 at every budget).
+- **Mixing synthetic into real data does not help the best representation** (−0.027, n.s.), but does help the weaker single representations (CLIP appearance +0.068, VideoMAE +0.055; both p = 0.024).
+- **With only a handful of falls, real data is unreliable** (4 falls: 0.670 ± 0.130, below staged and synthetic). Real overtakes both from about 8 falls.
+- **Main caveat: real training is in-domain.** Real training and test clips both come from OOPS!; synthetic and staged are out-of-domain. Part of the real-data advantage may be in-domain advantage. A second real-world test source (remaining work item 1) is needed before claiming real data is intrinsically worth more. Probes are linear on frozen features; OmniFall fine-tunes, which may use synthetic data better.
