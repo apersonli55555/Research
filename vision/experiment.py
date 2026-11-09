@@ -145,6 +145,7 @@ def main():
     ap.add_argument("--min-test-pos", type=int, default=20)
     ap.add_argument("--synthetic", default="", help="ofsyn.npz from ofsyn_prep.py (optional)")
     ap.add_argument("--external", default="", help="hmdb.npz from hmdb_prep.py: external real-world test (optional)")
+    ap.add_argument("--finetuned", nargs="*", default=[], help="scores_*.npz from finetune.py score (optional)")
     a = ap.parse_args()
     out = a.out or os.path.join(a.oops, "results")
     os.makedirs(out, exist_ok=True)
@@ -241,6 +242,7 @@ def main():
                 scores[f"synthetic_plus_real_probe_{kind}"] = s
 
     # ---- external real-world test (HMDB51): no training on it, clip score = max over windows ----
+    ext_scores, ye, ne, hard = {}, None, None, None
     if a.external:
         E = np.load(a.external)
         Fe, wc = E["frames"], E["win_clip"]
@@ -288,6 +290,46 @@ def main():
                 ka, kb = f"{a_}_probe_{kind}", f"{b_}_probe_{kind}"
                 if ka in ext_scores and kb in ext_scores:
                     res["paired_external"][f"{ka} vs {kb}"] = paired(ye, ext_scores[ka], ext_scores[kb], ne)
+
+    # ---- fine-tuned VideoMAE (finetune.py); pre-registered test: does fine-tuning on
+    #      synthetic+real beat the best probe on BOTH test sets? ----
+    res["preregistered"] = {}
+    for fpath in a.finetuned:
+        Z = np.load(fpath)
+        tag = "finetuned_" + str(Z["train_on"]).replace("+", "_plus_")
+        fmap = {(str(n), str(sg)): float(v) for n, sg, v in zip(Z["fon_name"], Z["fon_seg"], Z["fon_score"])}
+        keys = [(str(n), str(sg)) for n, sg in zip(gt, segt)]
+        have = np.array([k in fmap for k in keys])
+        if have.all():
+            scores[tag] = np.array([fmap[k] for k in keys])
+            res["real"][tag] = boot(yt, scores[tag], gt)
+        else:
+            print(f"WARNING {tag}: {int((~have).sum())} FallOrNot test clips missing; skipped")
+        if a.external and "hmdb_name" in Z.files:
+            hmap = dict(zip(map(str, Z["hmdb_name"]), Z["hmdb_score"].astype(float)))
+            if all(str(n) in hmap for n in ne):
+                ext_scores[tag] = np.array([hmap[str(n)] for n in ne])
+                res["external"][tag] = boot(ye, ext_scores[tag], ne)
+                res["external_hard"][tag] = boot(ye[hard], ext_scores[tag][hard], ne[hard])
+            else:
+                print(f"WARNING {tag}: some HMDB51 clips missing; skipped")
+    ft = "finetuned_synthetic_plus_real"
+    if ft in scores and a.external and ft in ext_scores:
+        best_fon = max((k for k in scores if "_probe_" in k), key=lambda k: res["real"][k]["auroc"][0])
+        best_ext = max((k for k in ext_scores if "_probe_" in k), key=lambda k: res["external"][k]["auroc"][0])
+        p1 = paired(yt, scores[ft], scores[best_fon], gt)
+        p2 = paired(ye, ext_scores[ft], ext_scores[best_ext], ne)
+        res["preregistered"] = {
+            "rule": "fine-tuned (synthetic+real) beats the best frozen probe on BOTH test sets, paired 95% CI above zero",
+            "fallornot": {"vs": best_fon, "diff_ci_p": p1},
+            "hmdb51": {"vs": best_ext, "diff_ci_p": p2},
+            "success": bool(p1[1] > 0 and p2[1] > 0)}
+        for src in ("synthetic", "real", "synthetic_plus_real"):
+            k = "finetuned_" + src
+            for dom_scores, yy_, gg_, key in ((scores, yt, gt, "paired"), (ext_scores, ye, ne, "paired_external")):
+                b = f"{src}_probe_clip+videomae"
+                if k in dom_scores and b in dom_scores:
+                    res.setdefault(key + "_ft", {})[f"{k} vs {b}"] = paired(yy_, dom_scores[k], dom_scores[b], gg_)
 
     # ---- head-to-head comparisons on the same test clips ----
     res["paired"] = {}
@@ -401,6 +443,19 @@ def main():
         for pt in lc["points"]:
             extra.append(f"| {pt['videos']} | {pt['falls']:.0f} | {pt['real']:.3f} ± {pt['real_sd']:.3f} | "
                          f"{pt['both']:.3f} ± {pt['both_sd']:.3f} |")
+    if res.get("preregistered"):
+        pr = res["preregistered"]
+        extra += ["", "PRE-REGISTERED TEST: " + pr["rule"], ""]
+        for dom in ("fallornot", "hmdb51"):
+            d_, lo, hi, pv = pr[dom]["diff_ci_p"]
+            extra.append(f"- {dom}: fine-tuned vs best probe ({pr[dom]['vs']}): {d_:+.3f} [{lo:+.3f}, {hi:+.3f}], p = {pv:.3f}")
+        extra.append(f"- RESULT: {'SUCCESS' if pr['success'] else 'NOT MET'}")
+    for key, title in (("paired_ft", "Fine-tuned vs probe with the same training data (FallOrNot)"),
+                       ("paired_external_ft", "Fine-tuned vs probe with the same training data (HMDB51)")):
+        if res.get(key):
+            extra += ["", title, "", "| Comparison | AUROC diff | 95% CI | p |", "|---|---|---|---|"]
+            for k, (d_, lo, hi, pv) in res[key].items():
+                extra.append(f"| {k} | {d_:+.3f} | [{lo:+.3f}, {hi:+.3f}] | {pv:.3f} |")
     if res.get("paired_external"):
         extra += ["", "Head-to-head on the EXTERNAL test set (HMDB51; nothing trained on it)", "",
                   "| Comparison | AUROC diff | 95% CI | p |", "|---|---|---|---|"]

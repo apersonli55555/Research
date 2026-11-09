@@ -39,10 +39,11 @@ Data (clips, embeddings, labels, result files) lives on the owner's Google Drive
 
 1. **Second real-world test source: done (HMDB51, run 5).** A third source of real accident falls (closer to OOPS! than HMDB51's movie falls) would further help separate "real vs. synthetic" from "which benchmark".
 2. **Second staged dataset.** UR Fall is saturated (AUROC 1.00 in-domain). The original Le2i page is offline; find a legitimate mirror or another staged dataset.
-3. **Proposed method** aimed at the hardest sub-problem: telling falls apart from other accidents (`real_hard` results). Explore why VideoMAE alone gains little from real data while CLIP temporal features gain a lot.
-4. **Related work and citations.** Every citation marked [VERIFY] must be checked against the real paper (authors, venue, year).
-5. **CVPR LaTeX version** of the paper with figures (`roc_real.png`, `learning_curve.png` on the owner's Drive).
-6. Optional, only if a second person volunteers: they label the existing test clips so we can report agreement (Cohen's κ). Never ask the owner for more labelling.
+3. **Fine-tuning experiment (in progress):** `vision/finetune.py`, pre-registered rule: fine-tuned VideoMAE on synthetic + real must beat the best frozen probe on BOTH FallOrNot and HMDB51 (paired 95% CI above zero). Report the outcome whatever it is; do not change the rule or hyper-parameters after seeing results.
+4. **Proposed method** aimed at the hardest sub-problem: telling falls apart from other accidents (`real_hard` results). Explore why VideoMAE alone gains little from real data while CLIP temporal features gain a lot.
+5. **Related work and citations.** Every citation marked [VERIFY] must be checked against the real paper (authors, venue, year).
+6. **CVPR LaTeX version** of the paper with figures (`roc_real.png`, `learning_curve.png` on the owner's Drive).
+7. Optional, only if a second person volunteers: they label the existing test clips so we can report agreement (Cohen's κ). Never ask the owner for more labelling.
 
 ## Rules (these protect the paper's credibility)
 

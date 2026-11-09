@@ -21,6 +21,7 @@ Open [`fall_cvpr.ipynb`](fall_cvpr.ipynb) in Google Colab: *File → Open notebo
 | `urfall_prep.py` | UR Fall clips: falls (side and ceiling cameras), pre-fall and everyday activity |
 | `ofsyn_prep.py` | OmniFall synthetic videos (OF-Syn): streams the 9.7 GB archive, one 2 s clip per video (fall-centred, or a hash-sampled non-fall), same encoders |
 | `hmdb_prep.py` | External real-world test: HMDB51 fall_floor clips vs. 20 hash-sampled clips per other class (and a pre-defined hard subset), 2 s windows every 1 s, clip score = max window |
+| `finetune.py` | Fine-tunes VideoMAE-B on synthetic, real or both (fixed hyper-parameters) and scores FallOrNot and HMDB51; stages are resumable. Pre-registered test reported by `experiment.py --finetuned` |
 | `experiment.py` | staged → real evaluation of four representations (CLIP appearance, CLIP temporal, VideoMAE, CLIP+VideoMAE): AUROC, AP and recall at 5% FPR with video-level bootstrap CIs, an ROC chart, and the worst errors |
 
 ## Data and licences
