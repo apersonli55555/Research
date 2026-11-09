@@ -8,7 +8,7 @@
 
 ## Abstract
 
-Video fall detectors are commonly trained and evaluated on falls staged by actors in laboratories, where reported accuracy approaches 100%. We ask whether that accuracy survives contact with real falls. We build **FallOrNot**, a real-world fall benchmark derived from the in-the-wild OOPS! dataset: a model-independent random sample of accident videos, labelled by a human for whether a person falls, with hard negatives (other accidents) and ordinary-activity negatives. Using frozen image (CLIP) and video (VideoMAE) encoders with linear probes, detectors trained on the staged UR Fall dataset reach 1.00 AUROC in-domain but only 0.72–0.77 on real falls, and catch 6–30% of falls at a 5% false-positive rate. The same probes trained on 131 real falls reach 0.90 AUROC (recall 43% at 5% FPR), and adding staged data on top brings no further gain. Motion-aware representations account for most of the improvement: a temporal CLIP representation rises from 0.73 to 0.87 with real data, while a static appearance representation stays near 0.73. Distinguishing falls from other accidents is the hardest sub-problem. Our results suggest that staged benchmarks substantially overstate readiness for deployment, and that small amounts of real data matter more than model choice. **[TODO: update with the second real-world source and the proposed method once available.]**
+Video fall detectors are commonly trained and evaluated on falls staged by actors in laboratories, where reported accuracy approaches 100%. We ask whether that accuracy survives contact with real falls. We build **FallOrNot**, a real-world fall benchmark derived from the in-the-wild OOPS! dataset: a model-independent random sample of accident videos, labelled by a human for whether a person falls, with hard negatives (other accidents) and ordinary-activity negatives. Using frozen image (CLIP) and video (VideoMAE) encoders with linear probes, detectors trained on the staged UR Fall dataset reach 1.00 AUROC in-domain but only 0.72–0.77 on real falls, and catch 6–30% of falls at a 5% false-positive rate. The same probes trained on 131 real falls reach 0.90 AUROC (recall 43% at 5% FPR), and adding staged data on top brings no further gain. Motion-aware representations account for most of the improvement: a temporal CLIP representation rises from 0.73 to 0.87 with real data, while a static appearance representation stays near 0.73. Distinguishing falls from other accidents is the hardest sub-problem. Our results suggest that staged benchmarks substantially overstate readiness for deployment, and that small amounts of real data matter more than model choice. With OmniFall's 12k synthetic videos, synthetic training plateaus near 0.82 AUROC, and 30 real falls outperform all 2,136 synthetic falls. **[TODO: update with the second real-world source and the proposed method once available.]**
 
 ## 1. Introduction
 
@@ -105,6 +105,32 @@ Real falls differ: they are sudden, partly occluded, filmed from arbitrary viewp
 | Staged + real | 0.784 ± 0.014 | 0.788 ± 0.011 | 0.815 ± 0.032 | 0.827 ± 0.016 | 0.866 ± 0.015 | 0.890 ± 0.005 | 0.892 |
 
 **[TODO]** Render Figure 1 (`roc_real.png`) and Figure 2 (`learning_curve.png`) for the paper.
+
+### 5.2 Real vs. synthetic vs. staged training data
+
+Synthetic falls are OmniFall's OF-Syn (2,136 fall clips, 3,000 non-fall clips; one 2 s clip per video, same encoders and probes).
+
+**Table 6. AUROC on the real test set, CLIP + VideoMAE, by training source.**
+
+| Training data | AUROC | Recall @ 5% FPR |
+|---|---|---|
+| Staged (UR Fall, 60 fall clips) | 0.759 [0.696, 0.820] | 0.167 [0.098, 0.375] |
+| Synthetic (OF-Syn, 2,136 falls) | 0.814 [0.760, 0.864] | 0.275 [0.149, 0.479] |
+| Staged + synthetic | 0.809 [0.758, 0.861] | 0.314 [0.128, 0.510] |
+| Real (131 falls) | **0.899 [0.859, 0.934]** | 0.431 [0.325, 0.670] |
+| Synthetic + real | 0.872 [0.827, 0.911] | 0.480 [0.323, 0.667] |
+
+Real vs. synthetic: +0.085 [+0.037, +0.137], p < 0.001. Synthetic vs. staged: +0.054 [+0.001, +0.108], p = 0.045. Synthetic + real vs. real: −0.027 [−0.066, +0.010], p = 0.17.
+
+**Table 7. Equal budget** (k falls + k non-falls from one source; mean ± s.d. over random draws).
+
+| Training falls | 4 | 8 | 15 | 30 | 60 | 125 | 500 | 2,136 |
+|---|---|---|---|---|---|---|---|---|
+| Staged | 0.751 ± 0.020 | 0.745 ± 0.014 | 0.744 ± 0.009 | 0.752 ± 0.008 | 0.754 | – | – | – |
+| Synthetic | 0.723 ± 0.025 | 0.724 ± 0.020 | 0.742 ± 0.011 | 0.768 ± 0.024 | 0.786 ± 0.024 | 0.825 ± 0.018 | 0.819 ± 0.004 | 0.812 |
+| Real | 0.670 ± 0.130 | 0.772 ± 0.028 | 0.789 ± 0.027 | 0.836 ± 0.018 | 0.862 ± 0.013 | 0.896 ± 0.003 | – | – |
+
+**Findings.** (i) Synthetic data plateaus near 0.82 AUROC from about 125 falls up to 2,136, while real data keeps improving: 30 real falls (0.836) already exceed every synthetic budget. (ii) We replicate OmniFall's result that synthetic beats staged training. (iii) Adding synthetic data to real data does not help the best representation, though it helps weaker single representations (CLIP appearance +0.068, VideoMAE +0.055, both p = 0.024). (iv) With very few falls (4) real data is unreliable; real overtakes both other sources from about 8 falls. **Caveat:** real training is in-domain (same OOPS! source as the test set) while synthetic and staged are out-of-domain; a second real-world source is needed to separate "real" from "in-domain" **[TODO]**. Our probes are linear on frozen features; OmniFall fine-tunes end-to-end, which may exploit synthetic data better.
 
 ## 6. Analysis
 
