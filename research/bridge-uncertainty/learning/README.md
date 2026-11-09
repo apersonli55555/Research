@@ -17,4 +17,4 @@ Everything runs on a simulated 3-mass "bridge" with known true answers, and each
 - Answer the 💬 questions in your lab notebook in your own words.
 - Don't read the `check_*` functions in `labkit.py` until you've passed or given up on an exercise.
 
-All labs were verified to pass with a reference solution, which is intentionally not included.
+**`oma_lab_worked.ipynb`** is the fully worked version, with every solution explained line by line, answer sketches for the 💬 questions, and all figures. Try each exercise first, use the worked version when stuck, then redo the lab from memory. Being able to rebuild it without looking is what a judge or mentor will test.
