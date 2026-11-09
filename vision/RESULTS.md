@@ -164,3 +164,43 @@ Equal budget, CLIP + VideoMAE: k training falls + k non-falls from one source; A
 - **Mixing synthetic into real data does not help the best representation** (−0.027, n.s.), but does help the weaker single representations (CLIP appearance +0.068, VideoMAE +0.055; both p = 0.024).
 - **With only a handful of falls, real data is unreliable** (4 falls: 0.670 ± 0.130, below staged and synthetic). Real overtakes both from about 8 falls.
 - **Main caveat: real training is in-domain.** Real training and test clips both come from OOPS!; synthetic and staged are out-of-domain. Part of the real-data advantage may be in-domain advantage. A second real-world test source (remaining work item 1) is needed before claiming real data is intrinsically worth more. Probes are linear on frozen features; OmniFall fine-tunes, which may use synthetic data better.
+
+---
+
+# Run 5: external real-world test on HMDB51 (nothing trained on it)
+
+**External test:** HMDB51 (CC BY 4.0), split-1 parquet files: all 100 `fall_floor` clips vs. 20 hash-sampled clips from each other class (1,000), 2 s windows every 1 s (2,740 windows), clip score = max window. Hard subset (fixed in advance): falls vs. cartwheel, flic_flac, somersault, handstand, dive, jump, sit, situp, pushup, stand, climb (320 clips). Training sets unchanged (staged UR Fall; synthetic OF-Syn 2,136 falls; real OOPS! training pool 131 falls). Copied from the Colab text output.
+
+AUROC [95% CI] on HMDB51:
+
+| Representation | Zero-shot | Staged | Synthetic | Real (OOPS!) | Synthetic + real |
+|---|---|---|---|---|---|
+| CLIP appearance | 0.834 [0.802, 0.866] | 0.783 [0.746, 0.818] | 0.813 [0.773, 0.849] | 0.626 [0.575, 0.678] | 0.803 [0.761, 0.842] |
+| CLIP temporal | – | 0.887 [0.854, 0.915] | 0.866 [0.826, 0.905] | 0.825 [0.782, 0.870] | 0.842 [0.798, 0.887] |
+| VideoMAE | – | 0.664 [0.609, 0.724] | 0.877 [0.844, 0.908] | 0.779 [0.732, 0.828] | 0.901 [0.873, 0.928] |
+| CLIP + VideoMAE | – | 0.899 [0.870, 0.926] | **0.917 [0.892, 0.943]** | 0.888 [0.850, 0.925] | 0.901 [0.869, 0.932] |
+
+Hard subset (falls vs. acrobatic / ground-contact actions), AUROC: CLIP + VideoMAE staged 0.833 [0.783, 0.877], synthetic 0.880 [0.843, 0.915], real 0.777 [0.718, 0.833], synthetic + real 0.855 [0.811, 0.896]; VideoMAE synthetic + real 0.878 [0.838, 0.911]; CLIP appearance real 0.365 [0.305, 0.425] (below chance).
+
+Head-to-head on HMDB51 (paired bootstrap by clip):
+
+| Comparison | ΔAUROC | 95% CI | p |
+|---|---|---|---|
+| CLIP + VideoMAE: real vs. synthetic | −0.029 | [−0.057, −0.003] | 0.029 |
+| CLIP + VideoMAE: real vs. staged | −0.011 | [−0.048, +0.027] | 0.566 |
+| CLIP + VideoMAE: synthetic vs. staged | +0.018 | [−0.010, +0.048] | 0.211 |
+| CLIP + VideoMAE: synthetic + real vs. real | +0.013 | [−0.010, +0.036] | 0.264 |
+| CLIP temporal: real vs. synthetic | −0.040 | [−0.080, −0.002] | 0.041 |
+| CLIP temporal: real vs. staged | −0.062 | [−0.106, −0.016] | 0.006 |
+| VideoMAE: real vs. synthetic | −0.098 | [−0.153, −0.046] | < 0.001 |
+| VideoMAE: synthetic vs. staged | +0.214 | [+0.153, +0.277] | < 0.001 |
+| VideoMAE: synthetic + real vs. real | +0.122 | [+0.074, +0.172] | < 0.001 |
+| CLIP appearance: real vs. synthetic | −0.187 | [−0.236, −0.137] | < 0.001 |
+| CLIP appearance: synthetic + real vs. real | +0.176 | [+0.133, +0.220] | < 0.001 |
+
+## Reading
+- **The real-data advantage does not transfer.** On FallOrNot (in-domain for the real training data) real beats synthetic by +0.085 (p < 0.001); on HMDB51 real is slightly *worse* than synthetic (−0.029, p = 0.029) and no better than staged. The run-4 headline ("30 real falls beat 2,136 synthetic falls") holds only in-domain and must not be stated as a general claim.
+- **Rankings flip between real-world test sets.** Synthetic is best on HMDB51, real is best on FallOrNot. Which training source looks best depends on which "real-world" benchmark is used.
+- **HMDB51 falls look more like staged falls than OOPS! falls do.** Staged probes score 0.899 on HMDB51 but 0.759 on FallOrNot, and zero-shot CLIP 0.834 vs. 0.717. HMDB51 `fall_floor` contains many movie and trimmed, clearly framed falls, so it is a different, likely easier, kind of "real" than OOPS! accidents.
+- **Combining synthetic and real is the most robust choice**: it is within the confidence interval of the best source on both test sets (FallOrNot 0.872 vs. 0.899, n.s.; HMDB51 0.901 vs. 0.917).
+- **Synthetic data rescues the weaker representations out of domain** (VideoMAE +0.214 over staged; CLIP appearance trained on OOPS! real data falls to 0.626).
