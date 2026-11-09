@@ -296,7 +296,8 @@ def main():
     res["preregistered"] = {}
     for fpath in a.finetuned:
         Z = np.load(fpath)
-        tag = "finetuned_" + str(Z["train_on"]).replace("+", "_plus_")
+        seed = int(Z["seed"]) if "seed" in Z.files else 0
+        tag = "finetuned_" + str(Z["train_on"]).replace("+", "_plus_") + ("" if seed == 0 else f"_s{seed}")
         fmap = {(str(n), str(sg)): float(v) for n, sg, v in zip(Z["fon_name"], Z["fon_seg"], Z["fon_score"])}
         keys = [(str(n), str(sg)) for n, sg in zip(gt, segt)]
         have = np.array([k in fmap for k in keys])
@@ -420,6 +421,30 @@ def main():
     for k, sc in scores.items():
         res["real_hard"][k] = boot(yt[ev], sc[ev], gt[ev])
 
+    # ---- robustness across fine-tuning seeds (the pre-registered test above is seed 0) ----
+    import re
+    bases = sorted({re.sub(r"_s\d+$", "", k) for k in list(scores) + list(ext_scores) if k.startswith("finetuned_")})
+    if any(re.search(r"_s\d+$", k) for k in list(scores) + list(ext_scores)):
+        res["seeds"] = {}
+        for b in bases:
+            for dom, dd in (("real", res["real"]), ("real_hard", res["real_hard"]), ("external", res.get("external", {})),
+                            ("external_hard", res.get("external_hard", {}))):
+                if dd is None:
+                    continue
+                vals = [v["auroc"][0] for k, v in dd.items() if re.fullmatch(re.escape(b) + r"(_s\d+)?", k)]
+                if vals:
+                    res["seeds"].setdefault(b, {})[dom] = dict(n=len(vals), mean=float(np.mean(vals)),
+                                                               sd=float(np.std(vals, ddof=1)) if len(vals) > 1 else 0.0,
+                                                               values=vals)
+        if "preregistered" in res and res["preregistered"]:
+            per_seed = []
+            for k in [k for k in scores if re.fullmatch(r"finetuned_synthetic_plus_real(_s\d+)?", k)]:
+                if k in ext_scores:
+                    p1 = paired(yt, scores[k], scores[res["preregistered"]["fallornot"]["vs"]], gt)
+                    p2 = paired(ye, ext_scores[k], ext_scores[res["preregistered"]["hmdb51"]["vs"]], ne)
+                    per_seed.append(dict(model=k, fallornot=p1, hmdb51=p2, success=bool(p1[1] > 0 and p2[1] > 0)))
+            res["preregistered"]["per_seed"] = per_seed
+
     # ---- outputs ----
     with open(os.path.join(out, "staged_to_real.json"), "w") as fh:
         json.dump(res, fh, indent=1)
@@ -450,6 +475,18 @@ def main():
             d_, lo, hi, pv = pr[dom]["diff_ci_p"]
             extra.append(f"- {dom}: fine-tuned vs best probe ({pr[dom]['vs']}): {d_:+.3f} [{lo:+.3f}, {hi:+.3f}], p = {pv:.3f}")
         extra.append(f"- RESULT: {'SUCCESS' if pr['success'] else 'NOT MET'}")
+        if pr.get("per_seed"):
+            extra += ["", "Same rule for every fine-tuning seed (robustness):", ""]
+            for ps in pr["per_seed"]:
+                f1, f2 = ps["fallornot"], ps["hmdb51"]
+                extra.append(f"- {ps['model']}: FallOrNot {f1[0]:+.3f} [{f1[1]:+.3f}, {f1[2]:+.3f}]; "
+                             f"HMDB51 {f2[0]:+.3f} [{f2[1]:+.3f}, {f2[2]:+.3f}] -> {'met' if ps['success'] else 'not met'}")
+    if res.get("seeds"):
+        extra += ["", "Fine-tuned models across seeds: AUROC mean ± s.d. (n seeds)", "",
+                  "| Model | FallOrNot | FallOrNot hard | HMDB51 | HMDB51 hard |", "|---|---|---|---|---|"]
+        for b, dd in res["seeds"].items():
+            cell = lambda d: f"{dd[d]['mean']:.3f} ± {dd[d]['sd']:.3f} ({dd[d]['n']})" if d in dd else "–"
+            extra.append(f"| {b} | {cell('real')} | {cell('real_hard')} | {cell('external')} | {cell('external_hard')} |")
     for key, title in (("paired_ft", "Fine-tuned vs probe with the same training data (FallOrNot)"),
                        ("paired_external_ft", "Fine-tuned vs probe with the same training data (HMDB51)")):
         if res.get(key):

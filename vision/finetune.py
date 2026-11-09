@@ -160,6 +160,11 @@ def prepare_syn(a):
     print(f"syn store: {len(store.items)} clips")
 
 
+def seed_suffix(seed):
+    """Seed 0 keeps the original file names (run 6); other seeds get _s<seed>."""
+    return "" if seed == 0 else f"_s{seed}"
+
+
 # ----------------------------------------------------------------------------- model
 def load_model(device, path=None):
     import torch
@@ -183,7 +188,7 @@ def to_tensor(frames, mean, std, flip=False):
 
 def train(a):
     import torch
-    out = os.path.join(a.work, "model_" + a.train_on.replace("+", "_"))
+    out = os.path.join(a.work, "model_" + a.train_on.replace("+", "_") + seed_suffix(a.seed))
     if os.path.exists(os.path.join(out, "config.json")) and not a.force:
         print(f"{out} already trained; skipping (use --force to retrain)")
         return
@@ -225,7 +230,7 @@ def train(a):
 def score(a):
     import torch
     dev = "cuda" if torch.cuda.is_available() else "cpu"
-    tag = a.train_on.replace("+", "_")
+    tag = a.train_on.replace("+", "_") + seed_suffix(a.seed)
     if os.path.exists(os.path.join(a.work, f"scores_{tag}.npz")) and not a.force and not a.limit:
         print(f"scores_{tag}.npz already exists; skipping (use --force to rescore)")
         return
@@ -272,7 +277,7 @@ def score(a):
                         break
         res.update(hmdb_name=np.array(list(sc)), hmdb_score=np.array(list(sc.values()), np.float32))
     out = os.path.join(a.work, f"scores_{tag}.npz")
-    np.savez(out, train_on=np.array(a.train_on), **res)
+    np.savez(out, train_on=np.array(a.train_on), seed=np.array(a.seed), **res)
     print("saved", out, {k: v.shape for k, v in res.items()})
 
 
