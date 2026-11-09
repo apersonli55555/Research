@@ -12,7 +12,7 @@ figcaption{font-family:"DejaVu Sans",Arial,sans-serif;font-size:7.9pt;color:#333
 .small{font-size:8.3pt;color:#52514e}
 </style></head><body>
 <h1>Do bridge-monitoring error bars survive an unseen season? Physics-guided, conformally calibrated temperature compensation on the KW51 railway bridge</h1>
-<div class="by">[Your name] · [High school], Austin, TX · [email] · Code and data pipeline: [GitHub link] · Draft, November 2026</div>
+<div class="by">Ethan Li · High school student, Austin, TX · poggies55555@gmail.com · November 2026<br>Code and results: github.com/apersonli55555/fall-detector (folder research/bridge-uncertainty)</div>
 
 <h2>Problem</h2>
 <p>Bridges are monitored by tracking natural frequencies, which fall when damage lowers stiffness. Temperature shifts them by a similar amount, so alarms depend on a temperature-compensated uncertainty band. Conformal prediction guarantees coverage only if past and future data are exchangeable; seasonal data are not. <b>How much does coverage degrade when a model must predict a season it has not seen, and does a physics prior help?</b></p>
@@ -34,5 +34,5 @@ figcaption{font-family:"DejaVu Sans",Arial,sans-serif;font-size:7.9pt;color:#333
 
 <h2>Limitations and next steps</h2>
 <p>This is one bridge and one season, so the rolling windows overlap. The retrofit was a large stiffening, not damage, so a minimum-detectable-shift study is needed. Next: a cross-season prior for the cold term, a second structure (LUMO), and a physics-informed neural-network residual. <b>I would value feedback on the physical cause of the cold stiffening and on evaluation design.</b></p>
-<p class="small">All numbers are reproducible from the project repository. Prior work on KW51 (Maes et al. 2022; Wittenberg et al. 2025; Neumann et al. 2025–26) covers environmental compensation and monitoring. In my search I did not find conformal coverage evaluated under seasonal shift for this dataset.</p>
+<p class="small">All numbers are reproducible from the project repository. The code was developed with the help of an AI coding assistant. Prior work on KW51 (Maes et al. 2022; Wittenberg et al. 2025; Neumann et al. 2025–26) covers environmental compensation and monitoring. In my search I did not find conformal coverage evaluated under seasonal shift for this dataset.</p>
 </body></html>
