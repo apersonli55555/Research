@@ -271,3 +271,18 @@ Per seed (FallOrNot / HMDB51): real 0.906, 0.888, 0.912 / 0.902, 0.909, 0.950; s
 - **The ranking flip holds on average across seeds**: real-trained is best on FallOrNot (0.902 vs. synthetic 0.838), and synthetic-trained is best on HMDB51 (0.960 vs. real 0.920).
 - **Synthetic + real is near the top on both test sets and is the most stable**: lowest seed-to-seed spread (s.d. 0.005 on FallOrNot, 0.011 on HMDB51), within 0.008 of the best mean on FallOrNot and 0.006 on HMDB51.
 - **Real-only fine-tuning is unstable out of domain** (HMDB51 0.902–0.950; hard subset 0.751–0.872), consistent with only 268 real training clips.
+
+---
+
+# Run 8: second annotator (inter-annotator agreement)
+
+**Setup:** a second person (a volunteer, not an author) labelled test clips with `Labeler(..., second_annotator=True)`: only the test clips the first annotator had labelled, in random order, without seeing the first annotator's labels, into a separate file (`labels_friend.csv`). Compared with `vision/agreement.py`. Copied from the Colab text output (counts and statistics verified to be mutually consistent).
+
+- Test clips labelled by both: 100; compared (fall / not fall by both): 98; involving "unsure": 2.
+- First annotator fall & second fall: 61 | first fall & second not: 4 | first not & second fall: 16 | both not: 17.
+- Raw agreement: 0.796. **Cohen's κ = 0.498 [95% CI 0.297, 0.678]** (moderate agreement).
+- Disagreements are asymmetric: in 16 of 20 the second annotator called a fall where the first did not (first annotator: 65 falls of 98; second: 77 of 98).
+
+## Reading
+- Agreement on "did a person fall?" is only moderate. Most disagreements are clips the first annotator judged not a fall and the second judged a fall, which suggests the boundary cases (near-falls, partial falls, sitting or being knocked down) are interpreted differently. The fall definition needs sharper written guidance, and test labels carry real uncertainty.
+- **[TODO]** Robustness check: re-run the main comparisons with the second annotator's labels on these 100 test videos (`experiment.py --test-labels labels_friend.csv`) to see whether the conclusions change.
