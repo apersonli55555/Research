@@ -33,7 +33,7 @@ Data (clips, embeddings, labels, result files) lives on the owner's Google Drive
 - **Done:** pipeline; 165 labelled test videos (255 clips, 102 falls); 268 labelled training clips (131 falls); results runs 1–7 (run 4 = real vs. synthetic vs. staged; run 5 = external HMDB51 test; runs 6–7 = fine-tuning over 3 seeds, pre-registered test not met); paper draft; OOPS! data-use question resolved by the owner (do not mention it in the paper or elsewhere).
 - **Citations checked** (by ChatGPT, applied by Claude): all fully specified references verified; still open: the Multiple Cameras Fall Dataset report [VERIFY], the OpenCLIP software citation, and a literature review for the domain-shift paragraph and for claims about how rarely real falls are evaluated.
 - **Key results:** see `vision/RESULTS.md`, runs 3, 3b, 4, 5, 6 and 7.
-- **Annotators:** a second, independent annotator labelled 100 of the test videos (run 8): raw agreement 0.796, Cohen's κ = 0.498 [0.297, 0.678], moderate; disagreements mostly second annotator = fall, first = not fall. Report this honestly as a limitation.
+- **Annotators:** a second, independent annotator labelled 100 of the test videos (run 8): raw agreement 0.796, Cohen's κ = 0.498 [0.297, 0.678], moderate; disagreements mostly second annotator = fall, first = not fall. Report this honestly as a limitation. Run 9 re-grades the test set with the second annotator's labels: main findings hold except that the in-domain real-over-synthetic advantage is no longer significant.
 - **Labelling is finished.** The owner will not label more clips. Do not plan work that needs more labels from them.
 
 ## Remaining work, in priority order

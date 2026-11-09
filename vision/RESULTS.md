@@ -286,3 +286,31 @@ Per seed (FallOrNot / HMDB51): real 0.906, 0.888, 0.912 / 0.902, 0.909, 0.950; s
 ## Reading
 - Agreement on "did a person fall?" is only moderate. Most disagreements are clips the first annotator judged not a fall and the second judged a fall, which suggests the boundary cases (near-falls, partial falls, sitting or being knocked down) are interpreted differently. The fall definition needs sharper written guidance, and test labels carry real uncertainty.
 - **[TODO]** Robustness check: re-run the main comparisons with the second annotator's labels on these 100 test videos (`experiment.py --test-labels labels_friend.csv`) to see whether the conclusions change.
+
+---
+
+# Run 9: robustness — test set graded with the second annotator's labels
+
+**Setup:** `experiment.py --test-labels labels_friend.csv`: the FallOrNot test set becomes the 99 videos the second annotator labelled fall / not fall (152 clips, 78 falls), graded with their labels; training labels unchanged. HMDB51 rows are unaffected (identical to run 5). Fine-tuned FallOrNot rows were skipped because one clip in this subset (a clip the first annotator marked "unsure") has no fine-tuned score. Copied from the Colab text output.
+
+FallOrNot (second annotator's labels), AUROC [95% CI]:
+
+| Representation | Staged | Synthetic | Real | Synthetic + real |
+|---|---|---|---|---|
+| CLIP appearance | 0.708 [0.637, 0.776] | 0.697 [0.619, 0.771] | 0.694 [0.622, 0.771] | 0.743 [0.663, 0.817] |
+| CLIP temporal | 0.688 [0.609, 0.769] | 0.733 [0.659, 0.805] | 0.788 [0.717, 0.854] | 0.736 [0.659, 0.805] |
+| VideoMAE | 0.698 [0.618, 0.766] | 0.710 [0.631, 0.785] | 0.678 [0.602, 0.756] | 0.739 [0.657, 0.811] |
+| CLIP + VideoMAE | 0.714 [0.638, 0.791] | 0.731 [0.653, 0.800] | **0.797 [0.732, 0.863]** | 0.746 [0.668, 0.812] |
+
+Zero-shot CLIP 0.664 [0.591, 0.734]. Staged in-domain (cross-validation) unchanged at 1.000.
+
+Head-to-head, CLIP + VideoMAE (second annotator's labels): real vs. staged **+0.083 [+0.010, +0.157], p = 0.024**; real vs. synthetic +0.065 [−0.006, +0.137], p = 0.079; synthetic vs. staged +0.017 [−0.053, +0.091], p = 0.656; synthetic + real vs. real −0.051 [−0.107, +0.007], p = 0.083. CLIP temporal: real vs. staged **+0.100 [+0.020, +0.182], p = 0.010**.
+
+Learning curve (CLIP + VideoMAE; staged-only 0.714): 4 falls 0.673 ± 0.082; 8: 0.709 ± 0.045; 15: 0.756 ± 0.036; 30: 0.759 ± 0.017; 60: 0.785 ± 0.023; 116: 0.800 ± 0.008; 131: 0.797.
+
+Equal budget (CLIP + VideoMAE): synthetic peaks at 0.766 ± 0.022 (125 falls) and ends at 0.732 (2,136); real reaches 0.795 ± 0.007 (125) and 0.795 (131). "Synthetic falls needed to match 131 real falls: not reached."
+
+## Reading
+- **Holds under the second annotator:** the staged-to-real gap (1.00 in-domain vs. ≤ 0.80 on real falls); real-trained beating staged-trained (+0.083, p = 0.024; CLIP temporal +0.100, p = 0.010); the learning-curve shape (about 8 real falls match the staged set, 15 exceed it); synthetic data plateauing below real at equal budget.
+- **Weaker under the second annotator:** the in-domain real-over-synthetic advantage shrinks to +0.065 and is no longer significant (p = 0.079), and synthetic + real is not significantly different from real.
+- **Absolute numbers depend on the annotator:** the best AUROC drops from 0.899 to 0.797. The second annotator labels more borderline events as falls, which are harder to detect. Reported numbers should be read as specific to the labelling definition.

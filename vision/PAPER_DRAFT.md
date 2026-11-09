@@ -182,7 +182,7 @@ The ranking flip of §5.3 reappears with fine-tuned models: on average, real dat
 - **In-distribution training.** Real training and test clips both come from OOPS!, so part of the real-data gain is ordinary in-domain advantage. **[TODO: evaluate on a second real-world source.]**
 - **Population.** OOPS! shows mostly younger people in sports and everyday mishaps, not older adults at home, the main use case.
 - **Model-selected training pool** (top CLIP zero-shot scores) may favour CLIP-friendly falls; the test set is not affected.
-- **Single annotator.** Inter-annotator agreement has not been measured.
+- **Label uncertainty.** A second, independent annotator labelled 100 test videos: raw agreement 0.796, Cohen's κ = 0.498 [0.297, 0.678] (moderate), with disagreements concentrated on borderline events that the second annotator called falls. Graded with the second annotator's labels (99 videos), the staged-to-real gap, the advantage of real over staged training (+0.083, p = 0.024), the learning-curve shape and the synthetic plateau all hold, but absolute AUROC is about 0.10 lower and the in-domain advantage of real over synthetic training is no longer significant (+0.065, p = 0.079).
 - **One staged dataset**, which is saturated. **[TODO: add Le2i or another, if obtainable.]**
 - **Frozen encoders and linear probes only.** Fine-tuned models may close more of the gap; the comparison isolates the effect of data.
 
