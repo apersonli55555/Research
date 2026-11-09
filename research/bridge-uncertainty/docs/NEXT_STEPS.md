@@ -11,6 +11,10 @@ Tick each box. Keep a dated lab notebook (paper or a Google Doc) and write every
 - [ ] **Send the LUMO email** (`docs/lumo_data_request_email.md`) from your own email address. This is a backup second structure.
 - [ ] **Find your fair's dates** (GARSEF registration and deadlines) and write them at the top of your notebook.
 
+## Week 1½: the learning lab (about 5–6 hours, spread over the week)
+- [ ] Work through `learning/oma_lab.ipynb` (5 short labs; see `learning/README.md`). It teaches you how natural frequencies are extracted from raw vibrations, which you'll need for Z24, and lets you reproduce your core finding on a simulated bridge.
+- [ ] Bring me your answers to questions Q6–Q8.
+
 ## Week 2: your own experiment (about 6–8 hours)
 - [ ] **Open `scripts/student_min_detectable_shift.py`** and complete TODO 1 and TODO 2. They're short. Run it.
 - [ ] Complete TODO 3 (more models and modes) and TODO 4 (the figure).

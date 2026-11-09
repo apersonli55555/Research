@@ -8,3 +8,4 @@ results/rolling*.log
 results/robust.log
 results/*.shard*
 results/*.log
+learning/__pycache__/
