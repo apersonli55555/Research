@@ -144,6 +144,7 @@ def main():
     ap.add_argument("--out", default=None)
     ap.add_argument("--min-test-pos", type=int, default=20)
     ap.add_argument("--synthetic", default="", help="ofsyn.npz from ofsyn_prep.py (optional)")
+    ap.add_argument("--external", default="", help="hmdb.npz from hmdb_prep.py: external real-world test (optional)")
     a = ap.parse_args()
     out = a.out or os.path.join(a.oops, "results")
     os.makedirs(out, exist_ok=True)
@@ -239,6 +240,55 @@ def main():
                 res["real"][f"synthetic_plus_real_probe_{kind}"] = boot(yt, s, gt)
                 scores[f"synthetic_plus_real_probe_{kind}"] = s
 
+    # ---- external real-world test (HMDB51): no training on it, clip score = max over windows ----
+    if a.external:
+        E = np.load(a.external)
+        Fe, wc = E["frames"], E["win_clip"]
+        Ve = E["video"] if "video" in E.files else None
+        ye, he, ne = E["clip_label"], E["clip_hard"].astype(bool), E["clip_name"]
+        nclip = len(ye)
+
+        def clip_max(w):
+            out_ = np.full(nclip, -np.inf)
+            np.maximum.at(out_, wc, w)
+            return out_
+        hard = he | (ye == 1)
+        res["external"], res["external_hard"], ext_scores = {}, {}, {}
+        res["n"].update(external_clips=int(nclip), external_falls=int(ye.sum()),
+                        external_hard_clips=int(hard.sum()))
+        ext_scores["zero_shot"] = clip_max(E["margin"])
+        train_sets = {"staged": (Fs, Vs, ys)}
+        if Y is not None:
+            train_sets["synthetic"] = (Fy, Vy, yy)
+        if have_real:
+            train_sets["real"] = (np.array([t[0] for t in train]),
+                                  np.array([t[5] for t in train]) if videos else None,
+                                  np.array([t[1] for t in train]))
+        if Y is not None and have_real:
+            r_ = train_sets["real"]
+            train_sets["synthetic_plus_real"] = (np.concatenate([Fy, r_[0]]),
+                                                 np.concatenate([Vy, r_[1]]) if (Vy is not None and r_[1] is not None) else None,
+                                                 np.concatenate([yy, r_[2]]))
+        for kind in reps:
+            if "videomae" in kind and Ve is None:
+                continue
+            Xe = featurize(Fe, kind, Ve)
+            for src, (F_, V_, y_) in train_sets.items():
+                if "videomae" in kind and V_ is None:
+                    continue
+                w = probe().fit(featurize(F_, kind, V_), y_).predict_proba(Xe)[:, 1]
+                ext_scores[f"{src}_probe_{kind}"] = clip_max(w)
+        for k, sc in ext_scores.items():
+            res["external"][k] = boot(ye, sc, ne)
+            res["external_hard"][k] = boot(ye[hard], sc[hard], ne[hard])
+        res["paired_external"] = {}
+        for kind in reps:
+            for a_, b_ in (("real", "synthetic"), ("real", "staged"), ("synthetic", "staged"),
+                           ("synthetic_plus_real", "real")):
+                ka, kb = f"{a_}_probe_{kind}", f"{b_}_probe_{kind}"
+                if ka in ext_scores and kb in ext_scores:
+                    res["paired_external"][f"{ka} vs {kb}"] = paired(ye, ext_scores[ka], ext_scores[kb], ne)
+
     # ---- head-to-head comparisons on the same test clips ----
     res["paired"] = {}
     pairs = []
@@ -332,7 +382,9 @@ def main():
     with open(os.path.join(out, "staged_to_real.json"), "w") as fh:
         json.dump(res, fh, indent=1)
     lines = ["| Evaluated on | Method | AUROC | AP | Recall @ 5% FPR |", "|---|---|---|---|---|"]
-    for dom in ("staged", "real", "real_hard"):
+    for dom in ("staged", "real", "real_hard", "external", "external_hard"):
+        if dom not in res:
+            continue
         for k, v in res[dom].items():
             f = lambda m: f"{v[m][0]:.3f} [{v[m][1]:.3f}, {v[m][2]:.3f}]"
             lines.append(f"| {dom} | {k} | {f('auroc')} | {f('ap')} | {f('recall_at_fpr5')} |")
@@ -349,6 +401,11 @@ def main():
         for pt in lc["points"]:
             extra.append(f"| {pt['videos']} | {pt['falls']:.0f} | {pt['real']:.3f} ± {pt['real_sd']:.3f} | "
                          f"{pt['both']:.3f} ± {pt['both_sd']:.3f} |")
+    if res.get("paired_external"):
+        extra += ["", "Head-to-head on the EXTERNAL test set (HMDB51; nothing trained on it)", "",
+                  "| Comparison | AUROC diff | 95% CI | p |", "|---|---|---|---|"]
+        for k, (d_, lo, hi, pv) in res["paired_external"].items():
+            extra.append(f"| {k} | {d_:+.3f} | [{lo:+.3f}, {hi:+.3f}] | {pv:.3f} |")
     if "equal_budget" in res:
         eb = res["equal_budget"]
         extra += ["", f"Equal budget ({eb['representation']}): AUROC on real test falls, k training falls + k non-falls "
