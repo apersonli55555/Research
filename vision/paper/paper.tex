@@ -28,7 +28,7 @@ Video fall detectors are commonly trained and evaluated on falls staged by actor
 
 %=====================================================================
 \section{Introduction}
-Falls are a leading cause of injury among older adults, and long periods on the floor after a fall are associated with worse outcomes~\cite{who_falls,fleming2008}. Camera-based fall detection promises automatic alerts without wearables, and published detectors often report near-perfect accuracy. Most of that evidence comes from staged datasets in which young actors fall onto mattresses in front of fixed cameras~\cite{kwolek2014,charfi2013}.
+Falls are the second-leading cause of unintentional injury death worldwide, and about 71\% of fall deaths occur in people aged 60 or older~\cite{who_falls}; long periods on the floor after a fall are associated with worse outcomes~\cite{fleming2008}. Camera-based fall detection promises automatic alerts without wearables, and published detectors often report near-perfect accuracy. Most of that evidence comes from staged datasets in which young actors fall onto mattresses in front of fixed cameras~\cite{kwolek2014,charfi2013}.
 
 Real falls are different: they are sudden, partly occluded, filmed from arbitrary viewpoints, and embedded among other abrupt events such as collisions, dropped objects and people catching themselves. OmniFall~\cite{omnifall} recently showed a large drop from staged to in-the-wild falls on fall-containing OOPS!~\cite{epstein2020oops} videos, and argued that synthetic training videos generalise better than staged ones. This leaves practical questions open for anyone building a detector: \emph{how much real data is needed, is real data worth more than synthetic data, does the answer change with the test set, and how often do detectors raise alarms for accidents that are not falls?}
 
@@ -179,7 +179,7 @@ Staged-trained fall detectors that look perfect in the lab fail on real accident
 %=====================================================================
 \small
 \begin{thebibliography}{99}
-\bibitem{auvinet_mcfd} E.~Auvinet et~al. Multiple Cameras Fall Dataset (technical report). Universit\'e de Montr\'eal. \textcolor{red}{[VERIFY]}
+\bibitem{auvinet_mcfd} E.~Auvinet, C.~Rougier, J.~Meunier, A.~St-Arnaud, and J.~Rousseau. Multiple cameras fall data set. Technical Report 1350, DIRO, Universit\'e de Montr\'eal, 2010.
 \bibitem{bagala2012} F.~Bagal\`a et~al. Evaluation of accelerometer-based fall detection algorithms on real-world falls. \emph{PLoS ONE}, 7(5):e37062, 2012.
 \bibitem{charfi2013} I.~Charfi, J.~Miteran, J.~Dubois, M.~Atri, and R.~Tourki. Optimized spatio-temporal descriptors for real-time fall detection: comparison of support vector machine and Adaboost-based classification. \emph{Journal of Electronic Imaging}, 22(4):041106, 2013.
 \bibitem{epstein2020oops} D.~Epstein, B.~Chen, and C.~Vondrick. Oops! Predicting unintentional action in video. In \emph{CVPR}, 2020.
@@ -187,12 +187,12 @@ Staged-trained fall detectors that look perfect in the lab fail on real accident
 \bibitem{gadre2023datacomp} S.~Y. Gadre et~al. DataComp: In search of the next generation of multimodal datasets. In \emph{NeurIPS Datasets and Benchmarks Track}, 2023.
 \bibitem{kay2017kinetics} W.~Kay et~al. The Kinetics human action video dataset. arXiv:1705.06950, 2017.
 \bibitem{klenk2016} J.~Klenk et~al. The FARSEEING real-world fall repository: a large-scale collaborative database to collect and share sensor signals from real-world falls. \emph{European Review of Aging and Physical Activity}, 13:8, 2016.
-\bibitem{kuehne2011hmdb} H.~Kuehne, H.~Jhuang, E.~Garrote, T.~Poggio, and T.~Serre. HMDB: A large video database for human motion recognition. In \emph{ICCV}, 2011. \textcolor{red}{[VERIFY]}
+\bibitem{kuehne2011hmdb} H.~Kuehne, H.~Jhuang, E.~Garrote, T.~Poggio, and T.~Serre. HMDB: A large video database for human motion recognition. In \emph{ICCV}, pages 2556--2563, 2011.
 \bibitem{kwolek2014} B.~Kwolek and M.~Kepski. Human fall detection on embedded platform using depth maps and wireless accelerometer. \emph{Computer Methods and Programs in Biomedicine}, 117(3):489--501, 2014.
-\bibitem{omnifall} D.~Schneider et~al. OmniFall: From staged through synthetic to wild, a unified multi-domain dataset for robust fall detection. arXiv:2505.19889, 2025. \textcolor{red}{[VERIFY: final title and venue]}
-\bibitem{openclip} OpenCLIP. \url{https://github.com/mlfoundations/open_clip}. \textcolor{red}{[TODO: use the repository's recommended citation]}
+\bibitem{omnifall} D.~Schneider et~al. OmniFall: From staged through synthetic to wild, a unified multi-domain dataset for robust fall detection. arXiv:2505.19889, 2025 (v3, 2026).
+\bibitem{openclip} G.~Ilharco, M.~Wortsman, R.~Wightman, C.~Gordon, N.~Carlini, R.~Taori, A.~Dave, V.~Shankar, H.~Namkoong, J.~Miller, H.~Hajishirzi, A.~Farhadi, and L.~Schmidt. OpenCLIP. Zenodo, 2021. doi:10.5281/zenodo.5143773.
 \bibitem{radford2021clip} A.~Radford et~al. Learning transferable visual models from natural language supervision. In \emph{ICML}, 2021.
 \bibitem{tong2022videomae} Z.~Tong, Y.~Song, J.~Wang, and L.~Wang. VideoMAE: Masked autoencoders are data-efficient learners for self-supervised video pre-training. In \emph{NeurIPS}, 2022.
-\bibitem{who_falls} World Health Organization. Falls (fact sheet). \url{https://www.who.int/news-room/fact-sheets/detail/falls}. \textcolor{red}{[TODO: access date]}
+\bibitem{who_falls} World Health Organization. Falls (fact sheet), 21 October 2026. \url{https://www.who.int/news-room/fact-sheets/detail/falls}, accessed November 2026.
 \end{thebibliography}
 \end{document}
