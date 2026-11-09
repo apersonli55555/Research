@@ -146,6 +146,8 @@ def main():
     ap.add_argument("--synthetic", default="", help="ofsyn.npz from ofsyn_prep.py (optional)")
     ap.add_argument("--external", default="", help="hmdb.npz from hmdb_prep.py: external real-world test (optional)")
     ap.add_argument("--finetuned", nargs="*", default=[], help="scores_*.npz from finetune.py score (optional)")
+    ap.add_argument("--test-labels", default="", help="file in --oops (e.g. labels_friend.csv): take TEST labels from "
+                    "this annotator instead (test set = clips they labelled); training labels unchanged")
     a = ap.parse_args()
     out = a.out or os.path.join(a.oops, "results")
     os.makedirs(out, exist_ok=True)
@@ -155,6 +157,14 @@ def main():
     Vs = S["video"] if "video" in S.files else None
 
     labels = load_labels(a.oops)
+    test_labels = None
+    if a.test_labels:
+        test_labels = {}
+        with open(os.path.join(a.oops, a.test_labels)) as fh:
+            for r_ in csv.DictReader(fh):
+                test_labels[r_["name"]] = r_["label"]
+        test_labels = {k: v for k, v in test_labels.items() if v}
+        print(f"TEST LABELS FROM {a.test_labels}: {sum(v in ('fall', 'not_fall') for v in test_labels.values())} clips")
     with open(os.path.join(a.oops, "scores.csv")) as fh:
         meta = {r["name"]: r for r in csv.DictReader(fh)}
     frames = load_frames(a.oops)
@@ -162,10 +172,12 @@ def main():
     reps = [r for r in REPRESENTATIONS if "videomae" not in r or (Vs is not None and videos)]
     test, train = [], []
     for (name, seg), fr in frames.items():
-        lab = labels.get(name)
-        if lab not in ("fall", "not_fall") or name not in meta:
+        if name not in meta:
             continue
         r = meta[name]
+        lab = test_labels.get(name) if (test_labels is not None and r["random_sample"] == "1") else labels.get(name)
+        if lab not in ("fall", "not_fall"):
+            continue
         y = 1 if (seg == "event" and lab == "fall") else 0
         m = float(r["event_margin"] if seg == "event" else r["pre_margin"])
         v = videos.get((name, seg))
