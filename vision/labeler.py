@@ -34,11 +34,18 @@ if (!window.__fallKeys) {
 
 
 class Labeler:
-    def __init__(self, oops_dir, labeler_id="me", start_with="test"):
+    def __init__(self, oops_dir, labeler_id="me", start_with="test", labels_file="labels.csv",
+                 second_annotator=False):
         """start_with="test" (default) shows the test-set clips first; "train" skips straight
-        to the training-pool clips (test clips come after)."""
+        to the training-pool clips (test clips come after).
+
+        second_annotator=True: an independent second person labels exactly the test clips the
+        first annotator labelled, into a separate file (default labels_friend.csv), without
+        seeing the first annotator's answers. The first annotator's labels.csv is never touched."""
         self.dir = oops_dir
-        self.path = os.path.join(oops_dir, "labels.csv")
+        if second_annotator and labels_file == "labels.csv":
+            labels_file, labeler_id = "labels_friend.csv", "second"
+        self.path = os.path.join(oops_dir, labels_file)
         self.labeler_id = labeler_id
         with open(os.path.join(oops_dir, "scores.csv")) as fh:
             rows = [r for r in csv.DictReader(fh) if r["kept"] == "1"]
@@ -49,7 +56,10 @@ class Labeler:
         random.Random(0).shuffle(rnd)
         random.Random(1).shuffle(top)   # shuffled so labels are not ordered by model score
         self.queue = top + rnd if start_with == "train" else rnd + top
-        self.n_random = len(rnd)
+        if second_annotator:
+            first = load_labels(oops_dir)          # only used to know WHICH clips to show
+            self.queue = [r for r in rnd if first.get(r["name"]) in ("fall", "not_fall", "unsure")]
+        self.n_random = len(self.queue) if second_annotator else len(rnd)
         self.test_names = {r["name"] for r in rnd}
         self.labels = {}
         if os.path.exists(self.path):
