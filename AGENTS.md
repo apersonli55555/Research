@@ -32,7 +32,7 @@ Data (clips, embeddings, labels, result files) lives on the owner's Google Drive
 
 - **Done:** pipeline; 165 labelled test videos (255 clips, 102 falls); 268 labelled training clips (131 falls); results runs 1–4 (run 4 = real vs. synthetic vs. staged); paper draft; OOPS! data-use question resolved by the owner (do not mention it in the paper or elsewhere).
 - **Citations checked** (by ChatGPT, applied by Claude): all fully specified references verified; still open: the Multiple Cameras Fall Dataset report [VERIFY], the OpenCLIP software citation, and a literature review for the domain-shift paragraph and for claims about how rarely real falls are evaluated.
-- **Key results:** see `vision/RESULTS.md`, run 3 and run 3b.
+- **Key results:** see `vision/RESULTS.md`, runs 3, 3b and 4.
 - **Labelling is finished.** The owner will not label more clips. Do not plan work that needs more labels from them.
 
 ## Remaining work, in priority order
