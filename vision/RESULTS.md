@@ -204,3 +204,40 @@ Head-to-head on HMDB51 (paired bootstrap by clip):
 - **HMDB51 falls look more like staged falls than OOPS! falls do.** Staged probes score 0.899 on HMDB51 but 0.759 on FallOrNot, and zero-shot CLIP 0.834 vs. 0.717. HMDB51 `fall_floor` contains many movie and trimmed, clearly framed falls, so it is a different, likely easier, kind of "real" than OOPS! accidents.
 - **Combining synthetic and real is the most robust choice**: it is within the confidence interval of the best source on both test sets (FallOrNot 0.872 vs. 0.899, n.s.; HMDB51 0.901 vs. 0.917).
 - **Synthetic data rescues the weaker representations out of domain** (VideoMAE +0.214 over staged; CLIP appearance trained on OOPS! real data falls to 0.626).
+
+---
+
+# Run 6: fine-tuned VideoMAE (pre-registered test)
+
+**Setup** (`finetune.py`, fixed before running): VideoMAE-B (Kinetics-400) fine-tuned end-to-end, 5 epochs, batch 8, AdamW lr 5e-5, weight decay 0.05, one-cycle schedule, class-balanced sampling, horizontal-flip augmentation, seed 0, last checkpoint. Training data: synthetic (1,000 + 1,000 hash-sampled OF-Syn clips), real (the 268 labelled OOPS! training clips) or both. Clips are the same 16-frame windows used everywhere else (523 OOPS! clips extracted from 345 labelled videos). Scored on FallOrNot (255 clips) and HMDB51 (1,100 clips, max over windows). **One seed only.** Copied from the Colab text output.
+
+**Pre-registered rule:** fine-tuned (synthetic + real) beats the best frozen probe on both test sets, paired 95% CI above zero.
+- FallOrNot: vs. best probe (real, CLIP + VideoMAE): −0.002 [−0.040, +0.037], p = 0.933
+- HMDB51: vs. best probe (synthetic, CLIP + VideoMAE): +0.028 [−0.003, +0.058], p = 0.074
+- **RESULT: NOT MET.**
+
+AUROC [95% CI]:
+
+| Model | FallOrNot | FallOrNot hard | HMDB51 | HMDB51 hard |
+|---|---|---|---|---|
+| Fine-tuned, synthetic | 0.829 [0.779, 0.875] | 0.746 [0.665, 0.816] | **0.967 [0.954, 0.979]** | **0.938 [0.913, 0.962]** |
+| Fine-tuned, real | **0.906 [0.868, 0.940]** | **0.876 [0.819, 0.930]** | 0.902 [0.869, 0.931] | 0.762 [0.704, 0.815] |
+| Fine-tuned, synthetic + real | 0.897 [0.860, 0.931] | 0.854 [0.792, 0.910] | 0.945 [0.925, 0.964] | 0.859 [0.820, 0.900] |
+| Best probe on that set (for reference) | 0.899 (real, CLIP + VideoMAE) | 0.860 (real, CLIP + VideoMAE) | 0.917 (synthetic, CLIP + VideoMAE) | 0.880 (synthetic, CLIP + VideoMAE) |
+
+Recall at 5% FPR: fine-tuned synthetic + real 0.529 [0.283, 0.667] on FallOrNot and 0.770 [0.612, 0.859] on HMDB51; fine-tuned synthetic 0.840 [0.714, 0.916] on HMDB51.
+
+Fine-tuned vs. probe with the same training data (paired):
+
+| Training data | FallOrNot ΔAUROC | HMDB51 ΔAUROC |
+|---|---|---|
+| Synthetic | +0.015 [−0.036, +0.068], p = 0.555 | **+0.050 [+0.024, +0.077], p < 0.001** |
+| Real | +0.007 [−0.029, +0.047], p = 0.723 | +0.014 [−0.024, +0.053], p = 0.466 |
+| Synthetic + real | +0.025 [−0.016, +0.069], p = 0.262 | **+0.044 [+0.009, +0.081], p = 0.019** |
+
+## Reading (exploratory beyond the pre-registered rule)
+- **Pre-registered test not met.** Fine-tuning on synthetic + real is not significantly better than the best probe on either test set.
+- **The ranking flip holds for fine-tuned models too**, a second model family: real-trained is best on FallOrNot (0.906), synthetic-trained is best on HMDB51 (0.967), and each is clearly worse on the other set (synthetic 0.829 on FallOrNot; real 0.902 on HMDB51, 0.762 on its hard subset).
+- **Synthetic + real is the robust choice again**: within the CI of the best model on FallOrNot (0.897 vs. 0.906) and second-best on HMDB51 (0.945 vs. 0.967). It is the only model in the top group on both sets, though not significantly best on either.
+- **Fine-tuning helps synthetic data out of domain** (+0.050 and +0.044 on HMDB51, both significant) but brings no significant gain on FallOrNot. This is consistent with OmniFall's use of fine-tuning with synthetic data.
+- **Caveats:** one seed (fine-tuning results vary between runs); training loss approached zero, so models may overfit; hyper-parameters were not tuned.

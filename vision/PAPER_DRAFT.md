@@ -149,6 +149,20 @@ Real vs. synthetic on HMDB51: −0.029 [−0.057, −0.003], p = 0.029 (compare 
 
 **Finding.** The value of real data measured on FallOrNot is largely in-domain: OOPS!-trained probes do not transfer better than synthetic or staged ones to HMDB51, and which training source looks best flips between the two real-world test sets. HMDB51 falls appear closer to staged falls (staged probes 0.899 there vs. 0.759 on FallOrNot), so the two benchmarks measure different kinds of "real". **Implication:** conclusions about training data drawn from a single in-the-wild benchmark, ours included, do not generalise; fall detectors should be evaluated on several real-world sources, and mixing synthetic with real data is the most robust choice we found.
 
+### 5.4 Fine-tuning (pre-registered)
+
+We fine-tuned VideoMAE-B end-to-end with hyper-parameters fixed in advance (5 epochs, batch 8, AdamW 5e-5, one seed) and pre-registered one test: fine-tuning on synthetic + real data must beat the best frozen probe on both test sets. **It did not** (FallOrNot −0.002 [−0.040, +0.037]; HMDB51 +0.028 [−0.003, +0.058]).
+
+**Table 9. AUROC of fine-tuned models.**
+
+| Training data | FallOrNot | HMDB51 |
+|---|---|---|
+| Synthetic | 0.829 [0.779, 0.875] | **0.967 [0.954, 0.979]** |
+| Real | **0.906 [0.868, 0.940]** | 0.902 [0.869, 0.931] |
+| Synthetic + real | 0.897 [0.860, 0.931] | 0.945 [0.925, 0.964] |
+
+The ranking flip of §5.3 reappears with fine-tuned models: the source that wins on one real-world test set loses on the other. Synthetic + real is the only training set near the top on both. Fine-tuning significantly improves synthetic-trained models on HMDB51 (+0.050, p < 0.001) but not on FallOrNot. **[TODO: repeat with 3 seeds before submission.]**
+
 ## 6. Analysis
 
 **The gap is large, and in-domain scores hide it.** Every probe is perfect on UR Fall, so the staged benchmark cannot rank methods at all, yet the same probes catch at most 30% of real falls at 5% FPR.
