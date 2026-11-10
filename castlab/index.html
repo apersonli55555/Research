@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CastLab</title>
+<meta name="description" content="CastLab: fishing tools and reproducible fishing research in one place — map, weather, BaitRadar inventory, GearMatch, LureLab statistics, the CastCheck shoreline digital twin and a rod mechanics simulator.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Instrument+Sans:wght@400..700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+<link rel="stylesheet" href="css/castlab.css">
+<script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
+</head>
+<body>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<!-- ============ AUTH ============ -->
+<div id="authView" class="auth-wrap" hidden>
+  <div class="auth card">
+    <div class="brand">
+      <svg width="38" height="38" viewBox="0 0 34 34" aria-hidden="true"><rect width="34" height="34" rx="10" fill="var(--deep)"/><path d="M7 24c5-1 9-6 11-13M18 11l9 15" stroke="var(--on-deep)" stroke-width="2.2" fill="none" stroke-linecap="round"/><circle cx="27" cy="26" r="2.6" fill="var(--hot)"/></svg>
+      <div><b>CastLab</b></div>
+    </div>
+    <p class="auth-lead">Know when, where and what to fish.</p>
+    <p class="auth-sub">Hour-by-hour ratings, fish reported near any lake, a 3D shoreline, and statistics from your own trips.</p>
+    <div class="guest-box">
+      <button class="btn hot" style="width:100%;padding:12px" type="button" id="guestBtn">Explore with example data, no sign-up</button>
+      <p class="small muted" style="margin:8px 0 0">Opens a guest profile with one real lake (Lake Harriet, Minneapolis) and a clearly labelled simulated trip dataset.</p>
+    </div>
+    <hr>
+    <div class="tabs" role="tablist"><button class="active" data-auth="login">Sign in</button><button data-auth="register">Create account</button></div>
+    <form id="authForm" autocomplete="on">
+      <label id="dnWrap" hidden>Display name<input type="text" id="authDisplay" autocomplete="name"></label>
+      <label>Username<input type="text" id="authUser" required autocomplete="username"></label>
+      <label>Password<input type="password" id="authPass" required autocomplete="current-password"></label>
+      <button class="btn primary" style="width:100%" type="submit" id="authSubmit">Sign in</button>
+      <p id="authErr" class="small status-fail" style="margin-top:8px"></p>
+    </form>
+    <p class="small muted">Accounts are local profiles stored in this browser (password hashed with PBKDF2-SHA-256). There is no CastLab server: nothing you log leaves this device unless you export it. Use <b>Account → Export</b> to move data between devices.</p>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="appView" class="layout" hidden>
+  <aside class="side" id="side">
+    <div class="brand">
+      <svg width="36" height="36" viewBox="0 0 34 34" aria-hidden="true"><rect width="34" height="34" rx="10" fill="rgba(255,255,255,.12)"/><path d="M7 24c5-1 9-6 11-13M18 11l9 15" stroke="var(--on-deep)" stroke-width="2.2" fill="none" stroke-linecap="round"/><circle cx="27" cy="26" r="2.6" fill="var(--hot)"/></svg>
+      <div><b>CastLab</b><small>Fishing tools and field science</small></div>
+    </div>
+    <nav class="nav" aria-label="Sections">
+      <a href="#home" data-view="home">Today</a>
+      <div class="nav-group">Go fishing</div>
+      <a href="#map" data-view="map">Fishing map</a>
+      <a href="#weather" data-view="weather">Weather &amp; best times</a>
+      <a href="#catches" data-view="catches">Catch log</a>
+      <a href="#baitradar" data-view="baitradar">BaitRadar</a>
+      <a href="#gearmatch" data-view="gearmatch">GearMatch</a>
+      <div class="nav-group">Science</div>
+      <a href="#dashboard" data-view="dashboard">Research dashboard</a>
+      <a href="#lurelab" data-view="lurelab">LureLab <span class="tag">STATS</span></a>
+      <a href="#castcheck" data-view="castcheck">CastCheck twin <span class="tag">GEO</span></a>
+      <a href="#gearsim" data-view="gearsim">Rod physics <span class="tag">MECH</span></a>
+      <a href="#research" data-view="research">Methods &amp; exports</a>
+      <div class="nav-group">Profile</div>
+      <a href="#account" data-view="account">Account &amp; data</a>
+    </nav>
+    <div class="userbox"><div id="whoami" class="mono"></div><div class="btns" style="margin-top:6px"><button class="btn sm" id="themeBtn" type="button">Theme</button><button class="btn sm" id="logoutBtn" type="button">Sign out</button></div></div>
+  </aside>
+
+  <main id="main">
+    <!-- HOME / TODAY -->
+    <section class="view" id="v-home" hidden>
+      <div class="hero">
+        <div class="hero-top"><span class="hero-spot" id="hmSpotName">Today</span><button class="btn sm menu-btn" data-menu type="button">Menu</button></div>
+        <h1 id="hmHeadline">Where are you fishing?</h1>
+        <p class="lead" id="hmSub">Pick a spot and CastLab rates every hour of today and tomorrow, shows which fish people have reported there, and suggests what to tie on.</p>
+        <div class="row">
+          <label>My spot<select id="hmLoc"></select></label>
+          <label>Find a lake or river by name<input type="search" id="hmSearch" placeholder="e.g. Lake Tahoe"></label>
+          <div style="flex:0 0 auto" class="btns"><button class="btn" id="hmSearchGo" type="button">Search</button><button class="btn" id="hmGps" type="button">Use my location</button></div>
+        </div>
+        <div id="hmSearchOut"></div>
+        <div class="btns" style="margin-top:6px"><a class="btn hot" href="#catches">Log a catch</a><a class="btn" href="#map">Choose on the map</a><a class="btn" id="hmTwin" href="#castcheck">See the shoreline in 3D</a><a class="btn" href="#lurelab">Log a full trip</a></div>
+      </div>
+      <div class="grid g2">
+        <div class="card"><div class="card-h"><h2>Every hour, rated</h2><a class="btn sm" href="#weather">See the chart</a></div><div id="hmTimes"><p class="muted small">Pick a spot to see the best times.</p></div></div>
+        <div class="card"><h2>Right now</h2><div id="hmNow"></div></div>
+      </div>
+      <div class="card" style="margin-top:14px"><div class="card-h"><h2>Fish reported near here</h2><span class="small muted">from other people, via iNaturalist</span></div><div id="hmFish"></div></div>
+      <div class="card" style="margin-top:14px"><div class="card-h"><h2>What to use</h2><label class="small" style="margin:0">Fishing for<select id="hmTarget"></select></label></div><div id="hmSetup"></div></div>
+    </section>
+
+    <!-- CATCH LOG -->
+    <section class="view" id="v-catches" hidden>
+      <div class="topbar"><div><h1>Catch log</h1><p>Your fish diary: every fish you land, with size, lure and place. See what other people have reported in the same area.</p></div><button class="btn menu-btn" data-menu type="button">Menu</button></div>
+      <div class="grid g-side">
+        <div class="card"><h3>I caught a fish</h3>
+          <form id="ctForm">
+            <label>Species<input type="text" id="ctSpecies" list="ctSpeciesList" required placeholder="start typing…"></label><datalist id="ctSpeciesList"></datalist>
+            <div class="row"><label id="ctLenLbl">Length (in)<input type="number" step="0.1" min="0" id="ctLen"></label><label id="ctWtLbl">Weight (lb)<input type="number" step="0.01" min="0" id="ctWt"></label></div>
+            <label>Where<select id="ctLoc"></select></label>
+            <label>Lure or bait<input type="text" id="ctLure" list="lureList"></label>
+            <div class="row"><label>Date<input type="date" id="ctDate" required></label><label>Hour<input type="number" min="0" max="23" id="ctHour"></label></div>
+            <label class="chk" style="margin-bottom:8px"><input type="checkbox" id="ctReleased" checked> Released</label>
+            <label>Notes<input type="text" id="ctNotes"></label>
+            <button class="btn primary" type="submit">Save catch</button>
+          </form>
+          <p class="small muted" style="margin-top:8px">The catch log is a diary of fish landed. For catch-rate statistics, also log whole trips (including blank ones) in LureLab.</p>
+        </div>
+        <div>
+          <div class="grid g4" id="ctKpis"></div>
+          <div class="card" style="margin-top:14px"><div class="card-h"><h3>My catches</h3><button class="btn sm" id="ctCsv" type="button">CSV</button></div><div id="ctTable"></div></div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px"><div class="card-h"><h3>What others have reported nearby</h3><label class="small" style="margin:0">Around<select id="ctNear"></select></label></div><div id="ctOthers"></div></div>
+    </section>
+
+    <!-- DASHBOARD -->
+    <section class="view" id="v-dashboard" hidden>
+      <div class="topbar"><div><h1>Research dashboard</h1><p>One view of everything in your profile: your logged sessions, locations, controlled experiments, field observations and bench tests, and how well the prediction model has done against what actually happened.</p></div>
+        <button class="btn menu-btn" data-menu type="button">Menu</button></div>
+      <div id="dashTour"></div>
+      <div id="dashProvenance"></div>
+      <div class="grid g4" id="dashKpis"></div>
+      <div class="grid g2" style="margin-top:14px">
+        <div class="card"><div class="card-h"><h3>Sessions per month</h3><div class="btns"><button class="btn sm" data-png="dashMonthly">PNG</button><button class="btn sm" data-csv="dashMonthly">CSV</button></div></div><div class="chartbox"><canvas id="dashMonthly"></canvas></div></div>
+        <div class="card"><div class="card-h"><h3>Prediction track record</h3><a class="btn sm" href="#lurelab" data-tab="validation">Open validation</a></div><div id="dashValidation"></div></div>
+      </div>
+      <div class="grid g2" style="margin-top:14px">
+        <div class="card"><h3>Experiments</h3><div id="dashExperiments"></div></div>
+        <div class="card"><h3>Simulation vs measurement</h3><div id="dashSimVsReal"></div></div>
+      </div>
+      <div class="card" style="margin-top:14px"><h3>Recent sessions</h3><div id="dashRecent"></div></div>
+    </section>
+
+    <!-- MAP -->
+    <section class="view" id="v-map" hidden>
+      <div class="topbar"><div><h1>Fishing map</h1><p>Your saved fishing locations, logged sessions and GPS field observations. Click the map to add a location; every other section (weather, LureLab, the CastCheck twin) uses these same locations.</p></div><button class="btn menu-btn" data-menu type="button">Menu</button></div>
+      <div class="grid g-side">
+        <div class="card">
+          <h3>Find water</h3>
+          <div class="row"><label>Lake or river name<input type="search" id="mapSearch" placeholder="e.g. Lake Minnetonka"></label><div style="flex:0 0 auto"><button class="btn" id="mapSearchGo" type="button">Search</button></div></div>
+          <div id="mapSearchOut"></div>
+          <p class="small muted">Or click any lake or river on the map: CastLab names it and offers to save it, open its shoreline twin or show the fish reported there.</p>
+          <label class="chk" style="margin:6px 0 14px"><input type="checkbox" id="mapInat"> Show fish reported by others (iNaturalist) around the map centre</label>
+          <h3>Add location</h3>
+          <form id="locForm">
+            <label>Name<input type="text" id="locName" required></label>
+            <div class="row"><label>Latitude<input type="number" step="any" id="locLat" required></label><label>Longitude<input type="number" step="any" id="locLon" required></label></div>
+            <label>Water body<select id="locType"><option>Lake / reservoir</option><option>River / stream</option><option>Pond</option><option>Coastal / estuary</option><option>Other</option></select></label>
+            <label>Notes<textarea id="locNotes" rows="2"></textarea></label>
+            <div class="btns"><button class="btn primary" type="submit">Save location</button><button class="btn" type="button" id="locGps">Use my GPS</button></div>
+          </form>
+          <div class="legend" style="margin-top:12px"><span><i style="background:var(--accent);height:10px;width:10px;border-radius:50%"></i>Location</span><span><i style="background:var(--ok);height:10px;width:10px;border-radius:50%"></i>Session with catch</span><span><i style="background:var(--bad);height:10px;width:10px;border-radius:50%"></i>Session, no catch</span><span><i style="background:var(--c3);height:10px;width:10px;border-radius:50%"></i>Field observation</span></div>
+        </div>
+        <div class="card" style="padding:8px"><div id="map"></div></div>
+      </div>
+      <div class="card" style="margin-top:14px"><h3>Locations</h3><div id="locTable"></div></div>
+    </section>
+
+    <!-- WEATHER -->
+    <section class="view" id="v-weather" hidden>
+      <div class="topbar"><div><h1>Weather</h1><p>Hourly conditions from Open-Meteo for any saved location: the past three days and a seven-day forecast. Forecast values are model output, not observations. LureLab stores the hour's values with each session so weather can be analysed against catch outcomes.</p></div><button class="btn menu-btn" data-menu type="button">Menu</button></div>
+      <div class="card"><div class="row"><label>Location<select id="wxLoc"></select></label><div style="flex:0 0 auto"><button class="btn primary" id="wxGo" type="button">Load weather</button></div></div><div id="wxNow"></div></div>
+      <div class="card" style="margin-top:14px"><div class="card-h"><h3>Fishing-time index, next 48 hours</h3><div class="btns"><button class="btn sm" data-png="wxBest">PNG</button><button class="btn sm" data-csv="wxBest">CSV</button></div></div>
+        <div class="chartbox"><canvas id="wxBest"></canvas></div><div id="wxBestList"></div>
+        <details class="more"><summary>How the index is calculated</summary><div class="method" id="wxBestMethod"></div></details></div>
+      <div class="grid g2" style="margin-top:14px">
+        <div class="card"><div class="card-h"><h3>Air temperature &amp; precipitation</h3><div class="btns"><button class="btn sm" data-png="wxTemp">PNG</button><button class="btn sm" data-csv="wxTemp">CSV</button></div></div><div class="chartbox"><canvas id="wxTemp"></canvas></div></div>
+        <div class="card"><div class="card-h"><h3>Surface pressure &amp; wind</h3><div class="btns"><button class="btn sm" data-png="wxPress">PNG</button><button class="btn sm" data-csv="wxPress">CSV</button></div></div><div class="chartbox"><canvas id="wxPress"></canvas></div></div>
+      </div>
+    </section>
+
+    <!-- BAITRADAR -->
+    <section class="view" id="v-baitradar" hidden>
+      <div class="topbar"><div><h1>BaitRadar inventory</h1><p>Track lures, bait, line and terminal tackle. Items are linked to LureLab sessions, so each item shows how often it has been fished and its observed catch rate with a credible interval, and quantities drop automatically when you log lures lost or bait used.</p></div><button class="btn menu-btn" data-menu type="button">Menu</button></div>
+      <div class="card" style="margin-bottom:14px"><div class="card-h"><h2>Best combos for a spot</h2><div class="row" style="flex:0 1 460px"><label class="small" style="margin:0">Spot<select id="brLoc"></select></label><label class="small" style="margin:0">Fishing for<select id="brTarget"></select></label></div></div><div id="brRecOut"></div></div>
+      <div class="grid g4" id="brKpis"></div>
+      <div class="grid g-side" style="margin-top:14px">
+        <div class="card"><h3 id="brFormTitle">Add item</h3>
+          <p class="small muted">List the lures and bait you own. CastLab then tells you which of them suit a spot, tracks how each one performs on your trips, and warns you when you are running low.</p>
+          <form id="brForm">
+            <input type="hidden" id="brId">
+            <label>What is it?<input type="text" id="brName" required placeholder="e.g. green pumpkin swim jig"></label>
+            <div class="row"><label>Type<select id="brCat"><option>Hard lure</option><option>Soft plastic</option><option>Spinner / spoon</option><option>Fly</option><option>Live bait</option><option>Prepared bait</option><option>Line</option><option>Terminal tackle</option></select></label><label>How many?<input type="number" step="1" min="0" id="brQty" value="1" required></label></div>
+            <details class="more" id="brMore" style="margin:0 0 10px"><summary>More details (optional)</summary>
+              <div class="row" style="margin-top:8px"><label>Colour<input type="text" id="brColor"></label><label>Weight (g)<input type="number" step="any" min="0" id="brWeight"></label></div>
+              <div class="row"><label>Warn me when I have this many left<input type="number" step="1" min="0" id="brReorder" value="1"></label><label>Price each<input type="number" step="0.01" min="0" id="brCost"></label></div>
+              <label>Where I keep it<input type="text" id="brWhere" placeholder="tackle box, tray…"></label>
+            </details>
+            <div class="btns"><button class="btn primary" type="submit">Save item</button><button class="btn" type="button" id="brCancel">Clear</button></div>
+          </form></div>
+        <div class="card"><div class="card-h"><h3>Inventory</h3><div class="btns"><input type="search" id="brSearch" placeholder="Filter…" style="width:160px"><button class="btn sm" id="brCsv">CSV</button></div></div><div id="brTable"></div></div>
+      </div>
+    </section>
+
+    <!-- GEARMATCH RECS -->
+    <section class="view" id="v-gearmatch" hidden>
+      <div class="topbar"><div><h1>GearMatch</h1><p>Setup recommendations by target species and technique, matched against your BaitRadar inventory and saved rods. The ranges are common angling guidance, not measured data; the physics simulator checks any setup against beam mechanics.</p></div><button class="btn menu-btn" data-menu type="button">Menu</button></div>
+      <div class="grid g-side">
+        <div class="card"><h3>What are you fishing for?</h3>
+          <label>Spot (optional)<select id="gmLoc"></select></label>
+          <div id="gmLocal" class="small" style="margin-bottom:8px"></div>
+          <label>Target species<select id="gmSpecies"></select></label>
+          <label>Technique<select id="gmTech"><option value="finesse">Finesse / light presentations</option><option value="general" selected>General casting</option><option value="power">Heavy cover / big baits</option><option value="bait">Live or natural bait</option></select></label>
+          <label>Water<select id="gmWater"><option value="open">Open water</option><option value="cover">Weeds, wood or rock</option><option value="current">Strong current</option></select></label>
+          <button class="btn primary" id="gmGo" type="button">Recommend</button>
+          <hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
+          <h3>My rods</h3>
+          <form id="rodForm">
+            <label>Name<input type="text" id="rodName" required placeholder="e.g. 7' MF spinning"></label>
+            <div class="row"><label>Length (ft)<input type="number" step="0.1" id="rodLen" value="7"></label><label>Power<select id="rodPower"><option>UL</option><option>L</option><option>ML</option><option selected>M</option><option>MH</option><option>H</option><option>XH</option></select></label></div>
+            <div class="row"><label>Line min (lb)<input type="number" step="1" id="rodLmin" value="6"></label><label>Line max (lb)<input type="number" step="1" id="rodLmax" value="12"></label></div>
+            <div class="row"><label>Lure min (oz)<input type="number" step="0.01" id="rodWmin" value="0.25"></label><label>Lure max (oz)<input type="number" step="0.01" id="rodWmax" value="0.75"></label></div>
+            <button class="btn" type="submit">Save rod</button>
+          </form>
+          <div id="rodList" style="margin-top:10px"></div>
+        </div>
+        <div class="card" id="gmOut"><p class="muted">Choose a species and technique.</p></div>
+      </div>
+    </section>
+
+    <!-- LURELAB -->
+    <section class="view" id="v-lurelab" hidden>
+      <div class="topbar"><div><h1>LureLab</h1><p>Statistical analysis of your logged fishing sessions: Bayesian catch-probability and catch-rate estimates with credible intervals, a Bayesian logistic regression on lure, species and conditions, controlled lure-comparison experiments, and forward-in-time validation of every prediction.</p></div>
+        <div class="btns"><label class="small" style="margin:0">Dataset<select id="llData"><option value="user">Your observations</option><option value="simulated">Simulated demo data</option></select></label><button class="btn menu-btn" data-menu type="button">Menu</button></div></div>
+      <div id="llDataNote"></div>
+      <div class="tabs" id="llTabs"><button data-t="sessions" class="active">Sessions</button><button data-t="estimates">Estimates</button><button data-t="model">Model &amp; predict</button><button data-t="experiments">Experiments</button><button data-t="validation">Validation</button><button data-t="methods">Methodology</button></div>
+
+      <div class="lltab" data-t="sessions">
+        <div class="grid g-side">
+          <div class="card"><h3 id="sesFormTitle">Log a session</h3>
+            <p class="small muted">Log every outing, including blanks. Leaving out unsuccessful sessions biases every estimate upward.</p>
+            <form id="sesForm">
+              <input type="hidden" id="sesId">
+              <div class="row"><label>Date<input type="date" id="sesDate" required></label><label>Start hour<input type="number" min="0" max="23" id="sesHour" value="7"></label></div>
+              <label>Location<select id="sesLoc" required></select></label>
+              <div class="row"><label>Target species<select id="sesSpecies"></select></label><label>Hours fished<input type="number" step="0.25" min="0.25" id="sesHours" value="2" required></label></div>
+              <label>Lure / bait (from BaitRadar or typed)<input type="text" id="sesLure" list="lureList" required></label><datalist id="lureList"></datalist>
+              <div class="row"><label>Fish caught<input type="number" min="0" step="1" id="sesCatch" value="0" required></label><label>Units lost/used<input type="number" min="0" step="1" id="sesUsed" value="0"></label></div>
+              <div class="row"><label>Water temp (°C)<input type="number" step="0.1" id="sesWater"></label><label>Clarity<select id="sesClarity"><option value="">—</option><option>clear</option><option>stained</option><option>muddy</option></select></label></div>
+              <details class="more"><summary>Weather at that hour</summary>
+                <p class="small muted">Fetch from Open-Meteo (dates within the last 92 days) or type what you measured.</p>
+                <div class="row"><label>Air °C<input type="number" step="0.1" id="sesT"></label><label>Wind km/h<input type="number" step="0.1" id="sesW"></label></div>
+                <div class="row"><label>Pressure hPa<input type="number" step="0.1" id="sesP"></label><label>Trend<select id="sesPT"><option value="">—</option><option>rising</option><option>steady</option><option>falling</option></select></label></div>
+                <div class="row"><label>Cloud %<input type="number" step="1" id="sesC"></label><label>Precip mm<input type="number" step="0.1" id="sesR"></label></div>
+                <div class="small muted" id="sesWxSrc">source: manual</div>
+                <button class="btn sm" type="button" id="sesWxFetch">Fetch from Open-Meteo</button>
+              </details>
+              <label style="margin-top:8px">Experiment (optional)<select id="sesExp"><option value="">— none —</option></select></label>
+              <label>Notes<textarea id="sesNotes" rows="2"></textarea></label>
+              <div class="btns"><button class="btn primary" type="submit">Save session</button><button class="btn" type="button" id="sesClear">Clear</button></div>
+            </form></div>
+          <div class="card"><div class="card-h"><h3>Session log</h3><div class="btns"><button class="btn sm" id="sesCsv">CSV</button><button class="btn sm" id="sesImportBtn">Import CSV</button><input type="file" id="sesImport" accept=".csv,text/csv" hidden></div></div>
+            <div id="sesSummary" class="small muted" style="margin-bottom:8px"></div><div id="sesTable"></div></div>
+        </div>
+      </div>
+
+      <div class="lltab" data-t="estimates" hidden>
+        <div class="card" style="margin-bottom:14px"><div class="row">
+          <label>Group by<select id="estBy"><option value="lure">Lure</option><option value="species">Species</option><option value="location">Location</option><option value="timeOfDay">Time of day</option><option value="pressureTrend">Pressure trend</option><option value="clarity">Water clarity</option></select></label>
+          <label>Filter species<select id="estSpecies"><option value="">All</option></select></label>
+          <label>Prior on P(catch)<select id="estPrior"><option value="1,1">Uniform Beta(1,1)</option><option value="0.5,0.5">Jeffreys Beta(½,½)</option><option value="pooled">Weakly pooled (overall rate, 4 pseudo-sessions)</option></select></label>
+          <label>Credible level<select id="estCred"><option value="0.95">95%</option><option value="0.9">90%</option><option value="0.8">80%</option></select></label>
+        </div></div>
+        <div class="grid g2">
+          <div class="card"><div class="card-h"><h3>P(at least one fish) by group</h3><div class="btns"><button class="btn sm" data-png="estForest">PNG</button><button class="btn sm" data-csv="estForest">CSV</button></div></div><div class="chartbox tall"><canvas id="estForest"></canvas></div></div>
+          <div class="card"><div class="card-h"><h3>Posterior densities</h3><div class="btns"><button class="btn sm" data-png="estDens">PNG</button><button class="btn sm" data-csv="estDens">CSV</button></div></div><div class="chartbox tall"><canvas id="estDens"></canvas></div></div>
+        </div>
+        <div class="card" style="margin-top:14px"><div class="card-h"><h3>Estimates table</h3><button class="btn sm" id="estCsv">CSV</button></div><div id="estTable"></div></div>
+      </div>
+
+      <div class="lltab" data-t="model" hidden>
+        <div class="grid g-side">
+          <div class="card"><h3>Model specification</h3>
+            <p class="small muted">Bayesian logistic regression for P(≥1 fish). Choose which predictors enter the model; categorical predictors use the most common level as reference.</p>
+            <div id="mdlVars"></div>
+            <label>Prior SD on effects (log-odds)<input type="number" step="0.1" min="0.1" id="mdlPrior" value="1"></label>
+            <label>Minimum sessions per level<input type="number" min="1" step="1" id="mdlMinLevel" value="3"></label>
+            <button class="btn primary" id="mdlFit" type="button">Fit model</button>
+            <div id="mdlInfo" class="small" style="margin-top:10px"></div>
+          </div>
+          <div class="card"><div class="card-h"><h3>Effects (odds ratios, 95% interval)</h3><div class="btns"><button class="btn sm" data-png="mdlOR">PNG</button><button class="btn sm" data-csv="mdlOR">CSV</button></div></div><div class="chartbox tall"><canvas id="mdlOR"></canvas></div><div id="mdlTable" style="margin-top:10px"></div></div>
+        </div>
+        <div class="card" style="margin-top:14px"><h3>Predict a trip</h3>
+          <div id="predInputs" class="row"></div>
+          <div class="btns" style="margin-top:8px"><button class="btn primary" id="predGo" type="button">Predict</button><button class="btn" id="predLog" type="button" title="Freeze this prediction with a timestamp, then record the outcome after the trip">Log as forward prediction</button></div>
+          <div id="predOut" style="margin-top:10px"></div>
+        </div>
+      </div>
+
+      <div class="lltab" data-t="experiments" hidden>
+        <div class="grid g-side">
+          <div class="card"><h3>Design a controlled comparison</h3>
+            <form id="expForm">
+              <label>Title<input type="text" id="expTitle" required placeholder="Chartreuse vs white spinnerbait"></label>
+              <div class="row"><label>Lure A<input type="text" id="expA" list="lureList" required></label><label>Lure B<input type="text" id="expB" list="lureList" required></label></div>
+              <div class="row"><label>Species<select id="expSpecies"></select></label><label>Location<select id="expLoc"></select></label></div>
+              <label>Hypothesis<textarea id="expHyp" rows="2" placeholder="Catch rate differs between A and B under the same conditions."></textarea></label>
+              <div class="row"><label>Block length (min)<input type="number" min="5" step="5" id="expBlock" value="20"></label><label>Planned blocks per lure<input type="number" min="2" step="1" id="expBlocks" value="12"></label></div>
+              <details class="more"><summary>Sample-size planner</summary>
+                <div class="row"><label>Expected rate, A (fish/h)<input type="number" step="0.05" id="ssA" value="0.6"></label><label>Expected rate, B<input type="number" step="0.05" id="ssB" value="0.9"></label></div>
+                <div class="row"><label>α (two-sided)<input type="number" step="0.01" id="ssAlpha" value="0.05"></label><label>Power<input type="number" step="0.05" id="ssPow" value="0.8"></label></div>
+                <div id="ssOut" class="small"></div>
+              </details>
+              <button class="btn primary" type="submit" style="margin-top:10px">Register experiment</button>
+            </form>
+            <p class="small muted" style="margin-top:8px">Registering freezes the design, the random lure order and the planned sample size before any data are collected.</p>
+          </div>
+          <div class="card"><div class="card-h"><h3>Experiments</h3></div><div id="expList"></div></div>
+        </div>
+        <div class="card" id="expDetail" style="margin-top:14px" hidden></div>
+      </div>
+
+      <div class="lltab" data-t="validation" hidden>
+        <div class="card" style="margin-bottom:14px"><div class="row">
+          <label>Burn-in (sessions before first prediction)<input type="number" min="5" step="1" id="valBurn" value="15"></label>
+          <label>Calibration bins<input type="number" min="2" max="10" step="1" id="valBins" value="5"></label>
+          <div style="flex:0 0 auto"><button class="btn primary" id="valRun" type="button">Run prequential validation</button></div></div>
+          <p class="small muted" style="margin:6px 0 0">Every session is predicted with a model fitted only to sessions that happened before it, then scored against what actually happened. Nothing from the future leaks into a prediction.</p></div>
+        <div class="grid g4" id="valKpis"></div>
+        <div class="grid g2" style="margin-top:14px">
+          <div class="card"><div class="card-h"><h3>Calibration</h3><div class="btns"><button class="btn sm" data-png="valCal">PNG</button><button class="btn sm" data-csv="valCal">CSV</button></div></div><div class="chartbox tall"><canvas id="valCal"></canvas></div></div>
+          <div class="card"><div class="card-h"><h3>Cumulative Brier score</h3><div class="btns"><button class="btn sm" data-png="valCum">PNG</button><button class="btn sm" data-csv="valCum">CSV</button></div></div><div class="chartbox tall"><canvas id="valCum"></canvas></div></div>
+        </div>
+        <div class="card" style="margin-top:14px"><div class="card-h"><h3>Forward predictions</h3><span class="small muted">Logged before the trip; outcome recorded after</span></div><div id="fwdTable"></div></div>
+      </div>
+
+      <div class="lltab method card" data-t="methods" hidden id="llMethods"></div>
+    </section>
+
+    <!-- CASTCHECK -->
+    <section class="view" id="v-castcheck" hidden>
+      <div class="topbar"><div><h1>CastCheck shoreline twin</h1><p>A terrain model of a saved location built from public elevation data, with a water level you can raise or lower to see where the shoreline moves, how steep the bank is, and how the simulated shoreline compares with GPS points you record in the field.</p></div><button class="btn menu-btn" data-menu type="button">Menu</button></div>
+      <div class="card"><div class="row">
+        <label>Location<select id="ccLoc"></select></label>
+        <label>Area (tiles at zoom 15)<select id="ccSize"><option value="2">2×2 (~1.6 km)</option><option value="3" selected>3×3 (~2.4 km)</option><option value="4">4×4 (~3.2 km)</option></select></label>
+        <div style="flex:0 0 auto" class="btns"><button class="btn primary" id="ccLoad" type="button">Load terrain</button><button class="btn" id="ccDemo" type="button">Synthetic demo</button></div></div>
+        <div id="ccSource" class="small muted"></div></div>
+      <div class="tabs" id="ccTabs" style="margin-top:14px"><button data-t="twin" class="active">Digital twin</button><button data-t="water">Water history</button><button data-t="obs">Field observations</button><button data-t="methods">Methodology</button></div>
+
+      <div class="cctab" data-t="twin">
+        <div class="grid g-side">
+          <div class="card">
+            <h3>Water level</h3>
+            <label>Change from reference: <b class="mono" id="ccLvlTxt">+0.00 m</b><input type="range" id="ccLvl" min="-6" max="6" step="0.05" value="0"></label>
+            <div class="btns" style="margin-bottom:10px"><button class="btn sm" id="ccAnim" type="button">Animate −3 → +3 m</button><button class="btn sm" id="ccZero" type="button">Reset</button></div>
+            <div id="ccStats"></div>
+            <h3 style="margin-top:14px">Display</h3>
+            <label>Layer<select id="ccLayer"><option value="elev">Elevation + hillshade</option><option value="slope">Slope (°)</option><option value="change">Flooded / exposed</option></select></label>
+            <label>Vertical exaggeration (3D): <b class="mono" id="ccVeTxt">3×</b><input type="range" id="ccVe" min="1" max="10" step="0.5" value="3"></label>
+            <label class="chk"><input type="checkbox" id="ccShowObs" checked> Show field observations</label>
+            <label class="chk"><input type="checkbox" id="ccShowRef" checked> Show reference shoreline</label>
+            <h3 style="margin-top:14px">Bank model below the waterline</h3>
+            <label>Assumed max depth (m)<input type="number" id="ccMaxDepth" value="8" step="0.5" min="0.5"></label>
+            <p class="small muted">Elevation models record the water surface, not the lake bed. For drawdowns the bed is extrapolated by continuing the measured bank slope under water, capped at this depth. Lowered-water results are therefore an assumption, labelled in the readout.</p>
+          </div>
+          <div>
+            <div class="grid g2">
+              <div class="card" style="padding:8px"><div class="card-h" style="margin:4px 6px 8px"><h3>2D map</h3><div class="btns"><span class="small muted">drag to draw a transect</span><button class="btn sm" id="cc2dPng" type="button">PNG</button></div></div><div class="canvas-wrap"><canvas id="cc2d" width="640" height="640"></canvas></div>
+                <div class="legend"><span><i style="background:var(--water)"></i>Water at chosen level</span><span><i style="background:#fff;border:1px solid #000"></i>Reference shoreline</span><span><i style="background:var(--sim)"></i>Simulated shoreline</span><span><i style="background:#e11d48"></i>Transect</span></div></div>
+              <div class="card" style="padding:8px"><div class="card-h" style="margin:4px 6px 8px"><h3>3D terrain</h3><div class="btns"><span class="small muted">drag to orbit, scroll to zoom</span><button class="btn sm" id="cc3dPng" type="button">PNG</button></div></div><div class="canvas-wrap" id="cc3dWrap" style="aspect-ratio:1/1"></div></div>
+            </div>
+            <div class="grid g2" style="margin-top:14px">
+              <div class="card"><div class="card-h"><h3>Transect profile</h3><div class="btns"><button class="btn sm" data-png="ccProfile">PNG</button><button class="btn sm" data-csv="ccProfile">CSV</button></div></div><div class="chartbox"><canvas id="ccProfile"></canvas></div></div>
+              <div class="card"><div class="card-h"><h3>Water area vs level</h3><div class="btns"><button class="btn sm" data-png="ccHyp">PNG</button><button class="btn sm" data-csv="ccHyp">CSV</button></div></div><div class="chartbox"><canvas id="ccHyp"></canvas></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cctab" data-t="water" hidden>
+        <div class="card"><div class="row"><label>USGS gage<select id="ccGage"><option value="">Load terrain or press Find gages</option></select></label><label>History<select id="ccPeriod"><option value="P90D">90 days</option><option value="P365D" selected>1 year</option><option value="P730D">2 years</option></select></label><div style="flex:0 0 auto" class="btns"><button class="btn" id="ccFindGage" type="button">Find gages</button><button class="btn primary" id="ccGageGo" type="button">Load record</button></div></div>
+          <p class="small muted" style="margin:6px 0 0">Gage height (USGS parameter 00065) is measured against a local gage datum, not sea level, so only <i>changes</i> in stage are transferred to the twin. A gage on a different water body, or far downstream, may not represent your location.</p></div>
+        <div class="grid g4" id="ccWaterKpis" style="margin-top:14px"></div>
+        <div class="card" style="margin-top:14px"><div class="card-h"><h3>Daily mean stage vs historical range</h3><div class="btns"><button class="btn sm" data-png="ccStage">PNG</button><button class="btn sm" data-csv="ccStage">CSV</button></div></div><div class="chartbox tall"><canvas id="ccStage"></canvas></div><div class="btns" style="margin-top:8px"><button class="btn" id="ccApplyStage" type="button" disabled>Apply current − median to twin</button></div></div>
+      </div>
+
+      <div class="cctab" data-t="obs" hidden>
+        <div class="grid g-side">
+          <div class="card"><h3>Record a field observation</h3>
+            <form id="obsForm">
+              <label>Type<select id="obsType"><option value="waterline">Waterline position (stand at the water's edge)</option><option value="slope">Bank slope (clinometer reading)</option><option value="depth">Water depth</option></select></label>
+              <div class="row"><label>Latitude<input type="number" step="any" id="obsLat" required></label><label>Longitude<input type="number" step="any" id="obsLon" required></label></div>
+              <div class="row"><label>GPS accuracy (m)<input type="number" step="any" id="obsAcc"></label><label>Measured value<input type="number" step="any" id="obsVal" placeholder="° or m"></label></div>
+              <div class="row"><label>Date &amp; time<input type="text" id="obsTime"></label><label>Gage reading at the time<input type="number" step="any" id="obsGage" placeholder="optional"></label></div>
+              <label>Notes<textarea id="obsNotes" rows="2"></textarea></label>
+              <div class="btns"><button class="btn" type="button" id="obsGps">Take GPS fix</button><button class="btn primary" type="submit">Save</button></div>
+              <p class="small muted" id="obsGpsMsg" style="margin-top:6px"></p>
+            </form>
+          </div>
+          <div class="card"><div class="card-h"><h3>Simulated vs measured</h3><div class="btns"><button class="btn sm" id="obsCsv">CSV</button></div></div>
+            <div id="obsSummary"></div><div id="obsTable"></div>
+            <div class="chartbox short" style="margin-top:10px"><canvas id="obsChart"></canvas></div></div>
+        </div>
+      </div>
+      <div class="cctab method card" data-t="methods" hidden id="ccMethods"></div>
+    </section>
+
+    <!-- GEAR PHYSICS -->
+    <section class="view" id="v-gearsim" hidden>
+      <div class="topbar"><div><h1>GearMatch physics simulator</h1><p>Large-deflection beam model of a tapered rod blank loaded by line tension at the tip. Compare up to three rod designs, check a full setup for compatibility, search for designs that balance performance, weight and cost, and calibrate the model against your own bench tests.</p></div><button class="btn menu-btn" data-menu type="button">Menu</button></div>
+      <div class="tabs" id="gsTabs"><button data-t="sim" class="active">Simulate &amp; compare</button><button data-t="compat">Compatibility</button><button data-t="opt">Optimisation</button><button data-t="bench">Bench test</button><button data-t="methods">Methodology</button></div>
+
+      <div class="gstab" data-t="sim">
+        <div class="grid g-side">
+          <div class="card">
+            <h3>Load case</h3>
+            <label>Line tension: <b class="mono" id="gsTTxt"></b><input type="range" id="gsT" min="0" max="60" step="0.25" value="8"></label>
+            <label>Line angle below horizontal: <b class="mono" id="gsBTxt"></b><input type="range" id="gsB" min="-30" max="90" step="1" value="35"></label>
+            <label>Rod angle above horizontal: <b class="mono" id="gsATxt"></b><input type="range" id="gsA" min="0" max="85" step="1" value="45"></label>
+            <div class="btns"><button class="btn sm" id="gsAnimate" type="button">Animate hook-set</button><button class="btn sm" id="gsFight" type="button">Simulate fight surges</button></div>
+            <h3 style="margin-top:14px">Rod configurations</h3>
+            <div class="tabs" id="gsCfgTabs" style="margin-bottom:8px"></div>
+            <div id="gsCfgForm"></div>
+          </div>
+          <div>
+            <div class="card" style="padding:8px"><div class="card-h" style="margin:4px 6px 8px"><h3>Deflected shape</h3><div class="btns"><span class="small muted">colour = bending stress / strength</span><button class="btn sm" id="gsPng" type="button">PNG</button></div></div><div class="canvas-wrap"><canvas id="gsCanvas" width="900" height="460"></canvas></div></div>
+            <div class="card" style="margin-top:14px"><div id="gsTable"></div></div>
+          </div>
+        </div>
+        <div class="grid g2" style="margin-top:14px">
+          <div class="card"><div class="card-h"><h3>Tip deflection vs line tension</h3><div class="btns"><button class="btn sm" data-png="gsCurve">PNG</button><button class="btn sm" data-csv="gsCurve">CSV</button></div></div><div class="chartbox"><canvas id="gsCurve"></canvas></div></div>
+          <div class="card"><div class="card-h"><h3>Bending stress along the blank</h3><div class="btns"><button class="btn sm" data-png="gsStress">PNG</button><button class="btn sm" data-csv="gsStress">CSV</button></div></div><div class="chartbox"><canvas id="gsStress"></canvas></div></div>
+        </div>
+      </div>
+
+      <div class="gstab" data-t="compat" hidden>
+        <div class="grid g-side">
+          <div class="card"><h3>Setup</h3>
+            <label>Rod (simulated blank)<select id="cpRod"></select></label>
+            <label>Saved rod labels (optional)<select id="cpRodLabel"><option value="">— none —</option></select></label>
+            <div class="row"><label>Line type<select id="cpLine"><option value="mono">Monofilament</option><option value="fluoro">Fluorocarbon</option><option value="braid">Braid</option></select></label><label>Line test (lb)<input type="number" id="cpLb" value="10" step="1"></label></div>
+            <div class="row"><label>Knot efficiency (%)<input type="number" id="cpKnot" value="80" step="1"></label><label>Line out (m)<input type="number" id="cpOut" value="30" step="1"></label></div>
+            <div class="row"><label>Drag setting (lb)<input type="number" id="cpDrag" value="3" step="0.25"></label><label>Reel max drag (lb)<input type="number" id="cpReel" value="15" step="0.5"></label></div>
+            <div class="row"><label>Lure weight (oz)<input type="number" id="cpLure" value="0.375" step="0.0625"></label><label>Line angle (°)<input type="number" id="cpBeta" value="35" step="1"></label></div>
+            <div class="row"><label>Rod line rating min (lb)<input type="number" id="cpRLmin" value="6"></label><label>max<input type="number" id="cpRLmax" value="12"></label></div>
+            <div class="row"><label>Rod lure rating min (oz)<input type="number" id="cpRWmin" value="0.25" step="0.0625"></label><label>max<input type="number" id="cpRWmax" value="0.75" step="0.0625"></label></div>
+            <button class="btn primary" id="cpGo" type="button">Check setup</button>
+          </div>
+          <div class="card" id="cpOut2"><p class="muted">Enter a setup and press Check.</p></div>
+        </div>
+      </div>
+
+      <div class="gstab" data-t="opt" hidden>
+        <div class="grid g-side">
+          <div class="card"><h3>Design search</h3>
+            <p class="small muted">Every combination in the grid is solved at the design load. Designs below the minimum safety factor are rejected; the rest are scored and the non-dominated (Pareto) set is marked.</p>
+            <label>Materials</label><div id="opMats" style="margin-bottom:8px"></div>
+            <div class="row"><label>Lengths (m)<input type="text" id="opLen" value="1.8, 2.0, 2.13, 2.3"></label></div>
+            <div class="row"><label>Butt OD (mm)<input type="text" id="opButt" value="9, 10, 11, 12, 13"></label><label>Tip OD (mm)<input type="text" id="opTip" value="1.6, 2.0, 2.4, 2.8"></label></div>
+            <label>Wall ratio t/R<input type="text" id="opWall" value="0.2, 0.3, 0.45, 0.6"></label>
+            <div class="row"><label>Design tension (N)<input type="number" id="opT" value="15"></label><label>Line angle (°)<input type="number" id="opB" value="35"></label><label>Rod angle (°)<input type="number" id="opA" value="45"></label></div>
+            <div class="row"><label>Target tip deflection / length<input type="number" id="opTarget" value="0.35" step="0.01"></label><label>Min safety factor<input type="number" id="opSF" value="2" step="0.1"></label></div>
+            <label>Weight on performance: <b class="mono" id="opWPTxt">1.0</b><input type="range" id="opWP" min="0" max="3" step="0.1" value="1"></label>
+            <label>Weight on low mass: <b class="mono" id="opWWTxt">1.0</b><input type="range" id="opWW" min="0" max="3" step="0.1" value="1"></label>
+            <label>Weight on low cost: <b class="mono" id="opWCTxt">1.0</b><input type="range" id="opWC" min="0" max="3" step="0.1" value="1"></label>
+            <button class="btn primary" id="opGo" type="button">Run search</button>
+            <div id="opInfo" class="small muted" style="margin-top:8px"></div>
+          </div>
+          <div>
+            <div class="card"><div class="card-h"><h3>Trade-off: mass vs performance (colour = cost index)</h3><div class="btns"><button class="btn sm" data-png="opChart">PNG</button><button class="btn sm" data-csv="opChart">CSV</button></div></div><div class="chartbox tall"><canvas id="opChart"></canvas></div></div>
+            <div class="card" style="margin-top:14px"><div class="card-h"><h3>Top designs</h3><button class="btn sm" id="opCsv">CSV (all designs)</button></div><div id="opTable"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="gstab" data-t="bench" hidden>
+        <div class="grid g-side">
+          <div class="card"><h3>Static tip-load bench test</h3>
+            <ol class="small" style="padding-left:18px">
+              <li>Clamp the blank horizontally at the point where the simulated length starts (top of the grip).</li>
+              <li>Measure the unloaded tip height against a vertical rule.</li>
+              <li>Hang known masses from the tip-top (weigh them on a kitchen scale) and record the tip height each time.</li>
+              <li>Enter drop = unloaded height − loaded height. Repeat each mass at least twice.</li>
+            </ol>
+            <label>Configuration to test<select id="bnCfg"></select></label>
+            <label>Test name<input type="text" id="bnName" placeholder="My 7' MH, 2026-11-10"></label>
+            <div id="bnRows"></div>
+            <div class="btns" style="margin-top:6px"><button class="btn sm" id="bnAdd" type="button">Add row</button><button class="btn primary" id="bnRun" type="button">Compare &amp; calibrate</button><button class="btn" id="bnSave" type="button">Save test</button></div>
+          </div>
+          <div>
+            <div class="card"><div class="card-h"><h3>Predicted vs measured tip drop</h3><div class="btns"><button class="btn sm" data-png="bnChart">PNG</button><button class="btn sm" data-csv="bnChart">CSV</button></div></div><div class="chartbox tall"><canvas id="bnChart"></canvas></div><div id="bnOut"></div></div>
+            <div class="card" style="margin-top:14px"><h3>Saved bench tests</h3><div id="bnList"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="gstab method card" data-t="methods" hidden id="gsMethods"></div>
+    </section>
+
+    <!-- RESEARCH -->
+    <section class="view" id="v-research" hidden>
+      <div class="topbar"><div><h1>Methods &amp; exports</h1><p>Export your datasets, generate a research summary written from your current data, and read how every number in CastLab is calculated. Each graph also has its own PNG and CSV buttons.</p></div><button class="btn menu-btn" data-menu type="button">Menu</button></div>
+      <div class="grid g3">
+        <div class="card"><h3>Datasets</h3><div id="rsDatasets" class="btns"></div></div>
+        <div class="card"><h3>Research summary</h3><p class="small muted">A self-contained HTML report with methodology and results sections, computed from your data at the moment you click.</p><div class="btns"><button class="btn primary" id="rsReport" type="button">Download report (HTML)</button><button class="btn" id="rsMd" type="button">Markdown</button></div></div>
+        <div class="card"><h3>Verification</h3><p class="small muted">The numerical engines are checked against closed-form and published reference values every time the page loads.</p><div id="rsVerify"></div></div>
+      </div>
+      <div class="card method" style="margin-top:14px" id="rsMethods"></div>
+    </section>
+
+    <!-- ACCOUNT -->
+    <section class="view" id="v-account" hidden>
+      <div class="topbar"><div><h1>Account &amp; data</h1><p>Your profile, units and the data stored for it on this device.</p></div><button class="btn menu-btn" data-menu type="button">Menu</button></div>
+      <div class="grid g2">
+        <div class="card"><h3>Profile</h3><div id="acProfile"></div>
+          <label style="margin-top:10px">Display units<select id="acUnits"><option value="imperial">Imperial (lb, oz, ft)</option><option value="metric">Metric (N, g, m)</option></select></label>
+          <label>Home location<select id="acHome"></select></label></div>
+        <div class="card"><h3>Back up and move data</h3>
+          <div class="btns"><button class="btn primary" id="acExport" type="button">Export everything (JSON)</button><button class="btn" id="acImportBtn" type="button">Import JSON</button><input type="file" id="acImport" accept="application/json,.json" hidden></div>
+          <label class="chk" style="margin-top:8px"><input type="checkbox" id="acReplace"> Replace instead of merge on import</label>
+          <h3 style="margin-top:16px">Simulated demo dataset</h3>
+          <p class="small muted">Generates sessions from a stated logistic model with known coefficients so you can see every analysis working and check that the model recovers the true values. Simulated records are tagged and are never mixed with your observations.</p>
+          <div class="btns"><button class="btn" id="acDemo" type="button">Generate simulated data</button><button class="btn danger" id="acDemoDel" type="button">Remove simulated data</button></div>
+          <h3 style="margin-top:16px">Danger zone</h3>
+          <button class="btn danger" id="acDelete" type="button">Delete account and all its data</button></div>
+      </div>
+      <div class="card" style="margin-top:14px"><h3>Stored records</h3><div id="acCounts"></div></div>
+    </section>
+  </main>
+</div>
+
+<script src="vendor/leaflet/leaflet.js"></script>
+<script src="vendor/chart.umd.js"></script>
+<script src="js/stats.js"></script>
+<script src="js/physics.js"></script>
+<script src="js/terrain.js"></script>
+<script src="js/astro.js"></script>
+<script src="js/store.js"></script>
+<script src="js/app.js"></script>
+<script src="js/lurelab.js"></script>
+<script src="js/gearsim.js"></script>
+<script src="js/field.js"></script>
+<script type="module" src="js/castcheck.js"></script>
+</body>
+</html>
