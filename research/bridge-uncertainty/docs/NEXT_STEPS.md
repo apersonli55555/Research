@@ -2,6 +2,11 @@
 
 Tick each box. Keep a dated lab notebook (paper or a Google Doc) and write every step in your own words. That notebook is your proof that the work is yours.
 
+## New: professor-style review (read this first)
+`docs/PROFESSOR_REVIEW.md` answers the four questions you emailed, lists what a professor would criticise, and ranks what to do next. Two new tasks come out of it, both small and both yours to do:
+- [ ] **Shared freezing threshold:** fit all five modes together with one common T_c. Does its uncertainty shrink?
+- [ ] **Mode 3:** confirm from Maes & Lombaert (2021) that the `y` sensors are lateral, then write half a page on why a lateral mode could stiffen as it warms.
+
 ## Week 1: own the basics (about 5–6 hours)
 - [ ] **Read `docs/STUDY_GUIDE.md` twice.** Then do the self-quiz with the answers covered.
 - [ ] **Run the project on your laptop.** Download it (see the README), install it, and run `python -m pytest -q`. If something breaks, write down the error and how you fixed it.
