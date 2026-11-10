@@ -166,6 +166,7 @@ def main():
                     help="resampling unit for FallOrNot confidence intervals and paired tests")
     ap.add_argument("--synthetic", default="", help="ofsyn.npz from ofsyn_prep.py (optional)")
     ap.add_argument("--external", default="", help="hmdb.npz from hmdb_prep.py: external real-world test (optional)")
+    ap.add_argument("--ofitw", default="", help="ofitw.npz from ofitw_prep.py: OmniFall's in-the-wild test split (optional)")
     ap.add_argument("--finetuned", nargs="*", default=[], help="scores_*.npz from finetune.py score (optional)")
     ap.add_argument("--test-overrides", default="", help="file in --oops (e.g. labels_adjudicated.csv): replaces "
                     "the first annotator's TEST labels for the clips it lists")
@@ -393,6 +394,59 @@ def main():
                                   "vs_real_fallornot": paired(yt, scores[bk], scores[f"real_probe_{mk}"], gb),
                                   "vs_synthetic_hmdb51": paired(ye, ext_scores[bk], ext_scores[f"synthetic_probe_{mk}"], ne)}
 
+    # ---- third test set: OmniFall OF-ItW test split (independent annotation team) ----
+    if a.ofitw:
+        O = np.load(a.ofitw)
+        vsplit = json.loads(str(O["video_split"])); fsegs = json.loads(str(O["fall_segments"]))
+        te = O["split"] == "test"; tr_o = ~te
+        Fo, yo, no = O["frames"], O["label"], O["name"]
+        Vo = O["video"] if "video" in O.files else None
+        go = np.array([compilation(n) for n in no])
+        res["ofitw"], res["paired_ofitw"], oscores = {}, {}, {}
+        res["n"].update(ofitw_test_videos=int(len(set(no[te]))), ofitw_test_clips=int(te.sum()), ofitw_test_falls=int(yo[te].sum()),
+                        ofitw_train_clips=int(tr_o.sum()), ofitw_train_falls=int(yo[tr_o].sum()))
+        oscores["zero_shot"] = O["margin"][te].astype(float)
+        osets = {"staged": (Fs, Vs, ys)}
+        if Y is not None:
+            osets["synthetic"] = (Fy, Vy, yy)
+        if have_real:           # our own real clips, minus any video that is in the OF-ItW test split
+            keep = np.array([vsplit.get(t[2]) != "test" for t in train])
+            res["n"]["our_real_train_clips_removed_as_ofitw_test"] = int((~keep).sum())
+            ours = (np.array([t[0] for t in train])[keep],
+                    np.array([t[5] for t in train])[keep] if videos else None, np.array([t[1] for t in train])[keep])
+            osets["real_ours"] = ours
+        osets["real_ofitw_train"] = (Fo[tr_o], Vo[tr_o] if Vo is not None else None, yo[tr_o])
+        if Y is not None:
+            osets["synthetic_plus_real_ofitw_train"] = (np.concatenate([Fy, Fo[tr_o]]),
+                np.concatenate([Vy, Vo[tr_o]]) if (Vy is not None and Vo is not None) else None, np.concatenate([yy, yo[tr_o]]))
+        for kind in reps:
+            if "videomae" in kind and Vo is None:
+                continue
+            Xo = featurize(Fo[te], kind, Vo[te] if Vo is not None else None)
+            for src, (F_, V_, y_) in osets.items():
+                if ("videomae" in kind and V_ is None) or len(set(y_)) < 2:
+                    continue
+                oscores[f"{src}_probe_{kind}"] = probe().fit(featurize(F_, kind, V_), y_).predict_proba(Xo)[:, 1]
+        for k, sc in oscores.items():
+            res["ofitw"][k] = boot(yo[te], sc, go[te])
+        mk_ = "clip+videomae" if "clip+videomae" in reps else "clip_temporal"
+        for a_, b_ in (("real_ofitw_train", "synthetic"), ("real_ofitw_train", "staged"), ("real_ours", "synthetic"),
+                       ("real_ours", "staged"), ("synthetic", "staged"), ("synthetic_plus_real_ofitw_train", "real_ofitw_train"),
+                       ("synthetic_plus_real_ofitw_train", "synthetic")):
+            ka, kb = f"{a_}_probe_{mk_}", f"{b_}_probe_{mk_}"
+            if ka in oscores and kb in oscores:
+                res["paired_ofitw"][f"{ka} vs {kb}"] = paired(yo[te], oscores[ka], oscores[kb], go[te])
+        # our annotators vs OmniFall's annotators, on videos both labelled (event window [t-1, t+1])
+        ag = {"fall_fall": 0, "fall_not": 0, "not_fall": 0, "not_not": 0}
+        for name_, lab_ in labels.items():
+            if lab_ in ("fall", "not_fall") and name_ in fsegs and name_ in meta:
+                t_ = float(meta[name_]["t"])
+                theirs = any(t_ - 1 < fe and fs < t_ + 1 for fs, fe in fsegs[name_])
+                ag[("fall" if lab_ == "fall" else "not") + "_" + ("fall" if theirs else "not")] += 1
+        n_ag = sum(ag.values())
+        res["agreement_with_omnifall"] = {**ag, "n": n_ag,
+                                          "raw_agreement": (ag["fall_fall"] + ag["not_not"]) / n_ag if n_ag else None}
+
     # ---- fine-tuned VideoMAE (finetune.py); pre-registered test: does fine-tuning on
     #      synthetic+real beat the best probe on BOTH test sets? ----
     res["preregistered"] = {}
@@ -551,7 +605,7 @@ def main():
     with open(os.path.join(out, "staged_to_real.json"), "w") as fh:
         json.dump(res, fh, indent=1)
     lines = ["| Evaluated on | Method | AUROC | AP | Recall @ 5% FPR |", "|---|---|---|---|---|"]
-    for dom in ("staged", "real", "real_hard", "external", "external_hard"):
+    for dom in ("staged", "real", "real_hard", "external", "external_hard", "ofitw"):
         if dom not in res:
             continue
         for k, v in res[dom].items():
@@ -570,6 +624,16 @@ def main():
         for pt in lc["points"]:
             extra.append(f"| {pt['videos']} | {pt['falls']:.0f} | {pt['real']:.3f} ± {pt['real_sd']:.3f} | "
                          f"{pt['both']:.3f} ± {pt['both_sd']:.3f} |")
+    if res.get("paired_ofitw"):
+        extra += ["", "Head-to-head on OmniFall OF-ItW test split (resampled by compilation)", "",
+                  "| Comparison | AUROC diff | 95% CI | p |", "|---|---|---|---|"]
+        for k, (d_, lo, hi, pv) in res["paired_ofitw"].items():
+            extra.append(f"| {k} | {d_:+.3f} | [{lo:+.3f}, {hi:+.3f}] | {pv:.3f} |")
+    if res.get("agreement_with_omnifall"):
+        ag = res["agreement_with_omnifall"]
+        extra += ["", f"OUR LABELS vs OMNIFALL LABELS on {ag['n']} videos both labelled (ours fall/not x theirs fall-in-window/not): "
+                      f"fall&fall {ag['fall_fall']}, fall&not {ag['fall_not']}, not&fall {ag['not_fall']}, not&not {ag['not_not']}; "
+                      + (f"raw agreement {ag['raw_agreement']:.3f}" if ag["n"] else "no overlap")]
     if res.get("method_test"):
         mt_ = res["method_test"]; g = lambda v: f"{v[0]:+.3f} [{v[1]:+.3f}, {v[2]:+.3f}], p = {v[3]:.3f}"
         extra += ["", "METHOD TEST (" + mt_["representation"] + "): " + mt_["rule"], "",

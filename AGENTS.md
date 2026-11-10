@@ -19,7 +19,7 @@ We are writing a computer-vision research paper, titled **"How Much Is a Real Fa
 | `vision/oops_mine.py` | Streams the 48 GB OOPS! archive, embeds clips, selects the test sample and the training pool. |
 | `vision/urfall_prep.py` | Prepares the staged UR Fall dataset. |
 | `vision/labeler.py` | In-Colab labelling tool. |
-| `vision/ofsyn_prep.py`, `vision/hmdb_prep.py` | Prepare OmniFall synthetic clips and the external HMDB51 test set. |
+| `vision/ofsyn_prep.py`, `vision/hmdb_prep.py`, `vision/ofitw_prep.py` | Prepare OmniFall synthetic clips, the external HMDB51 test set, and OmniFall's in-the-wild (OF-ItW) test set. |
 | `vision/finetune.py` | Fine-tunes VideoMAE (fixed hyper-parameters, seeds) and scores both test sets. |
 | `vision/agreement.py` | Inter-annotator agreement (Cohen's kappa). |
 | `vision/experiment.py` | All evaluation: probes, bootstrap CIs, paired tests, learning curve, equal budget, external test, fine-tuned scores, `--test-labels`. |
@@ -44,6 +44,7 @@ Data (clips, embeddings, labels, result files) lives on the owner's Google Drive
 
 ## Remaining work, in priority order
 
+0. **Third test set, pending one Colab GPU run:** `vision/ofitw_prep.py` embeds OmniFall's OF-ItW clips (818 OOPS! videos labelled by OmniFall's annotation team; test split 572 videos, 1,671 clips, 636 falls). `experiment.py --ofitw` scores every probe on that test split (our real training clips that fall in it are removed), trains probes on OF-ItW's own train+val split, and compares our labels with OmniFall's on shared videos. Record the output as run 11, then add it to the paper.
 1. **Second real-world test source: done (HMDB51, run 5).** A third source of real accident falls (closer to OOPS! than HMDB51's movie falls) would further help separate "real vs. synthetic" from "which benchmark".
 2. **Second staged dataset.** UR Fall is saturated (AUROC 1.00 in-domain). The original Le2i page is offline; find a legitimate mirror or another staged dataset.
 3. **Fine-tuning experiment: done (runs 6 and 7, 3 seeds). The rule specified in advance was NOT MET for any seed.**
