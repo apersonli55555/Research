@@ -17,6 +17,7 @@ rolling:   # 4 single-threaded shards in parallel (much faster than one multi-th
 sensitivity:
 	$(PY) scripts/run_sensitivity.py
 	$(PY) scripts/run_kink_check.py
+	$(PY) scripts/run_shared_threshold.py
 stats:
 	$(PY) scripts/paired_tests.py
 figures:

@@ -19,8 +19,8 @@ import scipy.io as sio
 ZENODO_URL = "https://zenodo.org/api/records/3745914/files/trackedmodes.zip/content"
 ZENODO_MD5 = "5cdb446519d1150228fab51b3a002239"  # published by Zenodo for trackedmodes.zip
 
-# Period boundaries. Retrofit window 15 May - 27 Sep 2019 as reported in
-# literature that cites Maes & Lombaert (2021); CONFIRM against that paper.
+# Period boundaries. Retrofit window 15 May - 27 Sep 2019: confirmed in the dataset authors'
+# own plotting code (matlab-functions/plot_trackedmodes.m, Zenodo 3745914).
 MONITOR_START = pd.Timestamp("2018-10-02")
 RETROFIT_START = pd.Timestamp("2019-05-15")
 RETROFIT_END = pd.Timestamp("2019-09-28")  # first day *after* retrofit

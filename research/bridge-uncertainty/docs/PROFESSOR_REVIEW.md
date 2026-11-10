@@ -6,6 +6,15 @@ Two small checks were run on the data for this review (10 Nov 2026). Their numbe
 
 ---
 
+## Follow-up results (10 Nov 2026): two of this review's suggestions, tested
+Both were run in `scripts/run_shared_threshold.py`. One of this review's predictions turned out wrong.
+
+1. **Shared freezing threshold: it did not help.** Fitting all five modes with one common threshold gives 1.22 °C with a 95 % range of −0.40 to 2.25 (width 2.65 °C). The separate fits have widths of 2.36–3.01 °C. This review predicted the uncertainty would "shrink a lot". It didn't, and the reason is instructive: all five modes are measured on the *same few freezing days*, so they are five views of the same evidence, not five independent pieces of evidence. More modes cannot substitute for more cold days.
+2. **Mode types confirmed from the dataset authors' own code.** Modes 3 and 11 are lateral deck modes; 5, 6, 10, 12 and 13 are global vertical; **mode 9 is torsional**, not vertical as the table below loosely suggests; the rest are arch modes. All 12 non-lateral modes soften as they warm. Mode 3 stiffens, and mode 11, the other lateral mode, shows no clear trend. See `docs/mode3_lateral_note.md`.
+3. **Retrofit dates confirmed** as 15 May to 27 September 2019 in the same code.
+
+---
+
 ## Overall verdict
 The question is good, and the evaluation is more careful than most student work: rolling windows, paired tests, an ablation, and a control that overturned your own first claim. The weak points are that the modelling contribution is small (a kinked line), there is one bridge and one season, and the hardest case (freezing) is unsolved. As it stands this is a solid science-fair project and a reasonable NHSJS paper. It is not yet a professional journal paper.
 

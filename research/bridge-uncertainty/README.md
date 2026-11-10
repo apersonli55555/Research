@@ -20,6 +20,7 @@ python scripts/run_rolling.py        # 22 systematic rolling windows (slow; see 
 python scripts/paired_tests.py       # paired day-block bootstrap tests of coverage differences
 python scripts/run_sensitivity.py    # hyperparameter sensitivity + physics-parameter CIs (~15 min)
 python scripts/run_kink_check.py     # physics form vs a plain two-regime line (~1 min)
+python scripts/run_shared_threshold.py  # shared freezing threshold + slope by mode type (~3 min)
 python scripts/make_figures.py       # figures/ and results/summary.md
 ```
 Everything is seeded and deterministic. `results/summary.md` is regenerated from the CSVs, so every number in the paper should be traceable to a CSV row. Tests run automatically on GitHub (`.github/workflows/bridge-uncertainty-tests.yml`).
@@ -147,6 +148,13 @@ The two models are **indistinguishable**, and they fit the same slopes and thres
 - The benefit does **not** come from the thermo-elastic formula. It comes from **separating the freezing regime from the warm-weather trend**, which is what the ablation in v2 already pointed to.
 - The physics still earns its place in two ways: it is *why* you would look for a softening slope and a freezing threshold in the first place, and it makes the fitted numbers interpretable. But "physics-guided" should be read as "physics-motivated two-regime model", and the claim to make is about regime separation.
 
+### v6: mode types, shared freezing threshold, retrofit dates (10 Nov 2026)
+From `scripts/run_shared_threshold.py`:
+- **Mode types** (from the dataset authors' plotting code): lateral deck modes 3 and 11; global vertical 5, 6, 10, 12, 13; torsional 9; arch 1, 2, 4, 7, 8, 14. Of the five modes studied here, three are vertical, one is lateral and one is torsional.
+- **Temperature trend by type** (pre-retrofit hours above 5 °C): all 12 non-lateral modes soften as they warm, each with a 95 % range below zero. Lateral mode 3 stiffens (+1.2e-4 per °C [+0.6e-4, +1.7e-4]). Lateral mode 11 shows no clear trend (−0.6e-4 [−2.0e-4, +0.6e-4]). So the "unexplained" positive sign of mode 3 goes with its being a lateral mode. See `docs/mode3_lateral_note.md` for hypotheses.
+- **Shared freezing threshold:** one common threshold for all five modes is 1.22 °C [−0.40, 2.25]. Its uncertainty (width 2.65 °C) is no smaller than the separate fits' (2.36–3.01 °C), because all modes see the same few freezing days.
+- **Retrofit dates** (15 May–27 Sep 2019) are confirmed in the authors' code.
+
 ## Honest limitations
 1. **Cold regime:** no method handles sub-zero temperatures when trained without them. This is the biggest open problem.
 2. **Small extrapolation samples:** outside-range samples are small (median 96–379 hours per fold; the >20 °C bin is 8 days).
@@ -156,7 +164,7 @@ The two models are **indistinguishable**, and they fit the same slopes and thres
 6. **Window design:** the rolling windows cover only one pre-retrofit season (Nov 2018–May 2019), so they overlap heavily and are not independent replications. The paired tests account for shared days, but not for the fact that it is one winter and one spring.
 
 ## Your tasks (this is the part that makes the project yours)
-1. **Verify** the retrofit dates (15 May–27 Sep 2019) in Maes & Lombaert (2021) or Maes et al. (2022). Fix `data.py` if they differ.
+1. ~~Verify the retrofit dates.~~ Done: confirmed in the dataset authors' code. Still read Maes & Lombaert (2021) for the bridge description.
 2. **Find a citable value** for steel's dE/dT/E near 0–30 °C (try the NIST technical note on temperature-dependent properties of structural steel, or Eurocode 3 tables). Compare it with the fitted *a* values in `results/physics_parameters.csv`. Do they agree in sign and order of magnitude?
 3. **Literature check:** search Google Scholar for "conformal" + "structural health monitoring", "conformal" + "natural frequency", and "KW51". Read Jones/Pitchforth/Cross (EWSHM 2024) on physics-informed GP kernels. Write down how your work differs.
 4. **Minimum detectable shift** (your main original experiment). Add a known synthetic shift of δ = 0.1 %, 0.25 %, 0.5 % or 1 % to the pre-retrofit *test* frequencies, labelled clearly as synthetic. Measure the detection rate vs δ for each model at a fixed false-alarm rate. This is what can actually separate the methods.

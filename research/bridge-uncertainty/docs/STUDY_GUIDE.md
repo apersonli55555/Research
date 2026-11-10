@@ -84,7 +84,7 @@ The formula carries the trend into new temperatures; the machine learning handle
 4. What is coverage? → *The fraction of real readings inside the band.*
 5. Why resample days, not hours? → *Hours in a day are strongly correlated; treating them as independent makes the CIs falsely narrow.*
 6. Why not use adaptive conformal inference everywhere? → *It adapts to whatever happens, including real damage, which would hide the alarm.*
-7. What does a positive *a* for mode 3 mean? → *The frequency rises with temperature for that mode, which steel softening alone can't explain. Honest answer: unknown; possibly bearings or the track.*
+7. Why does mode 3's frequency rise with temperature? → *Mode 3 is a lateral (sideways) mode. All 12 non-lateral modes soften when warm; the two lateral modes don't (mode 3 stiffens, mode 11 is flat). Sideways stiffness depends on bearings and track, not just steel. That's a hypothesis, not a proven cause.*
 8. What's the biggest weakness? → *One bridge, and the cold regime is unsolved.*
 9. What's novel? → *Testing conformal coverage under seasonal shift on KW51, inside vs outside the training range, with paired tests. (Confirm with your own literature search before claiming "first".)*
 10. Did you tune your model until it won? → *No. Settings were fixed in advance. I re-ran 9 settings for my model and gave the competitor the same 9. Every version of mine (0.88–0.90) beat every version of theirs (0.77–0.83), and my default wasn't even the best one.*

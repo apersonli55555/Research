@@ -1,7 +1,7 @@
 # Do conformal error bars survive an unseen season? Physics-guided temperature compensation of bridge natural frequencies on the KW51 railway bridge
 
 *[Your name]¹ — ¹[High school], Austin, Texas, USA*
-*DRAFT v0.5, 2026-11-10. Every number below comes from `results/` in this repository at the commit that contains this file. Items marked **[TODO]** need your own work or verification before submission.*
+*DRAFT v0.6, 2026-11-10. Every number below comes from `results/` in this repository at the commit that contains this file. Items marked **[TODO]** need your own work or verification before submission.*
 
 ---
 
@@ -42,7 +42,7 @@ An alarm threshold on residuals is an uncertainty statement: "this frequency is 
 **Conformal prediction in SHM.** Conformal methods have been used for anomaly detection on fibre-optic strain data from a railway bridge [**TODO: full citation, Ann. Appl. Stat. 15(3), "Unsupervised streaming anomaly detection for instrumented infrastructure"**] and for damage identification with graph neural networks [**TODO: full citation, Adv. Eng. Informatics 2025, "A hybrid data-physics framework with conformal GNN…"**]. Adaptive conformal inference [Gibbs & Candès 2021] targets distribution shift in general.
 
 ## 3. Data
-The KW51 bridge is a steel bowstring railway bridge in Leuven, Belgium **[TODO: add span and structural description from Maes & Lombaert 2021]**. It was monitored from October 2018 to January 2020 and retrofitted between 15 May and 27 September 2019 **[TODO: verify dates]** to correct a construction error in the connections of the diagonals. We use the dataset authors' tracked modal parameters (`trackedmodes.mat`, Zenodo 10.5281/zenodo.3745914). These comprise 11,328 hourly records of 14 natural frequencies and damping ratios identified with reference-based covariance-driven stochastic subspace identification, plus steel surface temperature, relative humidity and weather-station variables.
+The KW51 bridge is a steel bowstring railway bridge in Leuven, Belgium **[TODO: add span and structural description from Maes & Lombaert 2021]**. It was monitored from October 2018 to January 2020 and retrofitted between 15 May and 27 September 2019 (dates as given in the dataset's plotting code) to correct a construction error in the connections of the diagonals. We use the dataset authors' tracked modal parameters (`trackedmodes.mat`, Zenodo 10.5281/zenodo.3745914). These comprise 11,328 hourly records of 14 natural frequencies and damping ratios identified with reference-based covariance-driven stochastic subspace identification, plus steel surface temperature, relative humidity and weather-station variables.
 
 Missing data:
 - Steel temperature is missing throughout October 2018 and for 72 % of November 2018.
@@ -245,7 +245,8 @@ Fitted on main-split training data only, with 95 % day-block bootstrap CIs (300 
 | 13 | −2.9e-4 | [−4.0e-4, −1.4e-4] | 1.18 | [−1.4, 2.4] |
 
 - **Sign:** the temperature coefficient is negative, as thermal softening of steel predicts, with CIs excluding zero for modes 6, 9 and 13. It is indistinguishable from zero for mode 5.
-- **Mode 3:** the coefficient is positive with a CI excluding zero, which steel softening alone cannot explain **[TODO: discuss candidate mechanisms]**.
+- **Mode 3 is a lateral mode.** The dataset authors classify modes 3 and 11 as lateral deck modes, 5, 6, 10, 12 and 13 as global vertical, 9 as torsional and the rest as arch modes. Using pre-retrofit hours above 5 °C, all 12 non-lateral modes have negative temperature slopes with 95 % CIs excluding zero (−1.2e-4 to −5.0e-4 per °C). Lateral mode 3 is positive (+1.2e-4 [+0.6e-4, +1.7e-4]) and lateral mode 11 is not distinguishable from zero (−0.6e-4 [−2.0e-4, +0.6e-4]) (`results/mode_type_slopes.csv`). Lateral stiffness depends more on supports and track than on the steel modulus, which may explain the difference; this is a hypothesis **[TODO: discuss mechanisms in your own words; see docs/mode3_lateral_note.md]**.
+- **Shared threshold:** fitting the five modes with one common *T_c* gives 1.22 °C [−0.40, 2.25], no tighter than the separate fits, because all modes observe the same few freezing days.
 - **Freezing threshold:** the *T_c* CIs overlap across modes and all include 0 °C. That is consistent with a freezing-related mechanism, but does not establish it. The same regime appears as a 2–3 °C kink in Wittenberg et al. (2025a).
 - **Not validated out of sample:** no test hour of the main split fell below 0 °C, so the cold term is not validated out-of-sample there (see Sec. 5.4).
 

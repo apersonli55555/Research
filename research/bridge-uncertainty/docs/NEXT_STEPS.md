@@ -4,14 +4,14 @@ Tick each box. Keep a dated lab notebook (paper or a Google Doc) and write every
 
 ## New: professor-style review (read this first)
 `docs/PROFESSOR_REVIEW.md` answers the four questions you emailed, lists what a professor would criticise, and ranks what to do next. Two new tasks come out of it, both small and both yours to do:
-- [ ] **Shared freezing threshold:** fit all five modes together with one common T_c. Does its uncertainty shrink?
-- [ ] **Mode 3:** confirm from Maes & Lombaert (2021) that the `y` sensors are lateral, then write half a page on why a lateral mode could stiffen as it warms.
+- [x] **Shared freezing threshold:** done by the assistant at your request. It did *not* shrink (see `docs/PROFESSOR_REVIEW.md`, follow-up results). Your part: explain why, in your own words.
+- [x] **Mode 3:** confirmed as a lateral mode from the dataset authors' code; a half-page note is in `docs/mode3_lateral_note.md`. Your part: rewrite the note in your own words.
 
 ## Week 1: own the basics (about 5–6 hours)
 - [ ] **Read `docs/STUDY_GUIDE.md` twice.** Then do the self-quiz with the answers covered.
 - [ ] **Run the project on your laptop.** Download it (see the README), install it, and run `python -m pytest -q`. If something breaks, write down the error and how you fixed it.
 - [ ] **Read** Angelopoulos & Bates (arXiv 2107.07511), sections 1–2. Write half a page: what does conformal prediction guarantee, and when does it break?
-- [ ] **Task 1:** find the retrofit dates in Maes & Lombaert (2021) or Maes et al. (2022). If they aren't 15 May–27 Sep 2019, fix `RETROFIT_START`/`RETROFIT_END` in `src/kw51uq/data.py` and tell me.
+- [x] **Task 1:** retrofit dates confirmed (15 May–27 Sep 2019) in the dataset authors' code.
 - [ ] **Register for the Z24 data** at bwk.kuleuven.be/bwm/z24 with your school email (see "Get a second structure yourself" below).
 - [ ] **Send the LUMO email** (`docs/lumo_data_request_email.md`) from your own email address. This is a backup second structure.
 - [ ] **Find your fair's dates** (GARSEF registration and deadlines) and write them at the top of your notebook.
