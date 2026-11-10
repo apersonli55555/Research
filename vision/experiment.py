@@ -23,7 +23,7 @@ or staged+real data. Metrics: AUROC, average precision, recall at 5% false-posit
 with 95% CIs from a video-level bootstrap. Writes JSON, a markdown table, an ROC figure,
 and the real-test clips each staged-trained probe gets most wrong.
 """
-import argparse, csv, json, os, sys
+import argparse, csv, json, os, re, sys
 
 import numpy as np
 
@@ -33,6 +33,11 @@ from oops_mine import load_frames  # noqa: E402
 
 
 REPRESENTATIONS = ["clip_appearance", "clip_temporal", "videomae", "clip+videomae"]
+
+
+def compilation(name):
+    """OOPS! video names are '<compilation title><clip index>'; strip the index."""
+    return re.sub(r"\d+$", "", str(name)).strip()
 
 
 def l2n(x):
@@ -143,6 +148,8 @@ def main():
     ap.add_argument("--oops", required=True)
     ap.add_argument("--out", default=None)
     ap.add_argument("--min-test-pos", type=int, default=20)
+    ap.add_argument("--group-by", choices=["video", "compilation"], default="video",
+                    help="resampling unit for FallOrNot confidence intervals and paired tests")
     ap.add_argument("--synthetic", default="", help="ofsyn.npz from ofsyn_prep.py (optional)")
     ap.add_argument("--external", default="", help="hmdb.npz from hmdb_prep.py: external real-world test (optional)")
     ap.add_argument("--finetuned", nargs="*", default=[], help="scores_*.npz from finetune.py score (optional)")
@@ -189,6 +196,11 @@ def main():
     Ft = np.array([t[0] for t in test]); yt = np.array([t[1] for t in test])
     Vt = np.array([t[5] for t in test]) if videos else None
     gt = np.array([t[2] for t in test]); segt = [t[3] for t in test]; mt = np.array([t[4] for t in test])
+    # resampling unit for FallOrNot confidence intervals: the video (default) or the source
+    # compilation (OOPS! clips are cut from YouTube compilations; clips of one compilation are
+    # correlated, so --group-by compilation gives more conservative intervals)
+    gb = np.array([compilation(n) for n in gt]) if a.group_by == "compilation" else gt
+    test_comps = {compilation(n) for n in gt}
     print(f"real test set: {len(test)} clips from {len(set(gt))} videos, {yt.sum()} falls")
     if yt.sum() < a.min_test_pos:
         print(f"WARNING: only {yt.sum()} real falls in the test set; results will be very noisy")
@@ -211,23 +223,51 @@ def main():
         res["staged"][f"staged_probe_{kind}_cv"] = boot(ys, p, gs)
 
     # ---- staged -> real ----
-    res["real"]["zero_shot"] = boot(yt, mt, gt); scores["zero_shot"] = mt
+    res["real"]["zero_shot"] = boot(yt, mt, gb); scores["zero_shot"] = mt
     have_real = bool(train) and len({t[1] for t in train}) == 2
     if not have_real:
         print("no labelled training-pool clips with both classes: skipping real-trained probes")
     for kind in reps:
         Xs, Xt = featurize(Fs, kind, Vs), featurize(Ft, kind, Vt)
         s = probe().fit(Xs, ys).predict_proba(Xt)[:, 1]
-        res["real"][f"staged_probe_{kind}"] = boot(yt, s, gt); scores[f"staged_probe_{kind}"] = s
+        res["real"][f"staged_probe_{kind}"] = boot(yt, s, gb); scores[f"staged_probe_{kind}"] = s
         if have_real:
             Xr = featurize(np.array([t[0] for t in train]), kind,
                            np.array([t[5] for t in train]) if videos else None)
             yr = np.array([t[1] for t in train])
             s = probe().fit(Xr, yr).predict_proba(Xt)[:, 1]
-            res["real"][f"real_probe_{kind}"] = boot(yt, s, gt); scores[f"real_probe_{kind}"] = s
+            res["real"][f"real_probe_{kind}"] = boot(yt, s, gb); scores[f"real_probe_{kind}"] = s
             s = probe().fit(np.vstack([Xs, Xr]), np.concatenate([ys, yr])).predict_proba(Xt)[:, 1]
-            res["real"][f"staged_plus_real_probe_{kind}"] = boot(yt, s, gt)
+            res["real"][f"staged_plus_real_probe_{kind}"] = boot(yt, s, gb)
             scores[f"staged_plus_real_probe_{kind}"] = s
+
+    # ---- leakage check: real training clips from compilations that also appear in the test set ----
+    if have_real:
+        from sklearn.metrics import roc_auc_score
+        tr_comp = np.array([compilation(t[2]) for t in train])
+        disj = np.array([c not in test_comps for c in tr_comp])
+        yr_all = np.array([t[1] for t in train])
+        res["leakage"] = {"train_clips": int(len(train)), "train_clips_sharing_compilation_with_test": int((~disj).sum()),
+                          "disjoint_clips": int(disj.sum()), "disjoint_falls": int(yr_all[disj].sum()), "by_rep": {}}
+        print(f"LEAKAGE CHECK: {int((~disj).sum())}/{len(train)} real training clips come from a compilation "
+              f"that also appears in the test set; {int(disj.sum())} clips ({int(yr_all[disj].sum())} falls) do not")
+        if disj.sum() >= 10 and len(set(yr_all[disj])) == 2:
+            rng_l = np.random.default_rng(7)
+            for kind in reps:
+                Xr = featurize(np.array([t[0] for t in train]), kind, np.array([t[5] for t in train]) if videos else None)
+                Xt_l = featurize(Ft, kind, Vt)
+                auc = lambda m: roc_auc_score(yt, probe().fit(Xr[m], yr_all[m]).predict_proba(Xt_l)[:, 1])
+                d_auc = auc(disj)
+                rnd = []
+                for _ in range(20):                    # same number of clips and falls, drawn from ALL training clips
+                    pi = rng_l.choice(np.where(yr_all == 1)[0], int(yr_all[disj].sum()), replace=False)
+                    ni = rng_l.choice(np.where(yr_all == 0)[0], int((1 - yr_all[disj]).sum()), replace=False)
+                    m = np.zeros(len(yr_all), bool); m[pi] = True; m[ni] = True
+                    rnd.append(auc(m))
+                res["leakage"]["by_rep"][kind] = {"all_train": res["real"][f"real_probe_{kind}"]["auroc"][0],
+                                                  "disjoint": float(d_auc), "random_same_size_mean": float(np.mean(rnd)),
+                                                  "random_same_size_sd": float(np.std(rnd)),
+                                                  "staged": res["real"][f"staged_probe_{kind}"]["auroc"][0]}
 
     # ---- synthetic (OmniFall OF-Syn) -> real ----
     Y = np.load(a.synthetic) if a.synthetic else None
@@ -240,17 +280,17 @@ def main():
                 continue
             Xy, Xt = featurize(Fy, kind, Vy), featurize(Ft, kind, Vt)
             s = probe().fit(Xy, yy).predict_proba(Xt)[:, 1]
-            res["real"][f"synthetic_probe_{kind}"] = boot(yt, s, gt); scores[f"synthetic_probe_{kind}"] = s
+            res["real"][f"synthetic_probe_{kind}"] = boot(yt, s, gb); scores[f"synthetic_probe_{kind}"] = s
             Xs = featurize(Fs, kind, Vs)
             s = probe().fit(np.vstack([Xs, Xy]), np.concatenate([ys, yy])).predict_proba(Xt)[:, 1]
-            res["real"][f"staged_plus_synthetic_probe_{kind}"] = boot(yt, s, gt)
+            res["real"][f"staged_plus_synthetic_probe_{kind}"] = boot(yt, s, gb)
             scores[f"staged_plus_synthetic_probe_{kind}"] = s
             if have_real:
                 Xr = featurize(np.array([t[0] for t in train]), kind,
                                np.array([t[5] for t in train]) if videos else None)
                 yr = np.array([t[1] for t in train])
                 s = probe().fit(np.vstack([Xy, Xr]), np.concatenate([yy, yr])).predict_proba(Xt)[:, 1]
-                res["real"][f"synthetic_plus_real_probe_{kind}"] = boot(yt, s, gt)
+                res["real"][f"synthetic_plus_real_probe_{kind}"] = boot(yt, s, gb)
                 scores[f"synthetic_plus_real_probe_{kind}"] = s
 
     # ---- external real-world test (HMDB51): no training on it, clip score = max over windows ----
@@ -315,7 +355,7 @@ def main():
         have = np.array([k in fmap for k in keys])
         if have.all():
             scores[tag] = np.array([fmap[k] for k in keys])
-            res["real"][tag] = boot(yt, scores[tag], gt)
+            res["real"][tag] = boot(yt, scores[tag], gb)
         else:
             print(f"WARNING {tag}: {int((~have).sum())} FallOrNot test clips missing; skipped")
         if a.external and "hmdb_name" in Z.files:
@@ -330,7 +370,7 @@ def main():
     if ft in scores and a.external and ft in ext_scores:
         best_fon = max((k for k in scores if "_probe_" in k), key=lambda k: res["real"][k]["auroc"][0])
         best_ext = max((k for k in ext_scores if "_probe_" in k), key=lambda k: res["external"][k]["auroc"][0])
-        p1 = paired(yt, scores[ft], scores[best_fon], gt)
+        p1 = paired(yt, scores[ft], scores[best_fon], gb)
         p2 = paired(ye, ext_scores[ft], ext_scores[best_ext], ne)
         res["preregistered"] = {
             "rule": "fine-tuned (synthetic+real) beats the best frozen probe on BOTH test sets, paired 95% CI above zero",
@@ -339,7 +379,7 @@ def main():
             "success": bool(p1[1] > 0 and p2[1] > 0)}
         for src in ("synthetic", "real", "synthetic_plus_real"):
             k = "finetuned_" + src
-            for dom_scores, yy_, gg_, key in ((scores, yt, gt, "paired"), (ext_scores, ye, ne, "paired_external")):
+            for dom_scores, yy_, gg_, key in ((scores, yt, gb, "paired"), (ext_scores, ye, ne, "paired_external")):
                 b = f"{src}_probe_clip+videomae"
                 if k in dom_scores and b in dom_scores:
                     res.setdefault(key + "_ft", {})[f"{k} vs {b}"] = paired(yy_, dom_scores[k], dom_scores[b], gg_)
@@ -358,7 +398,7 @@ def main():
     pairs += [(f"staged_probe_{r}", "staged_probe_clip_appearance") for r in reps if r != "clip_appearance"]
     for a_, b_ in pairs:
         if a_ in scores and b_ in scores:
-            res["paired"][f"{a_} vs {b_}"] = paired(yt, scores[a_], scores[b_], gt)
+            res["paired"][f"{a_} vs {b_}"] = paired(yt, scores[a_], scores[b_], gb)
 
     # ---- learning curve: real training videos -> test AUROC ----
     if have_real:
@@ -431,7 +471,7 @@ def main():
     ev = np.array([sg == "event" for sg in segt])
     res["n"]["real_hard_clips"] = int(ev.sum()); res["n"]["real_hard_falls"] = int(yt[ev].sum())
     for k, sc in scores.items():
-        res["real_hard"][k] = boot(yt[ev], sc[ev], gt[ev])
+        res["real_hard"][k] = boot(yt[ev], sc[ev], gb[ev])
 
     # ---- robustness across fine-tuning seeds (the pre-registered test above is seed 0) ----
     import re
@@ -452,7 +492,7 @@ def main():
             per_seed = []
             for k in [k for k in scores if re.fullmatch(r"finetuned_synthetic_plus_real(_s\d+)?", k)]:
                 if k in ext_scores:
-                    p1 = paired(yt, scores[k], scores[res["preregistered"]["fallornot"]["vs"]], gt)
+                    p1 = paired(yt, scores[k], scores[res["preregistered"]["fallornot"]["vs"]], gb)
                     p2 = paired(ye, ext_scores[k], ext_scores[res["preregistered"]["hmdb51"]["vs"]], ne)
                     per_seed.append(dict(model=k, fallornot=p1, hmdb51=p2, success=bool(p1[1] > 0 and p2[1] > 0)))
             res["preregistered"]["per_seed"] = per_seed
@@ -480,6 +520,17 @@ def main():
         for pt in lc["points"]:
             extra.append(f"| {pt['videos']} | {pt['falls']:.0f} | {pt['real']:.3f} ± {pt['real_sd']:.3f} | "
                          f"{pt['both']:.3f} ± {pt['both_sd']:.3f} |")
+    if res.get("leakage"):
+        lk = res["leakage"]
+        extra += ["", f"LEAKAGE CHECK: {lk['train_clips_sharing_compilation_with_test']}/{lk['train_clips']} real training clips share a "
+                      f"compilation with the test set; compilation-disjoint subset = {lk['disjoint_clips']} clips ({lk['disjoint_falls']} falls)", "",
+                  "| Representation | Real, all clips | Real, compilation-disjoint | Real, random same size (mean ± s.d., 20 draws) | Staged |",
+                  "|---|---|---|---|---|"]
+        for k, v in lk["by_rep"].items():
+            extra.append(f"| {k} | {v['all_train']:.3f} | {v['disjoint']:.3f} | {v['random_same_size_mean']:.3f} ± "
+                         f"{v['random_same_size_sd']:.3f} | {v['staged']:.3f} |")
+    extra.append("")
+    extra.append(f"FallOrNot confidence intervals resampled by: {a.group_by}")
     if res.get("preregistered"):
         pr = res["preregistered"]
         extra += ["", "PRE-REGISTERED TEST: " + pr["rule"], ""]
