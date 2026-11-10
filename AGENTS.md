@@ -4,13 +4,14 @@ This file is for any AI assistant (ChatGPT, Codex, Claude or others) helping wit
 
 ## The project in one paragraph
 
-We are writing a computer-vision research paper, working title **"How Much Is a Real Fall Worth? Data Efficiency and False Alarms in Real-World Video Fall Detection"** (target venue under review: CVPR is now a long shot, see below). Fall detectors are usually trained and tested on falls staged by actors in a lab, where they score near 100%. We built a real-world test set (**FallOrNot**) from the OOPS! dataset of in-the-wild accident videos, labelled by a human, and showed that lab-trained detectors fail on real falls (AUROC about 0.76), while a few real training falls fix most of it (about 0.90, p < 0.001).
+We are writing a computer-vision research paper, titled **"How Much Is a Real Fall Worth? Real, Synthetic and Staged Training Data for Video Fall Detection, Tested on Two Real-World Sources"** (realistic targets: WACV, BMVC or a CVPR workshop; the CVPR main conference is a long shot). Fall detectors are usually trained and tested on falls staged by actors in a lab, where they score near 100%. We built a real-world test set (**FallOrNot**) from the OOPS! dataset of in-the-wild accident videos, labelled by a human, and showed that lab-trained detectors fail on real falls (AUROC about 0.76). Real training data fixes most of that on FallOrNot (about 0.90), but on a second real-world source (HMDB51) synthetic data is best; training on both is the safest recipe.
 
 ## Where things are
 
 | Path | What it is |
 |---|---|
-| `vision/PAPER_DRAFT.md` | The paper draft. Every number comes from `RESULTS.md`. |
+| `vision/paper/paper.tex`, `paper.pdf` | **The paper.** Every number comes from `RESULTS.md`. Figures: `vision/paper/make_figures.py`. |
+| `vision/PAPER_DRAFT.md` | Older outline, superseded by `vision/paper/`. Do not edit. |
 | `vision/RESULTS.md` | All measured results, run by run. **The single source of truth for numbers.** |
 | `vision/README.md` | Pipeline overview, data sources and licences. |
 | `vision/fall_cvpr.ipynb` | Google Colab notebook that runs the whole pipeline (the owner runs it on an L4 GPU). |
@@ -18,7 +19,10 @@ We are writing a computer-vision research paper, working title **"How Much Is a 
 | `vision/oops_mine.py` | Streams the 48 GB OOPS! archive, embeds clips, selects the test sample and the training pool. |
 | `vision/urfall_prep.py` | Prepares the staged UR Fall dataset. |
 | `vision/labeler.py` | In-Colab labelling tool. |
-| `vision/experiment.py` | All evaluation: probes, bootstrap CIs, paired tests, learning curve, figures. |
+| `vision/ofsyn_prep.py`, `vision/hmdb_prep.py` | Prepare OmniFall synthetic clips and the external HMDB51 test set. |
+| `vision/finetune.py` | Fine-tunes VideoMAE (fixed hyper-parameters, seeds) and scores both test sets. |
+| `vision/agreement.py` | Inter-annotator agreement (Cohen's kappa). |
+| `vision/experiment.py` | All evaluation: probes, bootstrap CIs, paired tests, learning curve, equal budget, external test, fine-tuned scores, `--test-labels`. |
 | `vision/label_page/`, `vision/build_label_page.py`, `vision/import_labels.py` | Optional web labelling page (not used for the current results). |
 | `index.html`, `research/` | An earlier, separate project: a phone motion-sensor fall detector and its SisFall benchmark. Not part of the CVPR paper; do not mix them up. |
 
@@ -26,14 +30,15 @@ Data (clips, embeddings, labels, result files) lives on the owner's Google Drive
 
 ## IMPORTANT: closest prior work (found November 2026)
 
-**OmniFall** (Schneider et al., arXiv 2505.19889; v1 May 2025, v3 July 2026) already shows the staged-to-wild gap on fall-containing OOPS videos, builds an in-the-wild OOPS test set it calls "OOPS-Fall"/"OF-ItW", shows synthetic training beats staged training, and trains one upper-bound model with in-the-wild data. **Never claim we are the first to show the gap or to build a real-world fall test set from OOPS.** Our benchmark is renamed **FallOrNot**. Our distinct contributions are: non-fall accidents as false-alarm negatives (random, model-independent sample of all accidents); how much real data is needed (learning curve, real-only vs. staged-only); appearance vs. motion; and real vs. synthetic (OF-Syn) vs. staged at equal budget, tested on two real-world sources. **Run 4 (in-domain, FallOrNot): 30 real falls beat all 2,136 synthetic falls. Run 5 (external, HMDB51): the advantage disappears and synthetic is best (real vs. synthetic −0.029, p = 0.029). Never state "real beats synthetic" as a general claim;** the supported message is that rankings flip between real-world test sets and that synthetic + real has the smallest worst-case shortfall from the best source (at most 0.03 AUROC; see the derived table at the end of RESULTS.md). Do not say it has the best worst-case AUROC: real-only matches it on that measure. Say the fine-tuning test was "specified in advance" (committed to the repo before the run), not "pre-registered". Cite OmniFall prominently in Related Work. See the positioning note at the top of `vision/PAPER_DRAFT.md`.
+**OmniFall** (Schneider et al., arXiv 2505.19889; v1 May 2025, v3 July 2026) already shows the staged-to-wild gap on fall-containing OOPS videos, builds an in-the-wild OOPS test set it calls "OOPS-Fall"/"OF-ItW", shows synthetic training beats staged training, and trains one upper-bound model with in-the-wild data. **Never claim we are the first to show the gap or to build a real-world fall test set from OOPS.** Our benchmark is renamed **FallOrNot**. Our distinct contributions are: non-fall accidents as false-alarm negatives (random, model-independent sample of all accidents); how much real data is needed (learning curve, real-only vs. staged-only); appearance vs. motion; and real vs. synthetic (OF-Syn) vs. staged at equal budget, tested on two real-world sources. **Run 4 (in-domain, FallOrNot): 30 real falls beat all 2,136 synthetic falls. Run 5 (external, HMDB51): the advantage disappears and synthetic is best (real vs. synthetic −0.029, p = 0.029). Never state "real beats synthetic" as a general claim;** the supported message is that rankings flip between real-world test sets and that synthetic + real has the smallest worst-case shortfall from the best source (at most 0.03 AUROC; see the derived table at the end of RESULTS.md). Do not say it has the best worst-case AUROC: real-only matches it on that measure. Say the fine-tuning test was "specified in advance" (committed to the repo before the run), not "pre-registered". Cite OmniFall prominently in Related Work.
 
 ## Current state (keep this section updated)
 
-- **Done:** pipeline; 165 labelled test videos (255 clips, 102 falls); 268 labelled training clips (131 falls); results runs 1–7 (run 4 = real vs. synthetic vs. staged; run 5 = external HMDB51 test; runs 6–7 = fine-tuning over 3 seeds, pre-registered test not met); paper draft; OOPS! data-use question resolved by the owner (do not mention it in the paper or elsewhere).
+- **Done:** pipeline; 165 labelled test videos (255 clips, 102 falls); 268 labelled training clips (131 falls); results runs 1–9 (run 4 = real vs. synthetic vs. staged; run 5 = external HMDB51 test; runs 6–7 = fine-tuning over 3 seeds, test specified in advance not met; run 8 = second annotator; run 9 = re-grading with their labels) plus a derived shortfall table; full paper; OOPS! data-use question resolved by the owner (do not mention it in the paper or elsewhere).
 - **Citations checked** (by ChatGPT, applied by Claude): all fully specified references verified; all references in vision/paper/paper.tex now verified (MCFD tech report 1350, HMDB51 ICCV 2011 pp. 2556-2563, OpenCLIP Zenodo DOI, WHO fact sheet 21 Oct 2026). A broader literature review for related work is still welcome.
 - **Paper:** full LaTeX draft in `vision/paper/paper.tex` (compiles with pdflatex; figures from `vision/paper/make_figures.py`, numbers from RESULTS.md); `paper.pdf` is the compiled copy. All citations verified (November 2026); no open [VERIFY]/[TODO] marks.
-- **Key results:** see `vision/RESULTS.md`, runs 3, 3b, 4, 5, 6 and 7.
+- **Key results:** see `vision/RESULTS.md`, runs 3–9 and the derived shortfall table.
+- **Outreach (9 Nov 2026):** the owner emailed the paper link to David Schneider (OmniFall), Carl Vondrick (OOPS!) and Michal Kępski (UR Fall) asking for feedback. No replies yet as of 10 Nov. If feedback arrives, apply it to `vision/paper/paper.tex`. The emailed link is the raw `paper.pdf` on this branch, so keep that path and branch alive.
 - **Annotators:** a second, independent annotator labelled 100 of the test videos (run 8): raw agreement 0.796, Cohen's κ = 0.498 [0.297, 0.678], moderate; disagreements mostly second annotator = fall, first = not fall. Report this honestly as a limitation. Run 9 re-grades the test set with the second annotator's labels: main findings hold except that the in-domain real-over-synthetic advantage is no longer significant.
 - **Labelling is finished.** The owner will not label more clips. Do not plan work that needs more labels from them.
 
@@ -41,11 +46,11 @@ Data (clips, embeddings, labels, result files) lives on the owner's Google Drive
 
 1. **Second real-world test source: done (HMDB51, run 5).** A third source of real accident falls (closer to OOPS! than HMDB51's movie falls) would further help separate "real vs. synthetic" from "which benchmark".
 2. **Second staged dataset.** UR Fall is saturated (AUROC 1.00 in-domain). The original Le2i page is offline; find a legitimate mirror or another staged dataset.
-3. **Fine-tuning experiment: done (runs 6 and 7, 3 seeds). Pre-registered rule NOT MET for any seed.** Exploratory: the ranking flip holds on average across seeds; synthetic + real is near the top on both test sets with the smallest seed spread.
+3. **Fine-tuning experiment: done (runs 6 and 7, 3 seeds). The rule specified in advance was NOT MET for any seed.**
 4. **Proposed method** aimed at the hardest sub-problem: telling falls apart from other accidents (`real_hard` results). Explore why VideoMAE alone gains little from real data while CLIP temporal features gain a lot.
-5. **Related work and citations.** Every citation marked [VERIFY] must be checked against the real paper (authors, venue, year).
-6. **CVPR LaTeX version** of the paper with figures (`roc_real.png`, `learning_curve.png` on the owner's Drive).
-7. Optional, only if a second person volunteers: they label the existing test clips so we can report agreement (Cohen's κ). Never ask the owner for more labelling.
+5. **Venue formatting.** Once the owner picks a venue, move `vision/paper/paper.tex` into its official template and anonymise as required.
+6. **Mentor feedback.** The owner is looking for a teacher or professor to read the paper.
+7. Optional: the second annotator could label the remaining 65 test videos (only if they volunteer). Never ask the owner for more labelling.
 
 ## Rules (these protect the paper's credibility)
 
