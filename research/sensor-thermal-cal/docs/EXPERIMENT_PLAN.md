@@ -2,7 +2,7 @@
 
 Read this whole page before buying or building anything. Keep a dated lab notebook from day one: what you did, what went wrong, photos of the setup.
 
-## 1. Parts (roughly $25–40)
+## 1. Parts (roughly $25–40; purchase links are in `PARTS.md`)
 | Item | Notes |
 |---|---|
 | 2–3 × GY-521 breakout boards (MPU6050 sensor) | Buy 3 so you have a spare. Boards from different sellers are better: more variety between units. |
