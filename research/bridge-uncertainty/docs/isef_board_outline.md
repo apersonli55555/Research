@@ -70,7 +70,7 @@
 
 **7. Detection.** Fig. 5, plus the false-alarm numbers. Say plainly that the retrofit was a large stiffening, so every method saw it. **[TODO: add your minimum-detectable-shift curve here once done. It is the strongest addition you can make.]**
 
-**8. Conclusions (3 bullets).**
+**8. Conclusions (3 bullets).** *(Note the v5 correction: a physics-free kinked line matches the physics model, so say "a two-regime model", not "physics beats ML".)*
 - Conformal prediction is reliable when its assumption holds and can fail badly in an unseen season.
 - Failures happen where models extrapolate badly, so always report coverage by condition.
 - A four-parameter physics prior fixed most of it, and the fitted parameters are physically interpretable.

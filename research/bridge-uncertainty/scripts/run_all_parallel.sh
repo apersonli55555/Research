@@ -12,4 +12,5 @@ wait
 python scripts/run_rolling.py merge "$N"
 python scripts/paired_tests.py
 python scripts/run_sensitivity.py
+python scripts/run_kink_check.py
 python scripts/make_figures.py

@@ -5,7 +5,7 @@ Read this until you can say every part out loud without looking. Judges and prof
 ---
 
 ## 1. The project in one sentence
-I tested whether the error bars used to monitor a real bridge's vibrations stay honest when the weather changes. Adding a small physics formula kept them honest when it got warmer, but no method worked when it got colder than anything the model had seen.
+I tested whether the error bars used to monitor a real bridge's vibrations stay honest when the weather changes. A model that treats freezing weather as a separate regime kept them honest when it got warmer, but no method worked when it got colder than anything the model had seen.
 
 ## 2. The 30-second version
 - Bridges vibrate at natural frequencies, like a guitar string's note.
@@ -48,6 +48,8 @@ The formula carries the trend into new temperatures; the machine learning handle
 
 **The ablation (my "why").** I removed the freezing term and coverage dropped. The freezing term isn't there to predict the cold. It's there to stop the cold-weather jump from ruining the warm-weather slope.
 
+**The control that keeps me honest.** √(1 + a·ΔT) is nearly a straight line when *a* is tiny. So I also tested a physics-free straight line with the same kink. It did exactly as well as my physics model (0.896 vs 0.895). So the win comes from the **two-regime shape**, not from the physics formula. The physics is why I looked for that shape, and it makes the fitted numbers meaningful, but I must not claim that "physics beats data-driven models".
+
 **Paired test with day-block bootstrap.**
 - I compare two models on exactly the same hours.
 - I resample whole *days*, not single hours, because hours within a day are nearly copies of each other.
@@ -87,7 +89,8 @@ The formula carries the trend into new temperatures; the machine learning handle
 9. What's novel? → *Testing conformal coverage under seasonal shift on KW51, inside vs outside the training range, with paired tests. (Confirm with your own literature search before claiming "first".)*
 10. Did you tune your model until it won? → *No. Settings were fixed in advance. I re-ran 9 settings for my model and gave the competitor the same 9. Every version of mine (0.88–0.90) beat every version of theirs (0.77–0.83), and my default wasn't even the best one.*
 11. Is your model just drawing wider bands? → *No. It has the narrowest bands of all nine models and still the best coverage.*
-12. What did you do yourself? → *Answer this truthfully and specifically.*
+12. Is it really the physics that helps? → *No, it's the shape. A physics-free line with a kink at the freezing point matches my model. The physics motivated the shape and makes the parameters interpretable.*
+13. What did you do yourself? → *Answer this truthfully and specifically.*
 
 ## 8. Glossary
 | Term | Meaning |

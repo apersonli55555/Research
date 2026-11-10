@@ -1,7 +1,7 @@
 # Do conformal error bars survive an unseen season? Physics-guided temperature compensation of bridge natural frequencies on the KW51 railway bridge
 
 *[Your name]¹ — ¹[High school], Austin, Texas, USA*
-*DRAFT v0.4, 2026-11-08. Every number below comes from `results/` in this repository at the commit that contains this file. Items marked **[TODO]** need your own work or verification before submission.*
+*DRAFT v0.5, 2026-11-10. Every number below comes from `results/` in this repository at the commit that contains this file. Items marked **[TODO]** need your own work or verification before submission.*
 
 ---
 
@@ -12,11 +12,11 @@ Using public hourly natural frequencies of the KW51 steel railway bridge, we eva
 
 - **Random split:** every model is calibrated (0.90 ± 0.01).
 - **Warm-side extrapolation** (test hours warmer than any training hour): a model combining a thermo-elastic stiffness curve with a cold-stiffening term and a gradient-boosted residual learner reaches a median coverage of 0.907 across 55 rolling window×mode cells, with 80 % of cells at or above 0.85. Its pooled coverage is 0.895, versus 0.810 for the best physics-free model and 0.534 for a Gaussian process. It is significantly better than all eight alternatives: paired differences +0.03 to +0.61, Holm-adjusted p ≤ 0.002.
-- **Ablations:** the benefit comes mainly from the cold-stiffening term. Without it, freeze-related stiffening inflates the fitted warm-side temperature slope (by up to about two-fold), and median coverage drops to 0.75.
+- **What matters is regime separation, not the physics formula.** Without the cold-stiffening term, freeze-related stiffening inflates the fitted warm-side slope (by up to about two-fold) and median warm-side coverage drops from 0.907 to 0.833. A physics-free straight line with the same smooth kink performs identically to the thermo-elastic model (pooled warm-side coverage 0.896 vs 0.895; paired difference −0.002 [−0.006, +0.002]).
 - **Cold-side extrapolation:** when models trained on warmer data are tested on colder hours, every model fails (rolling medians 0.50–0.62, with no significant differences). In a post-retrofit warm→cold fold, the proposed model is significantly *worse* than five baselines (pooled 0.78 vs 0.89–0.91).
 - **Detection:** with intervals frozen after calibration, the proposed model flags the 2019 retrofit on every post-retrofit day for three of five modes, with 0–1.3 % false-alarm days.
 
-Physics priors make conformal intervals robust when extrapolating along a mechanism the model has seen. They do not help with an unseen one. **[TODO: add the minimum-detectable-shift result.]**
+A model that separates the freezing regime from the warm-weather trend keeps conformal intervals honest when extrapolating to warmer conditions, whether it is written as a physical law or as an empirical kinked line. Nothing helps with a regime the training data never showed. **[TODO: add the minimum-detectable-shift result.]**
 
 **Keywords:** structural health monitoring; conformal prediction; temperature compensation; physics-guided machine learning; uncertainty quantification; distribution shift
 
@@ -28,7 +28,7 @@ An alarm threshold on residuals is an uncertainty statement: "this frequency is 
 **Contributions.**
 1. A controlled comparison of nine temperature-compensation models on KW51, including strong baselines (a GP with a linear-trend kernel) and ablations, all using the same split-conformal wrapper.
 2. An evaluation protocol that reports coverage separately for test conditions **inside vs outside the training range**, across designed folds (warm-side, cold-side, and a second structural state) and 22 systematic rolling-origin windows. Model differences are compared with a paired bootstrap that resamples calendar days. Average coverage hides the failures; this protocol exposes them and tests them.
-3. Evidence that a four-parameter physics prior keeps conformal coverage near nominal under warm-side extrapolation, plus an ablation identifying *why*: the cold-stiffening term removes a confound from the warm-side slope.
+3. Evidence that a four-parameter two-regime trend keeps conformal coverage near nominal under warm-side extrapolation, with an ablation and an equal-shape physics-free control that identify *why*: separating the cold-stiffening regime removes a confound from the warm-side slope. The thermo-elastic functional form itself adds nothing measurable.
 4. A clear negative result: no model, physics-guided or not, extrapolates into an unseen sub-zero stiffening regime.
 5. Fully reproducible code (MD5-checked download, seeded experiments, auto-generated tables).
 
@@ -192,6 +192,17 @@ The designed folds F2 + F3 give the same ordering and similar effect sizes. In f
 
 Every setting of the proposed model therefore exceeds every setting of the GBM. Varying the hinge width *s* gives 0.907 (0.5 °C), 0.895 (1 °C, default) and 0.838 (2 °C). The default was fixed before these runs and is not the best-performing value. The degradation at *s* = 2 °C is consistent with the mechanism of Sec. 5.3: a wider hinge spreads the cold-regime stiffening into the warm-side slope. Inside the training range, coverage is 0.908–0.918 for all settings of both models (`results/sensitivity.csv`).
 
+### 5.2d Control: is it the physics, or the shape?
+For the fitted values of *a* (magnitude about 5e-4 per °C), √(1 + aΔT) is nearly linear over the observed temperature range. We therefore compared the proposed model with a physics-free model of the same shape, f = c₀ + c₁T + c₂·softplus(T_c − T) plus the same GBM residual learner, fitted with the same loss and bounds, on all 22 rolling windows (`scripts/run_kink_check.py`, `results/kink_check.csv`).
+
+| Region | Hours | Proposed | Kink line + GBM | Paired difference [95 % CI] |
+|---|---|---|---|---|
+| Warm side, out of range | 3,259 | 0.895 | 0.896 | −0.002 [−0.006, +0.002] |
+| Cold side, out of range | 5,244 | 0.475 | 0.472 | +0.003 [+0.001, +0.006] |
+| Inside training range | 63,778 | 0.918 | 0.918 | +0.000 [−0.000, +0.001] |
+
+The two models are practically indistinguishable, and their fitted warm-side slopes and thresholds agree to three significant digits in every mode. The comparisons in Sec. 5.2b therefore show the value of a two-regime trend over single-regime and non-parametric alternatives. They do not show any value of the thermo-elastic form over an empirical one. Bilinear temperature models are standard for bridges with freezing effects **[TODO: cite examples, e.g. from the Z24 literature, after reading them]**, so the contribution here is the coverage analysis, not the trend model.
+
 ### 5.3 Why: the cold term de-confounds the warm-side slope
 The two ablations isolate the source of the gain. Adding a linear trend to the GBM (Linear + GBM) does *not* help: median 0.66 on warm-side out-of-range hours, versus 0.77 for the GBM alone. Removing the cold term from the physics model drops it from 0.90 to 0.75.
 
@@ -258,7 +269,7 @@ The output-only PCA baseline (k = 1) detects every post-retrofit day with 1.3 % 
 > **Figure 5** (`fig5_detection_mode6.pdf`). Daily median of residual/q for mode 6, before and after the retrofit.
 
 ## 6. Discussion
-- **What physics buys.** Conformal coverage under seasonal shift is governed by how a model extrapolates. A small physics prior helps when the extrapolation follows a mechanism the training data constrain: here, the smooth thermo-elastic trend, once separated from the freezing regime. It does not help when the test conditions activate a mechanism the training data never showed: here, sub-zero stiffening after a warm-only training period. The ablations show that a *structurally correct* decomposition matters more than having "a trend": Linear + GBM was worse than GBM alone.
+- **What physics buys, and what it doesn't.** Conformal coverage under seasonal shift is governed by how a model extrapolates. Here, what made extrapolation work was a *structurally correct decomposition* into a warm-weather trend and a separate cold regime. The thermo-elastic law supplied that structure and makes the fitted parameters interpretable, but an empirical kinked line with the same shape performed identically (Sec. 5.2d), so the functional form is not the source of the gain. Structure does not help when test conditions activate a regime the training data never showed. Having "a trend" is also not enough: Linear + GBM was worse than GBM alone.
 - **Practical recommendation.** Report coverage conditional on the environmental covariate, and specifically on out-of-range conditions. Average coverage of 0.89 for the GBM hid out-of-range coverage as low as 0.59 on the warm side.
 - **ACI versus fixed intervals.** ACI's guarantee is attractive, but in monitoring the point is *not* to adapt to the thing being detected. A combination (ACI on a slow time scale, physics-guided fixed intervals for alarms) is a direction for future work.
 
@@ -272,7 +283,7 @@ The output-only PCA baseline (k = 1) detects every post-retrofit day with 1.3 % 
 7. **Autocorrelation:** hourly residuals are autocorrelated. Day-level statistics and block bootstrap mitigate but do not remove this.
 
 ## 8. Conclusion
-On KW51, split-conformal temperature compensation is well calibrated when data are exchangeable, but it can lose most of its coverage at temperatures outside the training range. A four-parameter thermo-elastic prior with a separate cold-stiffening term kept warm-side out-of-range coverage near nominal (median 0.907 over 55 rolling window×mode cells; pooled 0.895). It was significantly better than every alternative, including the best physics-free model (pooled 0.810; difference +0.084 [0.051, 0.115]). Ablations show that the gain comes from separating the freezing regime from the thermo-elastic trend. No model, including ours, extrapolated into an unseen freezing regime. Encoding physics helps conformal intervals extrapolate along known mechanisms; it is not a substitute for data on unknown ones.
+On KW51, split-conformal temperature compensation is well calibrated when data are exchangeable, but it can lose most of its coverage at temperatures outside the training range. A four-parameter trend with a separate cold-stiffening regime kept warm-side out-of-range coverage near nominal (median 0.907 over 55 rolling window×mode cells; pooled 0.895), significantly better than single-regime and non-parametric alternatives (e.g. pooled 0.810 for boosted trees; difference +0.084 [0.051, 0.115]). An empirical kinked line of the same shape did equally well, so the gain comes from separating the freezing regime from the thermo-elastic trend, not from the physical functional form. No model extrapolated into an unseen freezing regime. Regime structure helps conformal intervals extrapolate; it is not a substitute for data on a regime that was never observed.
 
 ## Data and code availability
 Data: Zenodo 10.5281/zenodo.3745914 (CC-BY-NC-SA-4.0). Code: [GitHub URL, TODO]. `scripts/run_experiments.py`, `scripts/run_robustness.py` and `scripts/make_figures.py` regenerate every table and figure.

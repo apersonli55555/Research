@@ -19,6 +19,7 @@ python scripts/run_robustness.py     # 5 hand-designed folds (incl. cold-side an
 python scripts/run_rolling.py        # 22 systematic rolling windows (slow; see Makefile for the parallel version)
 python scripts/paired_tests.py       # paired day-block bootstrap tests of coverage differences
 python scripts/run_sensitivity.py    # hyperparameter sensitivity + physics-parameter CIs (~15 min)
+python scripts/run_kink_check.py     # physics form vs a plain two-regime line (~1 min)
 python scripts/make_figures.py       # figures/ and results/summary.md
 ```
 Everything is seeded and deterministic. `results/summary.md` is regenerated from the CSVs, so every number in the paper should be traceable to a CSV row. Tests run automatically on GitHub (`.github/workflows/bridge-uncertainty-tests.yml`).
@@ -129,6 +130,22 @@ Split conformal (Angelopoulos & Bates 2021, arXiv:2107.07511):
   - Mode 5's interval includes 0. Mode 3 is positive, +2.1e-4 [4.7e-5, 3.5e-4]: a real but unexplained effect.
   - *T_c* intervals span roughly −1.4 to +2.4 °C for every mode, which includes 0 °C. That is consistent with a freezing mechanism, but not proof of one.
 - **Code self-review:** no leakage of future data into features, conformal and bootstrap arithmetic checked, and default settings reproduce the saved predictions exactly.
+
+### v5: the "physics" is really a two-regime shape (important correction, 10 Nov 2026)
+`√(1 + a·ΔT)` is almost a straight line when *a* is as small as it is here (about 5e-4 per °C). So we tested a **physics-free model of the same shape**: a straight line plus a smooth kink, `f = c0 + c1·T + c2·softplus(T_c − T)`, with the same boosted-tree correction (`models.KinkGBM`, `scripts/run_kink_check.py`).
+
+| Setting (22 rolling windows, paired on the same hours) | Proposed | Kink line + GBM | Difference [95 % CI] |
+|---|---|---|---|
+| Warm side, out of range (3,259 h) | 0.895 | 0.896 | −0.002 [−0.006, +0.002] |
+| Cold side, out of range (5,244 h) | 0.475 | 0.472 | +0.003 [+0.001, +0.006] |
+| Inside the training range (63,778 h) | 0.918 | 0.918 | +0.000 [−0.000, +0.001] |
+
+The two models are **indistinguishable**, and they fit the same slopes and thresholds to three digits.
+
+**What this changes.**
+- The earlier statement that the proposed model "beats every physics-free alternative" is **wrong**. It beat the eight alternatives first tested. A physics-free kinked line matches it.
+- The benefit does **not** come from the thermo-elastic formula. It comes from **separating the freezing regime from the warm-weather trend**, which is what the ablation in v2 already pointed to.
+- The physics still earns its place in two ways: it is *why* you would look for a softening slope and a freezing threshold in the first place, and it makes the fitted numbers interpretable. But "physics-guided" should be read as "physics-motivated two-regime model", and the claim to make is about regime separation.
 
 ## Honest limitations
 1. **Cold regime:** no method handles sub-zero temperatures when trained without them. This is the biggest open problem.

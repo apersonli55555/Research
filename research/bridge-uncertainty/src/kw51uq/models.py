@@ -241,3 +241,40 @@ class PhysicsNoColdGBM(PhysicsHybrid):
 def all_models(seed: int = 0):  # noqa: F811  (extends the list above)
     return [LinearT(), CubicT(), GP(seed=seed), GPTrend(seed=seed), BlackBoxGBM(seed),
             LinearGBM(seed), PhysicsOnly(), PhysicsNoColdGBM(seed), PhysicsHybrid(seed)]
+
+
+# ---------------------------------------------------------------------------
+# Reviewer check (added after the main study; NOT in all_models, so no earlier
+# result changes): is the benefit due to the thermo-elastic FORM, or simply to
+# having a two-regime shape? This model has the same shape with no physics:
+#   f = c0 + c1*T + c2*softplus(Tc - T)      (a straight line plus a smooth kink)
+# ---------------------------------------------------------------------------
+def kink_curve(theta, T, s: float = 1.0):
+    c0, c1, c2, Tc = theta
+    return c0 + c1 * T + c2 * s * np.logaddexp(0.0, (Tc - T) / s)
+
+
+class KinkGBM:
+    """Empirical two-regime ('bilinear') trend + the same GBM residual learner.
+    Fitted exactly like the physics model (soft-L1 least squares, same bounds on
+    Tc, kink constrained to stiffen)."""
+    name = "Kink line + GBM (no physics)"
+
+    def __init__(self, seed: int = 0):
+        self.seed = seed
+
+    def fit(self, X, y):
+        T, yy = X["T_steel"].to_numpy(), np.asarray(y)
+        f0 = np.median(yy)
+        res = least_squares(lambda th: kink_curve(th, T) - yy,
+                            x0=[f0, -5e-4 * f0, 1e-3 * f0, 1.0],
+                            bounds=([0.5 * f0, -0.02 * f0, 0.0, -5.0], [1.5 * f0, 0.02 * f0, 0.1 * f0, 8.0]),
+                            loss="soft_l1", f_scale=np.std(yy), x_scale=[f0, 1e-3 * f0, 1e-3 * f0, 1.0])
+        self.theta = res.x
+        self.g = HistGradientBoostingRegressor(max_depth=3, learning_rate=0.05, max_iter=300,
+                                               l2_regularization=1.0, random_state=self.seed)
+        self.g.fit(X[RESIDUAL_FEATURES], yy - kink_curve(self.theta, T))
+        return self
+
+    def predict(self, X):
+        return kink_curve(self.theta, X["T_steel"].to_numpy()) + self.g.predict(X[RESIDUAL_FEATURES])
