@@ -373,3 +373,41 @@ Rule: must beat the plain synthetic + real mixture on both test sets, paired 95%
 Recall at 5% FPR, CLIP + VideoMAE: 0.588 [0.361, 0.722] on FallOrNot (plain mixture 0.480; real 0.431); 0.610 on HMDB51 (same as the plain mixture).
 
 **Reading:** balancing gives a small, significant gain on FallOrNot and no change on HMDB51, so the rule is not met. The balanced probe is statistically indistinguishable from the best single source on each test set (real on FallOrNot, synthetic on HMDB51). Its largest shortfall from the best of the four original sources is 0.029 (HMDB51 hard), about the same as the plain mixture (0.027).
+
+---
+
+# Run 11: third test set, OmniFall OF-ItW (independent annotation team)
+
+`ofitw_prep.py` + `experiment.py --ofitw --group-by compilation`. OF-ItW = 818 OOPS! videos annotated by OmniFall's team with segment-level classes. Clips: one 2 s clip per "fall" segment (positive); one per other segment of at least 1 s that is not "fallen" and does not overlap a fall (negative). All 818 videos were found (2,405 clips, 914 falls). **Test split: 571 videos, 1,671 clips, 636 falls. Train + val split: 734 clips, 278 falls.** 20 of our own real training clips belong to OF-ItW test videos and were removed before training "real (ours)". Intervals resampled by compilation. Copied from the Colab text output.
+
+AUROC [95% CI] on the OF-ItW test split:
+
+| Representation | Staged | Synthetic | Real (ours, 248 clips) | Real (OF-ItW train + val) | Synthetic + real (OF-ItW) |
+|---|---|---|---|---|---|
+| CLIP appearance | 0.746 [0.725, 0.769] | 0.727 [0.706, 0.750] | 0.781 [0.762, 0.803] | 0.829 [0.808, 0.852] | 0.825 [0.805, 0.847] |
+| CLIP temporal | 0.785 [0.765, 0.806] | 0.846 [0.826, 0.865] | 0.900 [0.885, 0.914] | 0.925 [0.910, 0.938] | 0.883 [0.866, 0.900] |
+| VideoMAE | 0.771 [0.750, 0.793] | 0.817 [0.796, 0.836] | 0.844 [0.827, 0.862] | 0.909 [0.896, 0.922] | 0.899 [0.884, 0.914] |
+| CLIP + VideoMAE | 0.815 [0.795, 0.833] | 0.872 [0.855, 0.890] | 0.927 [0.915, 0.939] | **0.951 [0.941, 0.960]** | 0.929 [0.917, 0.941] |
+
+Zero-shot CLIP 0.731 [0.707, 0.753]. Recall at 5% FPR, CLIP + VideoMAE: staged 0.362, synthetic 0.546, real (ours) 0.687, real (OF-ItW) 0.796, synthetic + real 0.714.
+
+Head-to-head, CLIP + VideoMAE (paired, by compilation; all p < 0.001):
+
+| Comparison | ΔAUROC | 95% CI |
+|---|---|---|
+| Real (OF-ItW train) vs. synthetic | +0.078 | [+0.062, +0.095] |
+| Real (OF-ItW train) vs. staged | +0.136 | [+0.117, +0.155] |
+| Real (ours) vs. synthetic | +0.055 | [+0.039, +0.071] |
+| Real (ours) vs. staged | +0.113 | [+0.094, +0.131] |
+| Synthetic vs. staged | +0.058 | [+0.040, +0.077] |
+| Synthetic + real (OF-ItW) vs. real (OF-ItW) | −0.022 | [−0.031, −0.013] |
+| Synthetic + real (OF-ItW) vs. synthetic | +0.056 | [+0.044, +0.067] |
+
+**Our labels vs. OmniFall's labels** on the 28 videos both labelled (ours: fall / not; theirs: a fall segment inside our event window [t−1, t+1] or not): fall & fall 25, fall & not 1, not & fall 0, not & not 2. Raw agreement 0.964; Cohen's κ = 0.781 (computed from these counts; n is small, and OF-ItW contains only fall-containing videos, so the sample is skewed towards falls).
+
+## Reading
+- **The FallOrNot ordering is confirmed on a 3.5× larger test set with independent labels:** staged 0.815 < synthetic 0.872 < real 0.927–0.951, every step significant (p < 0.001).
+- **Synthetic beats staged here with p < 0.001** (+0.058), so OmniFall's finding is reproduced on its own benchmark; the borderline result on FallOrNot (p = 0.053) was a matter of sample size.
+- **Our hand-labelled real clips transfer to OmniFall's labels:** probes trained on our 248 clips reach 0.927, close to probes trained on OmniFall's own 734 training clips (0.951). The label definitions are compatible, and where both teams labelled the same video they agree on 27 of 28.
+- **Plain mixing hurts here:** adding 5,136 synthetic clips to the real ones lowers AUROC significantly (−0.022). Motivates a better way to combine the two sources.
+- **Caveats:** OF-ItW negatives are other moments of the same fall videos (walking, standing, getting up), not other accidents, so it complements FallOrNot's accident negatives. Both are OOPS! footage, so the real-data advantage is again in-domain; HMDB51 remains the only out-of-domain test. OF-ItW's own train and test splits share compilations (117).
