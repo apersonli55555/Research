@@ -113,6 +113,22 @@ With CLIP + VideoMAE, real training beats staged training by $+0.139$ [$+0.085$,
 
 \paragraph{Compilation leakage check.}\label{sec:leak} Of the 268 real training clips, 111 come from a compilation that also contributes test clips. Retraining on the 157 clips (77 falls) from compilations absent from the test set gives 0.866, against $0.874\pm0.014$ for random subsets of the same size and class counts (CLIP temporal: 0.838 vs.\ $0.853\pm0.013$). We find no clear evidence that shared compilations inflate the real-data result: most of the drop from 0.899 comes from the smaller training set, and the compilation-disjoint probe still exceeds synthetic (0.814) and staged (0.759) training.
 
+\subsection{A third, larger test set with independent labels}\label{sec:ofitw}
+To check the FallOrNot result at larger scale and with labels that are not ours, we score the same probes on OmniFall's in-the-wild test split (OF-ItW~\cite{omnifall}): 571 OOPS!\ videos annotated by OmniFall's team, from which we cut 1,671 clips (636 falls; one clip per fall segment, and one per other segment of at least 1\,s that is not ``fallen'' and does not overlap a fall). Our 20 real training clips from these videos are removed. \Cref{tab:ofitw} confirms the FallOrNot ordering, with every step significant ($p<0.001$, paired, by compilation): synthetic over staged $+0.058$ [$+0.040$, $+0.077$], our real clips over synthetic $+0.055$ [$+0.039$, $+0.071$]. Probes trained on our 248 hand-labelled clips (0.927) come close to probes trained on OF-ItW's own 734 training clips (0.951), and on the 28 videos labelled by both teams the labels agree on 27 ($\kappa=0.78$; a small sample skewed towards falls). Simply pooling synthetic and real clips is significantly worse than real alone here ($-0.022$ [$-0.031$, $-0.013$]). OF-ItW negatives are other moments of fall videos rather than other accidents, and the footage is again OOPS!, so this is a second in-domain test, not an out-of-domain one.
+
+\begin{table}[t]\centering\small
+\caption{AUROC on the \textbf{OF-ItW test split} (1,671 clips, 636 falls; labels by OmniFall's team). ``Real (ours)'': our 248 training clips; ``Real (OF)'': OF-ItW train + val, 734 clips. Zero-shot CLIP: 0.731. Run 11.}
+\label{tab:ofitw}
+\setlength\tabcolsep{3.5pt}
+\begin{tabular}{lccccc}\toprule
+Representation & Staged & Syn. & \shortstack{Real\\(ours)} & \shortstack{Real\\(OF)} & \shortstack{Syn.\ +\\real (OF)}\\\midrule
+CLIP appearance & 0.746 & 0.727 & 0.781 & \textbf{0.829} & 0.825\\
+CLIP temporal & 0.785 & 0.846 & 0.900 & \textbf{0.925} & 0.883\\
+VideoMAE & 0.771 & 0.817 & 0.844 & \textbf{0.909} & 0.899\\
+CLIP + VideoMAE & 0.815 & 0.872 & 0.927 & \textbf{0.951} & 0.929\\\bottomrule
+\end{tabular}
+\end{table}
+
 \subsection{On an independent source, the ranking flips}
 On HMDB51 (\cref{tab:hmdb}, \cref{fig:flip}) the real-data advantage disappears. With CLIP + VideoMAE, real training is slightly \emph{worse} than synthetic ($-0.029$ [$-0.057$, $-0.003$], $p=0.029$) and no better than staged ($-0.011$, $p=0.57$). Synthetic training rescues VideoMAE ($+0.214$ over staged, $p<0.001$), and CLIP appearance trained on real OOPS!\ data falls to 0.626. HMDB51 falls look closer to staged falls than OOPS!\ accidents do: staged probes reach 0.899 there but 0.759 on FallOrNot, and zero-shot CLIP 0.834 vs.\ 0.717. Many HMDB51 falls come from films.
 
@@ -185,7 +201,7 @@ Re-grading FallOrNot with the second annotator's labels (99 videos, 152 clips, 7
 \section{Limitations}
 \begin{itemize}\setlength\itemsep{1pt}
 \item \textbf{Label uncertainty.} Agreement between annotators was moderate ($\kappa=0.50$), and absolute scores depend on the annotator; the fall definition needs sharper written guidance.
-\item \textbf{Scale.} 165 labelled test videos and 268 real training clips; confidence intervals are wide.
+\item \textbf{Scale.} FallOrNot has 165 labelled test videos and 268 real training clips, and its confidence intervals are wide; the larger OF-ItW test (\cref{sec:ofitw}) confirms the ordering but shares the OOPS!\ source.
 \item \textbf{In-domain real data.} Real training and test clips both come from OOPS!; the real-data advantage on FallOrNot is partly in-domain advantage.
 \item \textbf{Imperfect external test.} HMDB51 falls are partly from films and trimmed to the action; they are real-world video but not necessarily real accidents.
 \item \textbf{Population.} Neither source focuses on older adults at home, the main use case.
