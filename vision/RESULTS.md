@@ -332,3 +332,44 @@ Arithmetic on runs 4, 5 and 7: for each test, best AUROC among training sources 
 | Fine-tuned | Synthetic + real | 0.008 | 0.019 | 0.006 | 0.032 | **0.032** |
 
 Note: by plain worst-case AUROC over the two full test sets, real-only (probe 0.888, fine-tuned 0.902) is as good as synthetic + real (0.872, 0.894). The robustness claim for synthetic + real rests on worst-case shortfall, driven by the hard subsets. Correction to run 7's reading: synthetic + real has the smallest seed spread on FallOrNot only; on HMDB51 synthetic-only varies least (s.d. 0.006 vs. 0.011).
+
+---
+
+# Run 10: compilation leakage check, compilation-level intervals, source-balanced method
+
+`experiment.py --group-by compilation` (FallOrNot confidence intervals and paired tests resampled by source compilation instead of by video). Point estimates are unchanged from runs 3–7. Copied from the Colab text output.
+
+## Leakage check
+OOPS! clips are cut from YouTube compilations. 111 of the 268 real training clips come from a compilation that also appears in the test set; 157 clips (77 falls) do not. Real probes retrained on the compilation-disjoint subset, compared with 20 random subsets of the same size and class counts (AUROC on FallOrNot):
+
+| Representation | Real, all 268 clips | Compilation-disjoint (157) | Random same size (mean ± s.d.) | Staged |
+|---|---|---|---|---|
+| CLIP appearance | 0.732 | 0.746 | 0.731 ± 0.019 | 0.723 |
+| CLIP temporal | 0.866 | 0.838 | 0.853 ± 0.013 | 0.728 |
+| VideoMAE | 0.787 | 0.788 | 0.777 ± 0.022 | 0.765 |
+| CLIP + VideoMAE | 0.899 | 0.866 | 0.874 ± 0.014 | 0.759 |
+
+**Reading:** no clear evidence of compilation leakage. The disjoint subset scores within about one standard deviation of random subsets of the same size (CLIP + VideoMAE 0.866 vs. 0.874 ± 0.014; CLIP temporal 0.838 vs. 0.853 ± 0.013, the largest gap). Most of the drop from 0.899 is the smaller training set. Trained only on compilations absent from the test set, real data (0.866) still beats synthetic (0.814) and staged (0.759).
+
+## Compilation-level intervals (CLIP + VideoMAE unless noted)
+- AUROC CIs: staged 0.759 [0.698, 0.814]; synthetic 0.814 [0.753, 0.869]; real 0.899 [0.858, 0.935]; synthetic + real 0.872 [0.825, 0.914].
+- real vs. staged +0.139 [+0.085, +0.193], p < 0.001; real vs. synthetic +0.085 [+0.030, +0.137], p = 0.001; synthetic + real vs. real −0.027 [−0.068, +0.012], p = 0.190.
+- **synthetic vs. staged +0.054 [−0.000, +0.110], p = 0.053: no longer significant** (video-level: p = 0.045). CLIP temporal: synthetic vs. staged +0.067 [+0.007, +0.126], p = 0.030; real vs. staged +0.138 [+0.073, +0.198], p < 0.001; real vs. synthetic +0.071 [+0.019, +0.122], p = 0.006.
+- CLIP appearance real vs. staged +0.009, p = 0.759; VideoMAE real vs. staged +0.022, p = 0.492. Staged-trained encoder comparisons: all p ≥ 0.296.
+- Fine-tuning rule, FallOrNot side: seed 0 −0.002 [−0.042, +0.040]; seed 1 −0.003 [−0.038, +0.033]; seed 2 −0.011 [−0.046, +0.027]. Still not met for any seed.
+
+## Source-balanced synthetic + real probe (rule fixed in advance on 10 Nov 2026)
+Rule: must beat the plain synthetic + real mixture on both test sets, paired 95% CI above zero (CLIP + VideoMAE).
+- FallOrNot: +0.016 [+0.005, +0.028], p = 0.004. HMDB51: +0.002 [−0.004, +0.008], p = 0.491. **RESULT: NOT MET.**
+- Balanced vs. real-only on FallOrNot: −0.011 [−0.044, +0.022], p = 0.520. Balanced vs. synthetic-only on HMDB51: −0.014 [−0.032, +0.002], p = 0.091.
+
+| Balanced probe | FallOrNot | FallOrNot hard | HMDB51 | HMDB51 hard |
+|---|---|---|---|---|
+| CLIP + VideoMAE | 0.888 [0.842, 0.928] | 0.862 [0.794, 0.918] | 0.903 [0.872, 0.936] | 0.851 [0.805, 0.893] |
+| CLIP temporal | 0.841 | 0.827 | 0.853 | 0.784 |
+| VideoMAE | 0.859 | 0.815 | 0.900 | 0.863 |
+| CLIP appearance | 0.769 | 0.765 | 0.758 | 0.658 |
+
+Recall at 5% FPR, CLIP + VideoMAE: 0.588 [0.361, 0.722] on FallOrNot (plain mixture 0.480; real 0.431); 0.610 on HMDB51 (same as the plain mixture).
+
+**Reading:** balancing gives a small, significant gain on FallOrNot and no change on HMDB51, so the rule is not met. The balanced probe is statistically indistinguishable from the best single source on each test set (real on FallOrNot, synthetic on HMDB51). Its largest shortfall from the best of the four original sources is 0.029 (HMDB51 hard), about the same as the plain mixture (0.027).

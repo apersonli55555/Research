@@ -21,8 +21,8 @@ plt.rcParams.update({"font.family": "serif", "font.size": 7.5, "axes.edgecolor":
 
 # ---- Figure 1: ranking flip. CLIP+VideoMAE probes (runs 4, 5) and fine-tuned VideoMAE (run 7, 3 seeds)
 probe = {  # (AUROC, CI low, CI high)
-    "FallOrNot (OOPS!)": {"Staged": (0.759, 0.696, 0.820), "Synthetic": (0.814, 0.760, 0.864),
-                          "Real": (0.899, 0.859, 0.934), "Synthetic + real": (0.872, 0.827, 0.911)},
+    "FallOrNot (OOPS!)": {"Staged": (0.759, 0.698, 0.814), "Synthetic": (0.814, 0.753, 0.869),
+                          "Real": (0.899, 0.858, 0.935), "Synthetic + real": (0.872, 0.825, 0.914)},  # run 10, compilation-level
     "HMDB51 (external)": {"Staged": (0.899, 0.870, 0.926), "Synthetic": (0.917, 0.892, 0.943),
                           "Real": (0.888, 0.850, 0.925), "Synthetic + real": (0.901, 0.869, 0.932)},
 }
