@@ -314,3 +314,21 @@ Equal budget (CLIP + VideoMAE): synthetic peaks at 0.766 ± 0.022 (125 falls) an
 - **Holds under the second annotator:** the staged-to-real gap (1.00 in-domain vs. ≤ 0.80 on real falls); real-trained beating staged-trained (+0.083, p = 0.024; CLIP temporal +0.100, p = 0.010); the learning-curve shape (about 8 real falls match the staged set, 15 exceed it); synthetic data plateauing below real at equal budget.
 - **Weaker under the second annotator:** the in-domain real-over-synthetic advantage shrinks to +0.065 and is no longer significant (p = 0.079), and synthetic + real is not significantly different from real.
 - **Absolute numbers depend on the annotator:** the best AUROC drops from 0.899 to 0.797. The second annotator labels more borderline events as falls, which are harder to detect. Reported numbers should be read as specific to the labelling definition.
+
+---
+
+# Derived: shortfall from the best training source (no new run)
+
+Arithmetic on runs 4, 5 and 7: for each test, best AUROC among training sources minus each source's AUROC. Probes = CLIP + VideoMAE; fine-tuned = mean of 3 seeds. "hard" = accident negatives only (FallOrNot `real_hard`) or the HMDB51 hard subset. Differences of point estimates; no confidence intervals.
+
+| | Trained on | FallOrNot | FallOrNot hard | HMDB51 | HMDB51 hard | Max |
+|---|---|---|---|---|---|---|
+| Probe | Staged | 0.140 | 0.145 | 0.018 | 0.047 | 0.145 |
+| Probe | Synthetic | 0.085 | 0.088 | 0 | 0 | 0.088 |
+| Probe | Real | 0 | 0 | 0.029 | 0.103 | 0.103 |
+| Probe | Synthetic + real | 0.027 | 0.012 | 0.016 | 0.025 | **0.027** |
+| Fine-tuned | Synthetic | 0.064 | 0.101 | 0 | 0 | 0.101 |
+| Fine-tuned | Real | 0 | 0 | 0.040 | 0.127 | 0.127 |
+| Fine-tuned | Synthetic + real | 0.008 | 0.019 | 0.006 | 0.032 | **0.032** |
+
+Note: by plain worst-case AUROC over the two full test sets, real-only (probe 0.888, fine-tuned 0.902) is as good as synthetic + real (0.872, 0.894). The robustness claim for synthetic + real rests on worst-case shortfall, driven by the hard subsets. Correction to run 7's reading: synthetic + real has the smallest seed spread on FallOrNot only; on HMDB51 synthetic-only varies least (s.d. 0.006 vs. 0.011).
