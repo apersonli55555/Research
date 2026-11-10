@@ -2,6 +2,8 @@
 
 *Written by the AI assistant from the results in `results/mode_type_slopes.csv` (run `python scripts/run_shared_threshold.py`). The data facts are verified. The explanations are hypotheses, not findings. Rewrite this in your own words before using it.*
 
+> **Correction after reading Maes et al. (2022), Table 1.** That paper describes **mode 14 as the "3rd lateral mode of the bridge deck (+ torsion)"**, although the authors' plotting code colours it as an arch mode, which is how the table below counts it. Mode 14 clearly softens when warm (−1.9e-4 per °C [−2.4e-4, −1.5e-4]). So of the three lateral deck modes, the first stiffens, the second is flat and the third softens. The pattern is "the first lateral deck mode is different", not "lateral modes are different". The paper also says the bridge rests on **four pot bearings** and carries **ballasted** tracks, and it attributes the stiffening below 0 °C to frozen ballast. It does not discuss mode 3's warm-weather trend.
+
 ## What the data show
 The dataset authors classify the 14 tracked modes in their own plotting code (`matlab-functions/plot_trackedmodes.m`, Zenodo 3745914): arch modes 1, 2, 4, 7, 8, 14; **lateral deck modes 3 and 11**; global vertical modes 5, 6, 10, 12, 13; torsional mode 9.
 

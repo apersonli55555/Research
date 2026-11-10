@@ -155,6 +155,16 @@ From `scripts/run_shared_threshold.py`:
 - **Shared freezing threshold:** one common threshold for all five modes is 1.22 °C [−0.40, 2.25]. Its uncertainty (width 2.65 °C) is no smaller than the separate fits' (2.36–3.01 °C), because all modes see the same few freezing days.
 - **Retrofit dates** (15 May–27 Sep 2019) are confirmed in the authors' code.
 
+### v7: what the dataset authors' 2022 paper already says (read 10 Nov 2026)
+Reading the full text of Maes, Van Meerbeeck, Reynders & Lombaert (2022, MSSP 165, 108380) showed that two things this project presented as its own findings are **already in that paper**:
+- **The two-regime shape.** They report "a bilinear relation between the identified natural frequencies and the bridge temperature ... with a knee point around 0 °C", and note the same was seen on the Z24 bridge.
+- **The cause of the cold stiffening.** They state that finite element model updating indicates it "is likely due to frost of the porphyry ballast layer supporting the tracks". Earlier versions of this project called the cause "not established"; the authors do give one.
+- **The slope bias.** They restrict their linear regression to temperatures above 2 °C because the cold data "leads to a bias in the linear regression". That is the same effect as this project's ablation.
+
+So the regime structure and its explanation are prior work, to be cited. What this project adds is narrower: it keeps the cold data in one model instead of discarding it, and it measures what the regime structure does to **conformal coverage** inside and outside the training range.
+
+Other facts from the paper: the bridge is 115 m long and 12.4 m wide, carries two ballasted tracks, and rests on four pot bearings. Their mode table calls mode 3 the "1st lateral mode of the bridge deck", mode 11 the "2nd lateral mode of the bridge deck (+ torsion)" and **mode 14 the "3rd lateral mode of the bridge deck (+ torsion)"**. Their plotting code colours mode 14 as an arch mode, so v6 above counted it as one. Mode 14 clearly softens when warm, so only the *first* lateral deck mode stiffens. The paper says frequencies "tend to decrease with increasing temperature" and does not discuss mode 3's opposite trend.
+
 ## Honest limitations
 1. **Cold regime:** no method handles sub-zero temperatures when trained without them. This is the biggest open problem.
 2. **Small extrapolation samples:** outside-range samples are small (median 96–379 hours per fold; the >20 °C bin is 8 days).

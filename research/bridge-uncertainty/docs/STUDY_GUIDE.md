@@ -19,7 +19,7 @@ I tested whether the error bars used to monitor a real bridge's vibrations stay 
 
 **Natural frequency.** f = (1/2π)·√(k/m). Stiffer (bigger k) means higher frequency. Heavier (bigger m) means lower.
 
-**Why temperature matters.** Warm steel is very slightly softer, so the frequency drops a tiny bit. Near freezing the bridge suddenly gets stiffer, maybe because the gravel under the tracks or the bearings freeze. (That cause is a guess; the data don't prove it.)
+**Why temperature matters.** Warm steel is very slightly softer, so the frequency drops a tiny bit. Near freezing the bridge suddenly gets stiffer, which the dataset authors attribute to the gravel (ballast) under the tracks freezing, based on their computer model of the bridge.
 
 **Prediction interval (error band).** "I predict 2.92 Hz, and I'm 90 % sure the real value is between 2.91 and 2.93."
 
@@ -90,7 +90,8 @@ The formula carries the trend into new temperatures; the machine learning handle
 10. Did you tune your model until it won? → *No. Settings were fixed in advance. I re-ran 9 settings for my model and gave the competitor the same 9. Every version of mine (0.88–0.90) beat every version of theirs (0.77–0.83), and my default wasn't even the best one.*
 11. Is your model just drawing wider bands? → *No. It has the narrowest bands of all nine models and still the best coverage.*
 12. Is it really the physics that helps? → *No, it's the shape. A physics-free line with a kink at the freezing point matches my model. The physics motivated the shape and makes the parameters interpretable.*
-13. What did you do yourself? → *Answer this truthfully and specifically.*
+13. Didn't the dataset authors already know about the kink at 0 °C? → *Yes. Maes et al. (2022) describe the two-piece relation, blame frozen ballast, and leave out data below 2 °C because it biases the slope. I cite them for that. What I add is measuring how the regime structure affects the honesty of the error bars, inside and outside the training range.*
+14. What did you do yourself? → *Answer this truthfully and specifically.*
 
 ## 8. Glossary
 | Term | Meaning |

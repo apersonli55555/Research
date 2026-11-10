@@ -13,6 +13,8 @@ Both were run in `scripts/run_shared_threshold.py`. One of this review's predict
 2. **Mode types confirmed from the dataset authors' own code.** Modes 3 and 11 are lateral deck modes; 5, 6, 10, 12 and 13 are global vertical; **mode 9 is torsional**, not vertical as the table below loosely suggests; the rest are arch modes. All 12 non-lateral modes soften as they warm. Mode 3 stiffens, and mode 11, the other lateral mode, shows no clear trend. See `docs/mode3_lateral_note.md`.
 3. **Retrofit dates confirmed** as 15 May to 27 September 2019 in the same code.
 
+4. **Prior work found (important).** The dataset authors' 2022 paper already reports the two-regime ("bilinear") temperature relation with a knee near 0 °C, attributes the cold stiffening to frozen ballast, and excludes temperatures below 2 °C because they bias the regression slope. A professor who knows this literature would say so in the first minute. Your contribution is the coverage analysis, not the regime structure. See README, section v7.
+
 ---
 
 ## Overall verdict
