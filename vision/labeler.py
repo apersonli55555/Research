@@ -35,7 +35,7 @@ if (!window.__fallKeys) {
 
 class Labeler:
     def __init__(self, oops_dir, labeler_id="me", start_with="test", labels_file="labels.csv",
-                 second_annotator=False):
+                 second_annotator=False, adjudicate=False):
         """start_with="test" (default) shows the test-set clips first; "train" skips straight
         to the training-pool clips (test clips come after).
 
@@ -43,6 +43,8 @@ class Labeler:
         first annotator labelled, into a separate file (default labels_friend.csv), without
         seeing the first annotator's answers. The first annotator's labels.csv is never touched."""
         self.dir = oops_dir
+        if adjudicate:        # both annotators together settle only the clips they disagreed on
+            labels_file, labeler_id = "labels_adjudicated.csv", "adjudicated"
         if second_annotator and labels_file == "labels.csv":
             labels_file, labeler_id = "labels_friend.csv", "second"
         self.path = os.path.join(oops_dir, labels_file)
@@ -59,7 +61,16 @@ class Labeler:
         if second_annotator:
             first = load_labels(oops_dir)          # only used to know WHICH clips to show
             self.queue = [r for r in rnd if first.get(r["name"]) in ("fall", "not_fall", "unsure")]
-        self.n_random = len(self.queue) if second_annotator else len(rnd)
+        if adjudicate:
+            first = load_labels(oops_dir)
+            second = {}
+            with open(os.path.join(oops_dir, "labels_friend.csv")) as fh:
+                for r in csv.DictReader(fh):
+                    second[r["name"]] = r["label"]
+            keep = ("fall", "not_fall")
+            self.queue = [r for r in rnd if first.get(r["name"]) in keep and second.get(r["name"]) in keep
+                          and first[r["name"]] != second[r["name"]]]
+        self.n_random = len(self.queue) if (second_annotator or adjudicate) else len(rnd)
         self.test_names = {r["name"] for r in rnd}
         self.labels = {}
         if os.path.exists(self.path):

@@ -135,6 +135,20 @@ def paired(y, s1, s2, groups, n=2000, seed=0):
     return [float(est), float(np.percentile(d, 2.5)), float(np.percentile(d, 97.5)), float(p)]
 
 
+def balanced_fit(Xs_list, ys_list):
+    """Source-balanced probe: every (source, class) cell gets the same total weight, so a small
+    real set is not drowned out by a large synthetic one. Same model as probe() otherwise."""
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.preprocessing import StandardScaler
+    X = np.vstack(Xs_list); y = np.concatenate(ys_list)
+    w = np.concatenate([np.where(yy == 1, 1.0 / max(1, (yy == 1).sum()), 1.0 / max(1, (yy == 0).sum()))
+                        for yy in ys_list])
+    w = w / w.sum() * len(y)
+    sc = StandardScaler().fit(X, sample_weight=w)
+    lr = LogisticRegression(C=0.1, max_iter=5000).fit(sc.transform(X), y, sample_weight=w)
+    return lambda Z: lr.predict_proba(sc.transform(Z))[:, 1]
+
+
 def probe():
     from sklearn.linear_model import LogisticRegression
     from sklearn.pipeline import make_pipeline
@@ -153,6 +167,8 @@ def main():
     ap.add_argument("--synthetic", default="", help="ofsyn.npz from ofsyn_prep.py (optional)")
     ap.add_argument("--external", default="", help="hmdb.npz from hmdb_prep.py: external real-world test (optional)")
     ap.add_argument("--finetuned", nargs="*", default=[], help="scores_*.npz from finetune.py score (optional)")
+    ap.add_argument("--test-overrides", default="", help="file in --oops (e.g. labels_adjudicated.csv): replaces "
+                    "the first annotator's TEST labels for the clips it lists")
     ap.add_argument("--test-labels", default="", help="file in --oops (e.g. labels_friend.csv): take TEST labels from "
                     "this annotator instead (test set = clips they labelled); training labels unchanged")
     a = ap.parse_args()
@@ -172,6 +188,13 @@ def main():
                 test_labels[r_["name"]] = r_["label"]
         test_labels = {k: v for k, v in test_labels.items() if v}
         print(f"TEST LABELS FROM {a.test_labels}: {sum(v in ('fall', 'not_fall') for v in test_labels.values())} clips")
+    overrides = {}
+    if a.test_overrides:
+        with open(os.path.join(a.oops, a.test_overrides)) as fh:
+            for r_ in csv.DictReader(fh):
+                overrides[r_["name"]] = r_["label"]
+        overrides = {k: v for k, v in overrides.items() if v}
+        print(f"TEST LABEL OVERRIDES FROM {a.test_overrides}: {len(overrides)} clips")
     with open(os.path.join(a.oops, "scores.csv")) as fh:
         meta = {r["name"]: r for r in csv.DictReader(fh)}
     frames = load_frames(a.oops)
@@ -183,6 +206,8 @@ def main():
             continue
         r = meta[name]
         lab = test_labels.get(name) if (test_labels is not None and r["random_sample"] == "1") else labels.get(name)
+        if r["random_sample"] == "1" and name in overrides:
+            lab = overrides[name]
         if lab not in ("fall", "not_fall"):
             continue
         y = 1 if (seg == "event" and lab == "fall") else 0
@@ -342,6 +367,31 @@ def main():
                 ka, kb = f"{a_}_probe_{kind}", f"{b_}_probe_{kind}"
                 if ka in ext_scores and kb in ext_scores:
                     res["paired_external"][f"{ka} vs {kb}"] = paired(ye, ext_scores[ka], ext_scores[kb], ne)
+
+    # ---- METHOD (rule fixed before any result, see AGENTS.md): source-balanced synthetic + real probe.
+    #      Success = beats the plain synthetic + real mixture (same features, CLIP + VideoMAE) on BOTH
+    #      test sets, paired 95% CI above zero. Reported whatever the outcome. ----
+    if Y is not None and have_real:
+        Fr_ = np.array([t[0] for t in train]); Vr_ = np.array([t[5] for t in train]) if videos else None
+        yr_ = np.array([t[1] for t in train])
+        for kind in reps:
+            if "videomae" in kind and (Vy is None or Vr_ is None):
+                continue
+            f = balanced_fit([featurize(Fy, kind, Vy), featurize(Fr_, kind, Vr_)], [yy, yr_])
+            k_ = f"balanced_synthetic_plus_real_probe_{kind}"
+            scores[k_] = f(featurize(Ft, kind, Vt)); res["real"][k_] = boot(yt, scores[k_], gb)
+            if a.external and not ("videomae" in kind and Ve is None):
+                ext_scores[k_] = clip_max(f(featurize(Fe, kind, Ve)))
+                res["external"][k_] = boot(ye, ext_scores[k_], ne)
+                res["external_hard"][k_] = boot(ye[hard], ext_scores[k_][hard], ne[hard])
+        mk = "clip+videomae" if "clip+videomae" in reps else "clip_temporal"
+        bk, nk = f"balanced_synthetic_plus_real_probe_{mk}", f"synthetic_plus_real_probe_{mk}"
+        if bk in scores and bk in ext_scores:
+            m1 = paired(yt, scores[bk], scores[nk], gb); m2 = paired(ye, ext_scores[bk], ext_scores[nk], ne)
+            res["method_test"] = {"rule": "source-balanced synthetic + real beats the plain mixture on BOTH test sets, paired 95% CI above zero",
+                                  "representation": mk, "fallornot": m1, "hmdb51": m2, "success": bool(m1[1] > 0 and m2[1] > 0),
+                                  "vs_real_fallornot": paired(yt, scores[bk], scores[f"real_probe_{mk}"], gb),
+                                  "vs_synthetic_hmdb51": paired(ye, ext_scores[bk], ext_scores[f"synthetic_probe_{mk}"], ne)}
 
     # ---- fine-tuned VideoMAE (finetune.py); pre-registered test: does fine-tuning on
     #      synthetic+real beat the best probe on BOTH test sets? ----
@@ -520,6 +570,14 @@ def main():
         for pt in lc["points"]:
             extra.append(f"| {pt['videos']} | {pt['falls']:.0f} | {pt['real']:.3f} ± {pt['real_sd']:.3f} | "
                          f"{pt['both']:.3f} ± {pt['both_sd']:.3f} |")
+    if res.get("method_test"):
+        mt_ = res["method_test"]; g = lambda v: f"{v[0]:+.3f} [{v[1]:+.3f}, {v[2]:+.3f}], p = {v[3]:.3f}"
+        extra += ["", "METHOD TEST (" + mt_["representation"] + "): " + mt_["rule"], "",
+                  f"- fallornot: balanced vs plain mixture: {g(mt_['fallornot'])}",
+                  f"- hmdb51: balanced vs plain mixture: {g(mt_['hmdb51'])}",
+                  f"- RESULT: {'SUCCESS' if mt_['success'] else 'NOT MET'}",
+                  f"- for reference, balanced vs real-only on fallornot: {g(mt_['vs_real_fallornot'])}",
+                  f"- for reference, balanced vs synthetic-only on hmdb51: {g(mt_['vs_synthetic_hmdb51'])}"]
     if res.get("leakage"):
         lk = res["leakage"]
         extra += ["", f"LEAKAGE CHECK: {lk['train_clips_sharing_compilation_with_test']}/{lk['train_clips']} real training clips share a "

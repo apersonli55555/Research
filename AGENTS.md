@@ -47,10 +47,12 @@ Data (clips, embeddings, labels, result files) lives on the owner's Google Drive
 1. **Second real-world test source: done (HMDB51, run 5).** A third source of real accident falls (closer to OOPS! than HMDB51's movie falls) would further help separate "real vs. synthetic" from "which benchmark".
 2. **Second staged dataset.** UR Fall is saturated (AUROC 1.00 in-domain). The original Le2i page is offline; find a legitimate mirror or another staged dataset.
 3. **Fine-tuning experiment: done (runs 6 and 7, 3 seeds). The rule specified in advance was NOT MET for any seed.**
-4. **Proposed method** aimed at the hardest sub-problem: telling falls apart from other accidents (`real_hard` results). Explore why VideoMAE alone gains little from real data while CLIP temporal features gain a lot.
-5. **Venue formatting.** Once the owner picks a venue, move `vision/paper/paper.tex` into its official template and anonymise as required.
-6. **Mentor feedback.** The owner is looking for a teacher or professor to read the paper.
-7. Optional: the second annotator could label the remaining 65 test videos (only if they volunteer). Never ask the owner for more labelling.
+4. **Method test (rule fixed 10 Nov 2026, before any result):** a source-balanced synthetic + real probe (`balanced_fit` in `experiment.py`: every source-and-class cell gets equal total weight; CLIP + VideoMAE; C = 0.1 as before) must beat the plain synthetic + real mixture on BOTH FallOrNot and HMDB51, paired 95% CI above zero. Report the outcome whatever it is; do not change the rule or settings after seeing results. Also pending from the same run: the compilation leakage check and compilation-level confidence intervals.
+5. **Label adjudication (optional):** `vision/LABELING_GUIDE.md` sharpens the fall definition. `Labeler(..., adjudicate=True)` lets the two annotators settle only their 20 disagreements into `labels_adjudicated.csv`; evaluate with `experiment.py --test-overrides labels_adjudicated.csv`.
+6. **Further method work** aimed at the hardest sub-problem: telling falls apart from other accidents (`real_hard` results). Explore why VideoMAE alone gains little from real data while CLIP temporal features gain a lot.
+7. **Venue formatting.** Once the owner picks a venue, move `vision/paper/paper.tex` into its official template and anonymise as required.
+8. **Mentor feedback.** The owner is looking for a teacher or professor to read the paper.
+9. Optional: the second annotator could label the remaining 65 test videos (only if they volunteer). Never ask the owner for more labelling.
 
 ## Rules (these protect the paper's credibility)
 
