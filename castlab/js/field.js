@@ -33,36 +33,48 @@
   CL.bestTimes = async function (loc) {
     const key = loc.id + ':' + Math.floor(Date.now() / (20 * 60000)); if (btCache[key]) return btCache[key];
     const w = await U.fetchWeather(loc.lat, loc.lon), h = w.hourly, off = w.utcOffset, toMs = i => Date.parse(h.time[i] + ':00Z') - off * 1000;
-    const start = w.index, end = Math.min(h.time.length, start + 48), ev = A.events(toMs(start) - 6 * HOUR, loc.lat, loc.lon, 60), own = ownFactor(), hours = [];
+    const start = w.index, end = h.time.length, ev = A.events(toMs(start) - 6 * HOUR, loc.lat, loc.lon, Math.ceil((end - start) + 12)), own = ownFactor(), all = [];
     for (let i = start; i < end; i++) {
       const ms = toMs(i), sc = A.scoreHour({ ms, dPressure3h: i >= 3 ? h.surface_pressure[i] - h.surface_pressure[i - 3] : null, windKph: h.wind_speed_10m[i], precipMm: h.precipitation[i], code: h.weather_code[i], ev, sunAlt: A.sunAltitude(ms + HOUR / 2, loc.lat, loc.lon) });
       let index = sc.index; const localHour = +h.time[i].slice(11, 13), ob = own && own.bins[CL.timeOfDay(localHour)];
       if (ob && ob.rel != null && !sc.unsafe) index = Math.round(0.75 * index + 25 * ob.rel);
-      hours.push({ ms, i, label: h.time[i], localHour, index, rule: sc.index, why: sc.why, unsafe: sc.unsafe, c: sc.components, tempC: h.temperature_2m[i], windKph: h.wind_speed_10m[i] });
+      all.push({ ms, i, label: h.time[i], localHour, index, rule: sc.index, why: sc.why, unsafe: sc.unsafe, c: sc.components, tempC: h.temperature_2m[i], windKph: h.wind_speed_10m[i] });
     }
-    const top = Math.max(...hours.map(x => x.index)), wins = A.windows(hours, Math.max(50, top - 12)).slice(0, 4), now = toMs(start);
+    const hours = all.slice(0, 48), top = Math.max(...hours.map(x => x.index)), wins = A.windows(hours, Math.max(50, top - 12)).slice(0, 4), now = toMs(start);
     const first = k => (ev[k].find(t => t >= now - 12 * HOUR && t <= now + 24 * HOUR));
-    return btCache[key] = { w, off, hours, wins, ev, own, now, phase: A.moonPhase(now), sunrise: ev.sunrise.find(t => t > now - 14 * HOUR), sunset: ev.sunset.find(t => t > now - 6 * HOUR), first };
+    return btCache[key] = { w, off, hours, all, loc, wins, ev, own, now, phase: A.moonPhase(now), sunrise: ev.sunrise.find(t => t > now - 14 * HOUR), sunset: ev.sunset.find(t => t > now - 6 * HOUR), first };
   };
-  /* Hour-by-hour ratings for today and tomorrow (location's local time). */
-  function timesHTML(bt) {
-    const o = bt.off, dayOf = ms => Math.floor((ms + o * 1000) / 864e5), d0 = dayOf(bt.now), hr = h => ((h + 11) % 12 + 1) + (h < 12 ? ' am' : ' pm');
-    const cls = x => x.unsafe ? 'h-bad' : x.index >= 75 ? 'h-top' : x.index >= 60 ? 'h-good' : x.index >= 45 ? 'h-fair' : 'h-slow';
-    const days = [0, 1].map(k => ({ k, hours: bt.hours.filter(x => dayOf(x.ms) === d0 + k) })).filter(d => d.hours.length);
-    return days.map(d => { const best = d.hours.reduce((a, x) => x.index > a.index ? x : a, d.hours[0]);
-      return '<h4 style="margin:' + (d.k ? '12px' : '0') + ' 0 6px">' + (d.k ? 'Tomorrow' : 'Today' + (d.hours[0].localHour > 0 ? ' (from now)' : '')) + '</h4><div class="hours">' + d.hours.map(x => '<div class="hcell ' + cls(x) + (x === best && !x.unsafe ? ' h-best' : '') + '" title="' + esc(x.why.join(', ') || 'steady conditions') + '"><span>' + hr(x.localHour) + '</span><b>' + x.index + '</b></div>').join('') + '</div>' +
-        '<p class="small" style="margin:6px 0 0">Best hour: <b>' + hr(best.localHour) + '</b> (' + best.index + '/100, ' + rating(best.index)[0].toLowerCase() + ')' + (best.why.length ? ' — ' + esc(best.why.join(', ')) : '') + '</p>'; }).join('') +
-      '<div class="legend" style="margin-top:8px"><span><i class="hk h-top"></i>Excellent 75+</span><span><i class="hk h-good"></i>Good 60–74</span><span><i class="hk h-fair"></i>Fair 45–59</span><span><i class="hk h-slow"></i>Slow</span><span><i class="hk h-bad"></i>Thunderstorm</span></div>' +
-      '<p class="small" style="margin:8px 0 4px">Sunrise ' + (bt.sunrise ? clock(bt.sunrise, o) : '—') + ' · sunset ' + (bt.sunset ? clock(bt.sunset, o) : '—') + ' · ' + esc(bt.phase.name.toLowerCase()) + ' (' + Math.round(bt.phase.fraction * 100) + '% lit)</p>' +
-      '<p class="small muted" style="margin:0">' + (bt.own ? 'Includes your own record by time of day (' + bt.own.n + ' logged trips, 25% weight). ' : '') + 'Each hour is scored 0–100 from light, pressure trend, wind and moon position in this spot\'s forecast. Hover or tap-and-hold an hour for the reasons. It is guidance, not a tested prediction' + (bt.own ? '.' : '; after 20 logged trips it starts using your own results.') + '</p>';
+  /* The week ahead: one chip per day (best hour, score, 24-hour sparkline) and the hourly grid for the chosen day. */
+  let selDay = 0;
+  function daysOf(bt) {
+    const o = bt.off, dayOf = ms => Math.floor((ms + o * 1000) / 864e5), d0 = dayOf(bt.now), m = {};
+    bt.all.forEach(x => { const k = dayOf(x.ms) - d0; (m[k] = m[k] || []).push(x); });
+    return Object.keys(m).map(Number).sort((a, b) => a - b).filter(k => k === 0 || m[k].length >= 12).slice(0, 7).map(k => {
+      const hs = m[k], safe = hs.filter(x => !x.unsafe), pool = safe.length ? safe : hs, best = pool.reduce((a, x) => x.index > a.index ? x : a, pool[0]), d = new Date(hs[0].ms + o * 1000);
+      return { k, hs, best, storm: hs.some(x => x.unsafe), name: k === 0 ? 'Today' : k === 1 ? 'Tomorrow' : d.toLocaleDateString(undefined, { weekday: 'short', timeZone: 'UTC' }), date: d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' }) };
+    });
   }
+  CL.daysOf = daysOf;
+  const hcls = x => x.unsafe ? 'h-bad' : x.index >= 75 ? 'h-top' : x.index >= 60 ? 'h-good' : x.index >= 45 ? 'h-fair' : 'h-slow';
+  function timesHTML(bt) {
+    const hr = h => ((h + 11) % 12 + 1) + (h < 12 ? ' am' : ' pm'), days = daysOf(bt);
+    if (!days.some(d => d.k === selDay)) selDay = 0;
+    const day = days.find(d => d.k === selDay), best = day.best;
+    const spark = d => '<svg class="spark" viewBox="0 0 96 26" preserveAspectRatio="none" aria-hidden="true">' + d.hs.map(x => { const hgt = Math.max(2, x.index / 100 * 26); return '<rect x="' + (x.localHour * 4) + '" y="' + (26 - hgt).toFixed(1) + '" width="3" height="' + hgt.toFixed(1) + '" rx="1" class="' + hcls(x) + '"/>'; }).join('') + '</svg>';
+    return '<div class="week">' + days.map(d => '<button type="button" class="daychip' + (d.k === selDay ? ' on' : '') + '" data-day="' + d.k + '" aria-pressed="' + (d.k === selDay) + '"><span class="dn">' + d.name + '</span><span class="dd">' + d.date + '</span><b class="' + hcls(d.best) + '">' + d.best.index + '</b>' + spark(d) + '<span class="dh">' + (d.storm && d.best.unsafe ? 'storms' : hr(d.best.localHour)) + '</span></button>').join('') + '</div>' +
+      '<h4 style="margin:14px 0 6px">' + day.name + (day.k === 0 && day.hs[0].localHour > 0 ? ' (from now)' : ', ' + day.date) + '</h4><div class="hours">' + day.hs.map((x, i) => '<div class="hcell ' + hcls(x) + (x === best && !x.unsafe ? ' h-best' : '') + '" style="--i:' + i + '" title="' + esc(x.why.join(', ') || 'steady conditions') + '"><span>' + hr(x.localHour) + '</span><b>' + x.index + '</b></div>').join('') + '</div>' +
+      '<p class="small" style="margin:8px 0 0">Best hour: <b>' + hr(best.localHour) + '</b> (' + best.index + '/100, ' + rating(best.index)[0].toLowerCase() + ')' + (best.why.length ? ', for ' + esc(best.why.join(', ')) : '') + '</p>' +
+      '<div class="legend" style="margin-top:8px"><span><i class="hk h-top"></i>Excellent 75+</span><span><i class="hk h-good"></i>Good 60–74</span><span><i class="hk h-fair"></i>Fair 45–59</span><span><i class="hk h-slow"></i>Slow</span><span><i class="hk h-bad"></i>Thunderstorm</span></div>' +
+      '<p class="small muted" style="margin:8px 0 0">' + (bt.own ? 'Includes your own record by time of day (' + bt.own.n + ' logged trips, 25% weight). ' : '') + 'Each hour is scored 0–100 from light, pressure trend, wind and moon position in this spot\'s forecast. Forecasts get less reliable further out, so treat days 4 to 7 as a rough guide. It is guidance, not a tested prediction' + (bt.own ? '.' : '; after 20 logged trips it starts using your own results.') + '</p>';
+  }
+  function bindWeek(box, bt) { box._bt = bt; if (box._bound) return; box._bound = true; box.addEventListener('click', e => { const b = e.target.closest('[data-day]'); if (!b || !box._bt) return; selDay = +b.dataset.day; box.innerHTML = timesHTML(box._bt); }); }
   async function drawWeatherBest() {
     const loc = Store.location($('#wxLoc').value); if (!loc || !isFinite(loc.lat)) return;
     $('#wxBestMethod').innerHTML = '<p>Each hour gets four scores between 0 and 1, combined with fixed weights into a 0–100 index:</p><ul><li><b>Light (' + A.WEIGHTS.light * 100 + '%)</b>: 1 within an hour of sunrise or sunset, fading to 0 by 2.5 hours away; low at midday and at night. Sun times are computed for the spot\'s coordinates.</li><li><b>Pressure trend (' + A.WEIGHTS.pressure * 100 + '%)</b>: 3-hour change in forecast surface pressure. Slowly falling scores highest, steady next, rising or crashing lowest.</li><li><b>Wind (' + A.WEIGHTS.wind * 100 + '%)</b>: 4–20 km/h scores highest; calm a little lower; above 35 km/h scores 0.</li><li><b>Moon position (' + A.WEIGHTS.solunar * 100 + '%)</b>: the "solunar" periods, an hour either side of the moon being overhead or underfoot and half an hour around moonrise and moonset.</li></ul><p>Heavy rain cuts the index by 40%. Any forecast thunderstorm sets it to 0.</p><p><b>How much to trust it.</b> These are widely used angling rules of thumb. Low light and weather changes have reasonable support; evidence for solunar periods is weak, which is why they carry the smallest weight. The index has not been validated against catch data. Once you have logged 20 trips, your own success rate by time of day (a Beta-Binomial estimate, shown in LureLab) is blended in at 25% weight, and LureLab\'s Validation tab tells you whether time of day actually predicts your catches.</p>';
     try {
       const bt = await CL.bestTimes(loc), col = i => { const v = bt.hours[i].index; return bt.hours[i].unsafe ? U.cssVar('--bad') : v >= 60 ? U.cssVar('--ok') : v >= 45 ? U.cssVar('--warn') : U.cssVar('--faint'); };
       U.chart('wxBest', $('#wxBest'), { type: 'bar', data: { labels: bt.hours.map(x => x.label.slice(5, 13).replace('T', ' ') + 'h'), datasets: [{ label: 'Fishing-time index (0–100)', data: bt.hours.map(x => x.index), backgroundColor: bt.hours.map((_, i) => col(i)) }] }, options: CL.baseChartOpts({ plugins: { legend: { display: false }, tooltip: { callbacks: { afterLabel: c => { const x = bt.hours[c.dataIndex]; return (x.why.join(', ') || 'steady conditions') + '\nlight ' + x.c.light.toFixed(2) + ' · pressure ' + x.c.pressure.toFixed(2) + ' · wind ' + x.c.wind.toFixed(2) + ' · moon ' + x.c.solunar.toFixed(2); } } } }, scales: { y: { min: 0, max: 100 }, x: { ticks: { maxTicksLimit: 12 } } } }) });
-      $('#wxBestList').innerHTML = timesHTML(bt, 4);
+      $('#wxBestList').innerHTML = timesHTML(bt); bindWeek($('#wxBestList'), bt);
     } catch (e) { $('#wxBestList').innerHTML = '<p class="small muted">Best times need the weather forecast, which could not be loaded.</p>'; }
   }
   const wxOrig = CL.modules.weather.render; CL.modules.weather.render = function () { wxOrig(); drawWeatherBest(); };
@@ -228,11 +240,52 @@
     return '<svg class="wxi" width="56" height="56" viewBox="0 0 48 48" aria-hidden="true">' + g + '</svg>';
   }
 
+  /* ---- share image, calendar, spot ranking ---- */
+  function pickBest(bt) { const d = daysOf(bt), t0 = d[0] && d[0].best, t1 = d[1] && d[1].best; if (t0 && t1 && !t1.unsafe && (t0.unsafe || (t0.index < 60 && t1.index > t0.index))) return { day: d[1], h: t1 }; return t0 ? { day: d[0], h: t0 } : null; }
+  $('#hmShare').onclick = async () => {
+    const bt = lastBt; if (!bt) return U.toast('Pick a spot and wait for the forecast first.');
+    try { await Promise.all([document.fonts.load('700 84px "Bricolage Grotesque"'), document.fonts.load('500 28px "Instrument Sans"')]); } catch (e) {}
+    const W = 1200, H = 630, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    const c = cv.getContext('2d'), disp = '"Bricolage Grotesque", sans-serif', sans = '"Instrument Sans", sans-serif';
+    c.fillStyle = '#0f2a3d'; c.fillRect(0, 0, W, H); c.strokeStyle = 'rgba(255,255,255,.07)'; c.lineWidth = 2;
+    for (let k = 1; k <= 9; k++) { c.beginPath(); for (let i = 0; i <= 90; i++) { const a = i / 90 * Math.PI * 2, rr = k * 62 * (1 + 0.13 * Math.sin(2 * a + k) + 0.07 * Math.sin(3 * a + 1.7 * k)), x = 880 + rr * Math.cos(a) * 1.25, y = 150 + rr * Math.sin(a) * 0.85; if (i) c.lineTo(x, y); else c.moveTo(x, y); } c.closePath(); c.stroke(); }
+    c.fillStyle = '#f2f7fa'; c.font = '700 34px ' + disp; c.fillText('CastLab', 60, 78);
+    c.fillStyle = 'rgba(242,247,250,.7)'; c.font = '600 28px ' + sans; c.fillText(bt.loc.name, 60, 128);
+    c.fillStyle = '#fff'; c.font = '700 82px ' + disp; c.fillText($('#hmHeadline').textContent, 60, 232);
+    c.fillStyle = 'rgba(242,247,250,.75)'; c.font = '500 27px ' + sans;
+    let line = '', y = 282; $('#hmSub').textContent.split(' ').forEach(wd => { if (c.measureText(line + wd).width > 1060) { c.fillText(line, 60, y); y += 36; line = ''; } line += wd + ' '; }); c.fillText(line, 60, y);
+    const x0 = 60, x1 = W - 60, top = 390, base = 548, n = bt.hours.length, X = i => x0 + i / (n - 1) * (x1 - x0), Y = v => base - v / 100 * (base - top);
+    const g = c.createLinearGradient(0, top, 0, base); g.addColorStop(0, 'rgba(93,176,230,.6)'); g.addColorStop(1, 'rgba(93,176,230,0)');
+    c.beginPath(); c.moveTo(X(0), base); bt.hours.forEach((hh, i) => c.lineTo(X(i), Y(hh.index))); c.lineTo(X(n - 1), base); c.closePath(); c.fillStyle = g; c.fill();
+    c.beginPath(); bt.hours.forEach((hh, i) => { if (i) c.lineTo(X(i), Y(hh.index)); else c.moveTo(X(i), Y(hh.index)); }); c.strokeStyle = '#9ad4fb'; c.lineWidth = 4; c.lineJoin = 'round'; c.stroke();
+    c.strokeStyle = 'rgba(255,255,255,.25)'; c.lineWidth = 1; c.beginPath(); c.moveTo(x0, base); c.lineTo(x1, base); c.stroke();
+    c.font = '500 18px ' + sans; c.fillStyle = 'rgba(242,247,250,.6)'; c.textAlign = 'center';
+    bt.hours.forEach((hh, i) => { if (hh.localHour % 6 === 0 && i > 1 && i < n - 2) c.fillText(hh.localHour === 0 ? 'midnight' : hr12(hh.localHour), X(i), base + 26); });
+    const pk = pickBest(bt);
+    if (pk) { const i = bt.hours.indexOf(pk.h); if (i >= 0) { c.beginPath(); c.arc(X(i), Y(pk.h.index), 10, 0, 7); c.fillStyle = '#e4572e'; c.fill(); c.lineWidth = 4; c.strokeStyle = '#fff'; c.stroke(); c.fillStyle = '#fff'; c.font = '700 22px ' + disp; c.fillText(hr12(pk.h.localHour) + ', ' + pk.h.index, Math.min(x1 - 60, Math.max(x0 + 60, X(i))), Y(pk.h.index) - 20); } }
+    c.textAlign = 'left'; c.font = '500 17px ' + sans; c.fillStyle = 'rgba(242,247,250,.55)'; c.fillText('Fishing score, next 48 hours. A rule of thumb from light, pressure, wind and moon; not a guarantee.', 60, H - 22);
+    U.downloadDataURL('castlab-' + bt.loc.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '.png', cv.toDataURL('image/png')); U.toast('Forecast image saved.');
+  };
+  $('#hmCal').onclick = () => {
+    const bt = lastBt, pk = bt && pickBest(bt); if (!pk || pk.h.unsafe) return U.toast('No good hour to add yet. Pick a spot and wait for the forecast.');
+    const z = ms => new Date(ms).toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z', clean = s => s.replace(/[\\,;]/g, ' ').replace(/\s+/g, ' ').trim(), why = pk.h.why.join(' / ') || 'steady conditions';
+    const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//CastLab//Fishing//EN', 'BEGIN:VEVENT', 'UID:' + pk.h.ms + '-' + bt.loc.id + '@castlab', 'DTSTAMP:' + z(Date.now()), 'DTSTART:' + z(pk.h.ms - HOUR), 'DTEND:' + z(pk.h.ms + 2 * HOUR), 'SUMMARY:Fishing at ' + clean(bt.loc.name), 'DESCRIPTION:CastLab rates ' + hr12(pk.h.localHour) + ' at ' + pk.h.index + '/100 (' + clean(why) + '). Rule-of-thumb score. Check the forecast before you go.', 'GEO:' + bt.loc.lat.toFixed(5) + ';' + bt.loc.lon.toFixed(5), 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+    U.download('castlab-fishing.ics', ics, 'text/calendar'); U.toast('Calendar event saved for ' + pk.day.name.toLowerCase() + ' around ' + hr12(pk.h.localHour) + '.');
+  };
+  $('#hmCompareGo').onclick = async () => {
+    const spots = Store.list('locations').filter(l => !l.simulated && isFinite(l.lat)).slice(0, 6), rows = [], box = $('#hmCompare');
+    for (const l of spots) { box.innerHTML = '<p class="small muted" style="margin:0">Scoring ' + esc(l.name) + ' (' + (rows.length + 1) + ' of ' + spots.length + ')…</p>'; try { const d = daysOf(await CL.bestTimes(l)); rows.push({ l, t: d[0] && d[0].best, m: d[1] && d[1].best }); } catch (e) { rows.push({ l, err: e.message }); } }
+    rows.sort((a, b) => (b.t ? b.t.index : -1) - (a.t ? a.t.index : -1));
+    const cell = x => x ? '<b class="pillscore ' + hcls(x) + '">' + x.index + '</b> at ' + hr12(x.localHour) : '—';
+    box.innerHTML = '<div class="tablewrap" style="max-height:none"><table><tr><th>Spot</th><th>Best today</th><th>Best tomorrow</th><th></th></tr>' + rows.map((x, i) => '<tr><td>' + (i === 0 && x.t ? '<span class="badge ok">best today</span> ' : '') + '<b>' + esc(x.l.name) + '</b></td><td>' + (x.err ? '<span class="small status-fail">' + esc(x.err) + '</span>' : cell(x.t)) + '</td><td>' + cell(x.m) + '</td><td><button class="btn sm" type="button" data-go-spot="' + x.l.id + '">Open</button></td></tr>').join('') + '</table></div>' + (Store.list('locations').filter(l => !l.simulated && isFinite(l.lat)).length > 6 ? '<p class="small muted">Showing your first 6 spots.</p>' : '');
+  };
+  $('#hmCompare').addEventListener('click', e => { const b = e.target.closest('[data-go-spot]'); if (b) { CL.pickLoc = b.dataset.goSpot; CL.modules.home.render(); window.scrollTo({ top: 0, behavior: 'smooth' }); } });
+
   /* ================= Today page ================= */
   let homeFish = null, homeSeq = 0;
   CL.modules.home = { render() {
     const sel = $('#hmLoc'), want = CL.pickLoc || spot(); CL.pickLoc = null; CL.locationOptions(sel, { blank: Store.list('locations').some(l => !l.simulated) ? null : 'No spots yet — search below or use your location' });
-    if (want && Store.location(want) && !Store.location(want).simulated) sel.value = want; if (sel.value) setSpot(sel.value); refreshHome();
+    if (want && Store.location(want) && !Store.location(want).simulated) sel.value = want; if (sel.value) setSpot(sel.value); $('#hmCompareCard').hidden = Store.list('locations').filter(l => !l.simulated && isFinite(l.lat)).length < 2; refreshHome();
   } };
   async function refreshHome() {
     const loc = Store.location($('#hmLoc').value), seq = ++homeSeq; homeFish = null;
@@ -242,7 +295,7 @@
     heroCurve(null); $('#hmHeadline').textContent = 'Checking the next 48 hours…'; $('#hmSub').textContent = 'Reading the forecast, sun and moon for ' + loc.name + '.';
     $('#hmTimes').innerHTML = $('#hmNow').innerHTML = $('#hmFish').innerHTML = '<p class="muted small">Loading…</p>';
     CL.bestTimes(loc).then(bt => { if (seq !== homeSeq) return; const w = bt.w, cur = bt.hours[0], r = rating(cur.index);
-      $('#hmTimes').innerHTML = timesHTML(bt, 3); heroCurve(bt);
+      $('#hmTimes').innerHTML = timesHTML(bt); bindWeek($('#hmTimes'), bt); heroCurve(bt);
       { const dayOf = ms => Math.floor((ms + bt.off * 1000) / 864e5), d0 = dayOf(bt.now), hr = h => ((h + 11) % 12 + 1) + (h < 12 ? ' am' : ' pm'), best = k => { const hs = bt.hours.filter(x => dayOf(x.ms) === d0 + k); return hs.length ? hs.reduce((a, x) => x.index > a.index ? x : a, hs[0]) : null; }, t = best(0), tm = best(1);
         if (t && t.unsafe && (!tm || tm.unsafe)) { $('#hmHeadline').textContent = 'Stay off the water today'; $('#hmSub').textContent = 'Thunderstorms are in the forecast.'; }
         else if (t && tm && !tm.unsafe && (t.unsafe || (t.index < 60 && tm.index > t.index))) { $('#hmHeadline').textContent = 'Best hour tomorrow: ' + hr(tm.localHour); $('#hmSub').textContent = 'Rated ' + tm.index + ' out of 100' + (tm.why.length ? ' for ' + tm.why.slice(0, 3).join(', ') : '') + '. The rest of today tops out at ' + t.index + ' (' + hr(t.localHour) + ').'; }
@@ -273,6 +326,10 @@
     const m = CL.isMetric(), list = Store.list('catches').slice().sort((a, b) => (b.date + String(b.hour).padStart(2, '0')).localeCompare(a.date + String(a.hour).padStart(2, '0'))), len = c => c.lengthCm == null ? '—' : m ? fmt(c.lengthCm, 1) + ' cm' : fmt(c.lengthCm / 2.54, 1) + ' in', wt = c => c.weightKg == null ? '—' : m ? fmt(c.weightKg, 2) + ' kg' : fmt(c.weightKg / 0.45359237, 2) + ' lb';
     const bySp = {}; list.forEach(c => bySp[c.species] = (bySp[c.species] || 0) + 1); const topSp = Object.entries(bySp).sort((a, b) => b[1] - a[1])[0], big = list.filter(c => c.lengthCm != null).sort((a, b) => b.lengthCm - a.lengthCm)[0], heavy = list.filter(c => c.weightKg != null).sort((a, b) => b.weightKg - a.weightKg)[0];
     $('#ctKpis').innerHTML = [['Fish logged', list.length, list.filter(c => c.released).length + ' released'], ['Species', Object.keys(bySp).length, topSp ? 'most: ' + esc(topSp[0]) + ' (' + topSp[1] + ')' : 'none yet'], ['Longest', big ? len(big) : '—', big ? esc(big.species) + ', ' + esc(big.date) : 'add a length'], ['Heaviest', heavy ? wt(heavy) : '—', heavy ? esc(heavy.species) + ', ' + esc(heavy.date) : 'add a weight']].map(k => '<div class="kpi"><div class="l">' + k[0] + '</div><div class="v">' + k[1] + '</div><div class="s">' + k[2] + '</div></div>').join('');
+    $('#ctCharts').hidden = !list.length;
+    if (list.length) { const col = U.chartColors(), sp = Object.entries(bySp).sort((a, b) => b[1] - a[1]).slice(0, 8), byH = new Array(24).fill(0); list.forEach(c => { if (c.hour != null) byH[c.hour]++; });
+      U.chart('ctSpecies', $('#ctSpeciesChart'), { type: 'bar', data: { labels: sp.map(x => x[0]), datasets: [{ label: 'Fish', data: sp.map(x => x[1]), backgroundColor: col[0], borderRadius: 6 }] }, options: CL.baseChartOpts({ indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { ticks: { precision: 0 } } } }) });
+      U.chart('ctHour', $('#ctHourChart'), { type: 'bar', data: { labels: byH.map((_, h) => hr12(h)), datasets: [{ label: 'Fish', data: byH, backgroundColor: col[1], borderRadius: 4 }] }, options: CL.baseChartOpts({ plugins: { legend: { display: false } }, scales: { y: { ticks: { precision: 0 } }, x: { ticks: { maxTicksLimit: 8 } } } }) }); }
     $('#ctTable').innerHTML = list.length ? '<div class="tablewrap"><table><tr><th>Date</th><th>Fish</th><th class="num">Length</th><th class="num">Weight</th><th>Lure or bait</th><th>Where</th><th></th><th></th></tr>' + list.map(c => '<tr><td class="mono small">' + esc(c.date) + (c.hour != null ? ' ' + String(c.hour).padStart(2, '0') + 'h' : '') + '</td><td><b>' + esc(c.species) + '</b>' + (c.notes ? '<br><span class="small muted">' + esc(c.notes) + '</span>' : '') + '</td><td class="num">' + len(c) + '</td><td class="num">' + wt(c) + '</td><td>' + esc(c.lure || '—') + '</td><td>' + esc(Store.locationName(c.locationId)) + '</td><td>' + (c.released ? '<span class="badge ok">released</span>' : '<span class="badge">kept</span>') + '</td><td><button class="btn sm danger" data-ct-del="' + c.id + '" type="button">×</button></td></tr>').join('') + '</table></div>' : '<p class="muted small">No fish logged yet. Add your first catch with the form.</p>';
   }
   async function drawOthers() {

@@ -152,6 +152,8 @@ function update3D() {
 }
 function render3D() { if (three && three.terrain) three.renderer.render(three.scene, three.camera); }
 $('#ccVe').oninput = update3D;
+let spinH = null;
+$('#ccSpin').onclick = () => { if (!three || !three.terrain) return U.toast('Load terrain first.'); const on = !three.controls.autoRotate; three.controls.autoRotate = on; three.controls.autoRotateSpeed = 1.1; $('#ccSpin').classList.toggle('primary', on); cancelAnimationFrame(spinH); const loop = () => { if (!three.controls.autoRotate || $('#v-castcheck').hidden) { three.controls.autoRotate = false; $('#ccSpin').classList.remove('primary'); return; } three.controls.update(); spinH = requestAnimationFrame(loop); }; if (on) loop(); };
 $('#cc3dPng').onclick = () => { if (!three) return; render3D(); U.downloadDataURL('castlab-shoreline-3d.png', three.renderer.domElement.toDataURL('image/png')); };
 
 /* ================= USGS water history ================= */

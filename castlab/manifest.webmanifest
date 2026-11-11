@@ -1,0 +1,3 @@
+{ "name": "CastLab", "short_name": "CastLab", "description": "Best fishing hours, fish reported nearby, a 3D shoreline and statistics from your own trips.",
+  "start_url": "./index.html", "scope": "./", "display": "standalone", "background_color": "#0f2a3d", "theme_color": "#0f2a3d",
+  "icons": [ { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }, { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" } ] }
