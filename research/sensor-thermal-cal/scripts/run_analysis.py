@@ -55,6 +55,20 @@ def main():
                               weighted_refused=np.average(g.weighted_refused, weights=w),
                               worst_cell_coverage=g.cov_split.min()))
     summ = r.groupby(["design", "region", "model"]).apply(pool, include_groups=False).reset_index()
+
+    # 95 % range for pooled coverage: resample whole held-out recordings (unit x test run) with
+    # replacement, keeping all channels of a recording together. Honest about how few recordings there are.
+    rng = np.random.default_rng(0)
+    r["cluster"] = r["unit"].astype(str) + "|" + r["test_run"].astype(str)
+    ci = []
+    for key, g in r.groupby(["design", "region", "model"]):
+        cl = g.groupby("cluster").apply(lambda x: pd.Series(dict(h=(x.cov_split * x.n).sum(), n=x.n.sum())),
+                                        include_groups=False)
+        idx = rng.integers(0, len(cl), size=(2000, len(cl)))
+        boot = cl.h.to_numpy()[idx].sum(1) / cl.n.to_numpy()[idx].sum(1)
+        ci.append(dict(zip(["design", "region", "model"], key), n_recordings=len(cl),
+                       ci_lo=np.quantile(boot, .025), ci_hi=np.quantile(boot, .975)))
+    summ = summ.merge(pd.DataFrame(ci), on=["design", "region", "model"])
     summ.to_csv(res_dir / "coverage_summary.csv", index=False)
     comp = r.groupby(["design", "channel", "region", "model"])[["raw_rms", "resid_rms"]].median().reset_index()
     comp.to_csv(res_dir / "compensation_summary.csv", index=False)

@@ -37,7 +37,7 @@ The firmware has never been run on real hardware, so these checks matter.
 2. **Stillness:** `gx, gy, gz` raw means should be steady, typically within a few hundred counts of zero (a few deg/s at most). Rotate the board by hand and watch them move.
 3. **Temperature:** hold a finger on the chip; the temperature should rise several degrees in a minute. The chip reads a few degrees above room temperature because it heats itself.
 4. **Rate:** `n` should be 100 on every line. If it isn't, tell the assistant.
-5. **A 30-minute room-temperature recording:** run the analysis loader on it and confirm nothing crashes.
+5. **A 30-minute room-temperature recording:** check it with `python tools/check_recording.py data/raw/<name>.csv`. Every line should say PASS (the temperature may barely change in a test like this).
 
 If any check fails, stop and fix it. Do not collect data on a setup that fails a check.
 
@@ -70,7 +70,7 @@ If any check fails, stop and fix it. Do not collect data on a setup that fails a
 - **Cables in doors:** a thin flat cable lets the fridge door seal. Check that the door still closes.
 
 ## 7. After the first 6 runs
-Run `python scripts/run_analysis.py` and bring the output to the assistant for review. Do not change the analysis after seeing the results without writing down why (see `PREREGISTRATION.md`).
+Check each recording with `tools/check_recording.py` right after you make it, then run `python scripts/run_analysis.py` and bring the output to the assistant for review. Do not change the analysis after seeing the results without writing down why (see `PREREGISTRATION.md`).
 
 ## 8. Known weaknesses to think about (reviewers will)
 - The chip's thermometer measures the chip, not the air. During fast changes, different parts of the chip are at different temperatures. Slow sweeps reduce this; the heating-rate model term is meant to capture what remains.

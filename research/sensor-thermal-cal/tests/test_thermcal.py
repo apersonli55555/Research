@@ -50,3 +50,15 @@ def test_pipeline_runs_end_to_end_on_fake_data(tmp_path):
     assert df["simulated"].all() and set(io.CHANNELS) <= set(df.columns)
     r = evaluate.evaluate(df[df.run.isin(sorted(df.run.unique()))])
     assert {"inside"} <= set(r.region) and r.cov_split.between(0, 1).all()
+
+
+def test_recording_checker_passes_good_data_and_flags_bad(tmp_path):
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("check_recording", Path(__file__).resolve().parents[1] / "tools" / "check_recording.py")
+    cr = importlib.util.module_from_spec(spec); spec.loader.exec_module(cr)
+    simulate.make(tmp_path, n_units=1, hours=0.2, seed=4)
+    good = sorted(tmp_path.glob("*.csv"))[0]
+    assert cr.check(str(good))
+    d = pd.read_csv(good); d["gz"] = 0.0                       # a dead channel
+    bad = tmp_path / "bad.csv"; d.to_csv(bad, index=False)
+    assert not cr.check(str(bad))

@@ -14,6 +14,7 @@ A sensor sitting still has a known true reading: zero rotation, and gravity's co
 ```
 firmware/thermcal_logger/   Arduino sketch for an MPU6050 on an ESP32 or Arduino Uno
 tools/log_serial.py         records the board's output to data/raw/ on your laptop
+tools/check_recording.py    checks a recording (timing, gravity, stillness, stuck channels)
 src/thermcal/               loader, models, conformal methods, evaluation, simulator
 scripts/run_analysis.py     full analysis -> results/ and figures/
 scripts/make_simulated_data.py   FAKE data for testing the pipeline
@@ -25,7 +26,7 @@ docs/JOURNAL_NOTES.md       fit to Review of Scientific Instruments, and what is
 ## Quick start
 ```bash
 pip install -r requirements.txt
-python -m pytest -q                              # 5 tests
+python -m pytest -q                              # 8 tests (2 need g++ and Linux/macOS)
 python scripts/make_simulated_data.py            # FAKE data
 python scripts/run_analysis.py --simulated       # test the pipeline (~4 min)
 # after you have recordings in data/raw/:
@@ -33,15 +34,15 @@ python scripts/run_analysis.py
 ```
 
 ## What has and hasn't been checked
-- **Firmware:** compiles for Arduino Uno and for ESP32 (checked with arduino-cli). It has **not been run on real hardware.** Do the sanity checks in the experiment plan before trusting any data.
-- **Logger:** not tested against a real serial port.
-- **Analysis:** 5 automated tests pass; the full pipeline runs on simulated recordings in the logger's file format. On simulated data, coverage inside the calibration range is 0.88–0.92 for a 0.90 target, which shows the code is wired correctly. It says nothing about real sensors.
+- **Firmware:** compiles for Arduino Uno and for ESP32 (checked with arduino-cli). Its source also runs on a PC against a fake sensor chip (`tests/host_mock`), and a test checks that its output matches the fake values exactly: averaging, standard deviations, one line per second, two sensors. It has **not been run on real hardware**, so real wiring, I2C timing and the chip itself are untested. Do the sanity checks in the experiment plan.
+- **Logger:** tested through a pseudo serial port with the firmware's output: it records every line, ignores a cut-off line, and refuses to overwrite a recording. Not tested with a real USB port.
+- **Analysis:** 8 automated tests pass in total; the full pipeline runs on simulated recordings in the logger's file format. On simulated data, coverage inside the calibration range is 0.88–0.92 for a 0.90 target, which shows the code is wired correctly. It says nothing about real sensors.
 
 ## Methods in brief
 - **Targets:** gyroscope x, y, z (true value 0 when still) and the accelerometer magnitude minus 1 g (true value constant). Single accelerometer axes are not used, because a 1° change in the tilt of the box shifts them by 17 mg.
 - **Models:** linear, quadratic and cubic polynomials in temperature (the standard practice), a quadratic plus a heating-rate term (for thermal lag), and boosted trees.
 - **Error bars:** split conformal prediction, with calibration errors pooled by cross-validation over whole recordings, because every power-on has its own slow drift.
-- **Evaluation:** leave one recording out; coverage reported separately inside, colder than and warmer than the calibration range; a restricted (room-temperature) calibration is compared with a full-range one.
+- **Evaluation:** leave one recording out, with 95 % ranges from resampling whole recordings; coverage reported separately inside, colder than and warmer than the calibration range; a restricted (room-temperature) calibration is compared with a full-range one.
 - **Weighted conformal prediction** (Tibshirani et al. 2019) is run as a second method. It corrects for a different mix of temperatures within the calibrated range and returns an infinite interval where there is no calibration data.
 
 ## AI-assistance disclosure

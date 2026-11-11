@@ -55,7 +55,7 @@ def make(out_dir, n_units: int = 2, hours: float = 3.0, seed: int = 0):
             err_mg = c["a0"] + rng.normal(0, 0.3) + c1 * dT + c2 * dT ** 2 + c3 * dT ** 3 + h * rate \
                 + _ar1(n, 0.15, 0.999, rng) + rng.normal(0, 0.25, n)
             tilt = np.deg2rad(rng.uniform(0, 3)); az = (1000 + err_mg) / 1000 * ACC_LSB_PER_G
-            d["ax"], d["ay"], d["az"] = az * np.sin(tilt), 0.0 * t, az * np.cos(tilt)
+            d["ax"], d["ay"], d["az"] = az * np.sin(tilt) + rng.normal(0, 4, n), rng.normal(0, 4, n), az * np.cos(tilt)
             for a in "xyz":
                 d[f"sa{a}"] = np.abs(rng.normal(40, 3, n))
             d["temp"] = (T - 36.53) * 340
