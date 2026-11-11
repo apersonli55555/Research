@@ -411,3 +411,52 @@ Head-to-head, CLIP + VideoMAE (paired, by compilation; all p < 0.001):
 - **Our hand-labelled real clips transfer to OmniFall's labels:** probes trained on our 248 clips reach 0.927, close to probes trained on OmniFall's own 734 training clips (0.951). The label definitions are compatible, and where both teams labelled the same video they agree on 27 of 28.
 - **Plain mixing hurts here:** adding 5,136 synthetic clips to the real ones lowers AUROC significantly (−0.022). Motivates a better way to combine the two sources.
 - **Caveats:** OF-ItW negatives are other moments of the same fall videos (walking, standing, getting up), not other accidents, so it complements FallOrNot's accident negatives. Both are OOPS! footage, so the real-data advantage is again in-domain; HMDB51 remains the only out-of-domain test. OF-ItW's own train and test splits share compilations (117).
+
+# Run 12: anchored probe (method test, rule fixed in advance: MET)
+
+`adapt.py` (no GPU; commit `7d539e5`). The success rule was committed to `AGENTS.md` (commit `c666999`) before the script produced any result on real data. Copied from the Colab text output.
+
+**Method.** Logistic probe on CLIP + VideoMAE features, trained on k real falls + k real non-falls, with its weights penalised for moving away from the synthetic-trained probe's weights (instead of from zero). Penalty strength C chosen from {0.001, 0.01, 0.1, 1, 10} by video-grouped cross-validation on the training clips only. Baselines: real-only probe on the same clips; synthetic-only probe. Ten random draws per budget (seed 0); mean ± s.d. over draws.
+
+**FallOrNot** (real clips drawn from our 268-clip training pool), AUROC:
+
+| k | Anchored | Real-only | Synthetic-only | Median C |
+|---|---|---|---|---|
+| 4 | 0.813 ± 0.005 | 0.687 ± 0.124 | 0.814 | 0.001 |
+| 8 | 0.819 ± 0.012 | 0.756 ± 0.063 | 0.814 | 0.1 |
+| 15 | 0.834 ± 0.015 | 0.791 ± 0.022 | 0.814 | 1 |
+| 30 | 0.853 ± 0.014 | 0.826 ± 0.030 | 0.814 | 10 |
+| 60 | 0.875 ± 0.010 | 0.871 ± 0.010 | 0.814 | 10 |
+| 125 | 0.893 ± 0.005 | 0.892 ± 0.005 | 0.814 | 10 |
+
+Mean over budgets: anchored 0.848, real-only 0.804, synthetic-only 0.814. Every budget within 0.005 of the better baseline: yes. Rule met on FallOrNot.
+
+**OF-ItW test split** (real clips drawn from OF-ItW train + val), AUROC:
+
+| k | Anchored | Real-only | Synthetic-only | Median C |
+|---|---|---|---|---|
+| 4 | 0.876 ± 0.005 | 0.794 ± 0.046 | 0.873 | 0.001 |
+| 8 | 0.877 ± 0.006 | 0.825 ± 0.024 | 0.873 | 0.001 |
+| 15 | 0.891 ± 0.012 | 0.847 ± 0.024 | 0.873 | 10 |
+| 30 | 0.907 ± 0.019 | 0.891 ± 0.014 | 0.873 | 10 |
+| 60 | 0.921 ± 0.008 | 0.908 ± 0.016 | 0.873 | 10 |
+| 125 | 0.935 ± 0.007 | 0.937 ± 0.007 | 0.873 | 10 |
+
+Mean over budgets: anchored 0.901, real-only 0.867, synthetic-only 0.873. Every budget within 0.005 of the better baseline: yes. Rule met on OF-ItW.
+
+**METHOD RESULT: SUCCESS** (rule met on both test sets).
+
+**Full real pool** (secondary, not part of the rule; paired bootstrap, by compilation on the OOPS!-based sets, by clip on HMDB51):
+
+| Test set | Anchored | Real-only | Synthetic-only | Anchored vs. real | Anchored vs. synthetic |
+|---|---|---|---|---|---|
+| FallOrNot | 0.899 | 0.899 | 0.814 | −0.000 [−0.021, +0.019], p = 0.957 | +0.084 [+0.042, +0.125], p < 0.001 |
+| OF-ItW | 0.943 | 0.951 | 0.873 | −0.008 [−0.012, −0.003], p = 0.002 | +0.071 [+0.055, +0.085], p < 0.001 |
+| HMDB51 | 0.902 | 0.888 | 0.917 | +0.014 [−0.000, +0.028], p = 0.055 | −0.015 [−0.039, +0.006], p = 0.139 |
+
+## Reading
+- **First test specified in advance that was met.** With 4 to 30 real falls the anchored probe is far better and far more stable than a real-only probe (k = 4: 0.813 ± 0.005 vs. 0.687 ± 0.124 on FallOrNot; 0.876 vs. 0.794 on OF-ItW), and it never drops meaningfully below the synthetic-only probe.
+- **The gain is a small-data gain.** From k = 60 upwards the anchored and real-only probes are level (within 0.004 on FallOrNot; at k = 125 on OF-ItW the anchored probe is 0.002 lower).
+- **With the full real pool it does not beat real-only:** equal on FallOrNot, and significantly, though slightly, worse on OF-ItW (−0.008, p = 0.002). Do not claim it is the best method at every budget.
+- **HMDB51 (out of domain):** 0.902, between real-only (0.888) and synthetic-only (0.917); neither difference is significant. It recovers about half of the gap that real-only training loses there.
+- **Caveats:** the technique (regularising towards a source model, "biased regularisation") is known in transfer learning; what is new is the test on this problem, not the idea. Plain pooling of synthetic and real clips was not run at these small budgets, so the table does not compare against it. The s.d. is over random training draws with the test set fixed. The OF-ItW synthetic-only value here (0.873) differs from run 11 (0.872) in the third decimal because this script standardises features with synthetic statistics only.

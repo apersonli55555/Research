@@ -82,4 +82,34 @@ for sp in ("top", "right"):
     ax.spines[sp].set_visible(False)
 fig.tight_layout()
 fig.savefig(os.path.join(HERE, "fig_budget.pdf"))
-print("wrote fig_flip.pdf, fig_budget.pdf")
+
+# ---- Figure 3: anchored probe (run 12); mean ± s.d. over 10 draws, CLIP+VideoMAE
+adapt = {
+    "FallOrNot": dict(syn=0.814, k=[4, 8, 15, 30, 60, 125],
+                      anch=[(.813, .005), (.819, .012), (.834, .015), (.853, .014), (.875, .010), (.893, .005)],
+                      real=[(.687, .124), (.756, .063), (.791, .022), (.826, .030), (.871, .010), (.892, .005)]),
+    "OF-ItW test": dict(syn=0.873, k=[4, 8, 15, 30, 60, 125],
+                        anch=[(.876, .005), (.877, .006), (.891, .012), (.907, .019), (.921, .008), (.935, .007)],
+                        real=[(.794, .046), (.825, .024), (.847, .024), (.891, .014), (.908, .016), (.937, .007)]),
+}
+fig, axes = plt.subplots(1, 2, figsize=(3.35, 2.1))
+for ax, (title, d) in zip(axes, adapt.items()):
+    ax.axhline(d["syn"], color=COL["Synthetic"], lw=1.2, ls=(0, (4, 2)))
+    for key, src, mk in (("real", "Real", "o"), ("anch", "Synthetic + real", "D")):
+        y, e = zip(*d[key])
+        ax.errorbar(d["k"], y, yerr=e, color=COL[src], marker=mk, ms=3.6, lw=1.5, elinewidth=0.8, capsize=0,
+                    markeredgecolor="white", markeredgewidth=0.4)
+    ax.set_xscale("log"); ax.set_xticks([4, 15, 60, 125]); ax.set_xticklabels(["4", "15", "60", "125"])
+    ax.minorticks_off()
+    ax.set_title(title, fontsize=7.5, color=INK, pad=3); ax.set_xlabel("real training falls")
+    ax.yaxis.grid(True, color=GRID, lw=0.5); ax.set_axisbelow(True)
+    for sp in ("top", "right"):
+        ax.spines[sp].set_visible(False)
+axes[0].set_ylabel("AUROC")
+fig.legend(handles=[Line2D([], [], marker="D", color=COL["Synthetic + real"], ms=3.6, lw=1.5, label="anchored"),
+                    Line2D([], [], marker="o", color=COL["Real"], ms=3.6, lw=1.5, label="real only"),
+                    Line2D([], [], color=COL["Synthetic"], lw=1.2, ls=(0, (4, 2)), label="synthetic only")],
+           loc="lower center", ncol=3, fontsize=6.3, bbox_to_anchor=(0.53, -0.02), handletextpad=0.4, columnspacing=1.0)
+fig.tight_layout(rect=(0, 0.07, 1, 1), w_pad=0.8)
+fig.savefig(os.path.join(HERE, "fig_adapt.pdf"))
+print("wrote fig_flip.pdf, fig_budget.pdf, fig_adapt.pdf")
