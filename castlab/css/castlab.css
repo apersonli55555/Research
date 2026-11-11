@@ -181,3 +181,54 @@ details.more summary{cursor:pointer;font-weight:600}
   #map,.map{height:380px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ---- v3 polish ---- */
+.ni{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;opacity:.85}
+.nav a.active::before{display:none}
+.nav a.active .ni{color:var(--hot);opacity:1}
+.card{box-shadow:0 1px 2px rgba(15,42,61,.04),0 8px 24px -18px rgba(15,42,61,.25)}
+.hero{box-shadow:0 18px 40px -26px rgba(15,42,61,.7)}
+.hero-curve{margin:4px -28px 18px;min-height:0}
+.hero-curve svg{display:block;width:100%;height:auto}
+.hero-curve .ln{fill:none;stroke:#9ad4fb;stroke-width:2.6;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;animation:draw 1.5s .15s ease-out forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.hero-curve .ax{stroke:rgba(255,255,255,.25);stroke-width:1}
+.hero-curve .ref{stroke:rgba(255,255,255,.22);stroke-width:1;stroke-dasharray:3 5}
+.hero-curve .mid{stroke:rgba(255,255,255,.3);stroke-width:1;stroke-dasharray:2 4}
+.hero-curve .tk{fill:rgba(242,247,250,.6);font:500 11.5px var(--sans)}
+.hero-curve .pk{fill:var(--hot);stroke:#fff;stroke-width:2.5}
+.hero-curve .pl{fill:#fff;font:700 14px var(--display)}
+.reel{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(140px,168px);gap:12px;overflow-x:auto;padding:2px 2px 10px;scroll-snap-type:x proximity}
+.fishcard{scroll-snap-align:start;border-radius:14px;overflow:hidden;background:var(--panel-2);text-decoration:none;color:var(--ink);display:block;transition:transform .15s}
+.fishcard:hover{transform:translateY(-3px)}
+.fishcard img,.fishcard .ph{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:var(--line)}
+.fishcard .fc{display:block;padding:9px 12px 11px}
+.fishcard b{display:block;font:650 14.5px/1.2 var(--display)}.fishcard small{color:var(--muted);font-size:12px}
+.nowtop{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.nowscore,.nowwx{display:flex;align-items:center;gap:14px}
+.nowlabel{font-size:13px;color:var(--muted);font-weight:500}
+.nowword{font:700 28px/1.1 var(--display);letter-spacing:-.02em}
+.nowtemp{font:700 40px/1 var(--display);letter-spacing:-.03em}.nowtemp span{font-size:18px;color:var(--muted);margin-left:2px}
+.gauge .gt{fill:none;stroke:var(--panel-2);stroke-width:10}
+.gauge .gv{fill:none;stroke-width:10;stroke-linecap:round}
+.gauge .g-ok{stroke:var(--ok)}.gauge .g-warn{stroke:var(--c5)}.gauge .g-low{stroke:var(--faint)}.gauge .g-bad{stroke:var(--bad)}
+.gauge .gn{font:700 30px var(--display);fill:var(--ink)}
+.wxi .wc{fill:var(--panel-2);stroke:var(--muted);stroke-width:1.8;stroke-linejoin:round}
+.wxi .ws{fill:#f5b942}.wxi .wy{stroke:#f5b942;stroke-width:2.200;stroke-linecap:round}
+.wxi .wm{fill:var(--c3)}.wxi .wr{stroke:var(--water);stroke-width:2.200;stroke-linecap:round}
+.wxi .wd{fill:var(--water)}.wxi .wb{fill:none;stroke:var(--hot);stroke-width:2.400;stroke-linecap:round;stroke-linejoin:round}
+/* landing */
+.auth-wrap{align-items:center}
+.auth-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(320px,430px);gap:56px;align-items:center;width:100%;max-width:1120px}
+.auth-pitch{color:var(--on-deep)}
+.auth-pitch .brand{padding:0 0 26px}.auth-pitch .brand b{color:var(--on-deep);font-size:24px}
+.auth-pitch h1{font-size:clamp(40px,6vw,74px);line-height:.98;letter-spacing:-.04em;margin:0 0 28px;max-width:11ch}
+.pitch{list-style:none;padding:0;margin:0 0 30px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 28px;max-width:640px}
+.pitch b{display:block;font:650 17px var(--display);margin-bottom:2px}
+.pitch span{color:var(--on-deep-muted);font-size:14.5px}
+.btn.big{padding:15px 26px;font-size:16.5px}
+.pitch-note{color:var(--on-deep-muted);font-size:13px;margin:12px 0 0;max-width:52ch}
+.auth{max-width:none}
+@media (max-width:900px){.auth-grid{grid-template-columns:1fr;gap:28px}.auth-pitch h1{max-width:none}}
+@media (max-width:760px){.hero-curve{margin:4px -18px 14px}.pitch{grid-template-columns:1fr}.nowtemp{font-size:32px}}
+@media (prefers-reduced-motion:reduce){.hero-curve .ln{animation:none;stroke-dashoffset:0}.fishcard{transition:none}}
