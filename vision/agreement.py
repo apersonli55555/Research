@@ -65,7 +65,7 @@ def main():
         print(f"clips whose label changed between entries: {len(changed)} (test set: {sum(n in test for n in changed)})")
         if len(multi) > 20:
             print("\nMany clips were labelled more than once. If a second person labelled in this same file,")
-            print("their answers replaced the first ones (the newest entry wins). Tell Claude before running anything else.")
+            print("their answers replaced the first ones (the newest entry wins). Tell your AI assistant before running anything else.")
         else:
             print("\nNo sign that a second person wrote into this file (repeats are few, e.g. undo/redo).")
         return

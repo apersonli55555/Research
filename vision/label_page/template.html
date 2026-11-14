@@ -1,5 +1,4 @@
 <title>Fall Label Desk</title>
-<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -143,8 +142,8 @@
     current = queue.find(c => !labels.has(c.id)) || null;
     if (!current) {
       enable(false);
-      showMessage(nPool ? 'Every clip is labelled. Thank you! Tell Claude you are done.'
-                        : 'Test set done. Tell Claude, and more clips will be added here.');
+      showMessage(nPool ? 'Every clip is labelled. Thank you! Tell your AI assistant you are done.'
+                        : 'Test set done. Tell your AI assistant, and more clips will be added here.');
       return;
     }
     const v = document.createElement('video');

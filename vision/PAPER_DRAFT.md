@@ -203,14 +203,14 @@ Detectors that look perfect on staged falls miss most real ones. A small amount 
 | Item | Who | Notes |
 |---|---|---|
 | Optional: second annotator on the existing test clips (κ) | second person, if available | about 30 min |
-| Agreement with OmniFall's independent OF-ItW annotations on overlapping videos (37 of our 422 test-sample videos are in OF-ItW) | Claude, one Colab run | no labelling |
-| Real vs. synthetic (OF-Syn, 9.7 GB, public) vs. staged at equal training budget | Claude, Colab runs | no labelling |
+| Agreement with OmniFall's independent OF-ItW annotations on overlapping videos (37 of our 422 test-sample videos are in OF-ItW) | AI assistant, one Colab run | no labelling |
+| Real vs. synthetic (OF-Syn, 9.7 GB, public) vs. staged at equal training budget | AI assistant, Colab runs | no labelling |
 | Rewrite abstract, introduction and contributions around the new positioning | ChatGPT | after the new experiments |
-| Second real-world test source | Claude | look for public real-fall video |
-| Second staged dataset | Claude | Le2i page is offline; find a mirror or alternative |
-| Proposed method for falls vs. other accidents | Claude | e.g. person-centred motion features or fine-tuning |
-| Related work and citations | Claude | verify every reference |
-| CVPR LaTeX template, figures | Claude | 8 pages plus references |
+| Second real-world test source | AI assistant | look for public real-fall video |
+| Second staged dataset | AI assistant | Le2i page is offline; find a mirror or alternative |
+| Proposed method for falls vs. other accidents | AI assistant | e.g. person-centred motion features or fine-tuning |
+| Related work and citations | AI assistant | verify every reference |
+| CVPR LaTeX template, figures | AI assistant | 8 pages plus references |
 
 ---
 

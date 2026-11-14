@@ -1,6 +1,6 @@
 # Instructions for AI assistants working on this repository
 
-This file is for any AI assistant (ChatGPT, Codex, Claude or others) helping with this project. Read it fully before changing anything.
+This file is for any AI assistant (ChatGPT, Codex or others) helping with this project. Read it fully before changing anything.
 
 ## The project in one paragraph
 
@@ -35,7 +35,7 @@ Data (clips, embeddings, labels, result files) lives on the owner's Google Drive
 ## Current state (keep this section updated)
 
 - **Done:** pipeline; 165 labelled test videos (255 clips, 102 falls); 268 labelled training clips (131 falls); results runs 1–12 (run 12 = anchored-probe method test, rule fixed in advance MET; run 11 = OmniFall OF-ItW third test set; run 10 = leakage check, compilation-level intervals, source-balanced method; run 4 = real vs. synthetic vs. staged; run 5 = external HMDB51 test; runs 6–7 = fine-tuning over 3 seeds, test specified in advance not met; run 8 = second annotator; run 9 = re-grading with their labels) plus a derived shortfall table; full paper; OOPS! data-use question resolved by the owner (do not mention it in the paper or elsewhere).
-- **Citations checked** (by ChatGPT, applied by Claude): all fully specified references verified; all references in vision/paper/paper.tex now verified (MCFD tech report 1350, HMDB51 ICCV 2011 pp. 2556-2563, OpenCLIP Zenodo DOI, WHO fact sheet 21 Oct 2026). A broader literature review for related work is still welcome.
+- **Citations checked** (by ChatGPT, applied by an AI coding assistant): all fully specified references verified; all references in vision/paper/paper.tex now verified (MCFD tech report 1350, HMDB51 ICCV 2011 pp. 2556-2563, OpenCLIP Zenodo DOI, WHO fact sheet 21 Oct 2026). A broader literature review for related work is still welcome.
 - **Paper:** full LaTeX draft in `vision/paper/paper.tex` (compiles with pdflatex; figures from `vision/paper/make_figures.py`, numbers from RESULTS.md); `paper.pdf` is the compiled copy. All citations verified (November 2026); no open [VERIFY]/[TODO] marks.
 - **Run 11 is in `vision/paper/paper.tex`** (new subsection and table, 10 Nov 2026). `vision/paper/cvpr/main.tex` has NOT been re-synced (it lacks runs 11 and 12); rebuild it from `paper.tex` in the ICCV 2027 template once that template is published.
 - **Run 12 (11 Nov 2026): anchored probe, rule fixed in advance MET on both test sets.** Mean over budgets: FallOrNot anchored 0.848 vs. real-only 0.804 vs. synthetic-only 0.814; OF-ItW 0.901 vs. 0.867 vs. 0.873. It is in `paper.tex` (section "anchored probe", table, `fig_adapt.pdf`). **Do not overclaim:** the gain is at small budgets only (k ≤ 30); with the full real pool it equals real-only on FallOrNot and is slightly worse on OF-ItW (−0.008, p = 0.002); on HMDB51 it sits between real-only and synthetic-only (n.s.); the technique is known biased regularisation (cited), not a new idea; plain pooling was not run at small budgets.
