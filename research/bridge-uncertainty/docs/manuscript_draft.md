@@ -292,7 +292,7 @@ On KW51, split-conformal temperature compensation is well calibrated when data a
 Data: Zenodo 10.5281/zenodo.3745914 (CC-BY-NC-SA-4.0). Code: [GitHub URL, TODO]. `scripts/run_experiments.py`, `scripts/run_robustness.py` and `scripts/make_figures.py` regenerate every table and figure.
 
 ## Acknowledgments and AI-use disclosure
-**[TODO: write honestly.]** Example: "Code scaffolding, initial experiments and an initial draft of this manuscript were produced with the assistance of an AI system (Claude, Anthropic). The author verified the data, reran all experiments, performed [list your tasks], and rewrote the text." Check each venue's policy. The KW51 data were collected and published by K. Maes and G. Lombaert (KU Leuven).
+**[TODO: write honestly.]** Example: "Code scaffolding, initial experiments and an initial draft of this manuscript were produced with the assistance of an AI system. The author verified the data, reran all experiments, performed [list your tasks], and rewrote the text." Check each venue's policy. The KW51 data were collected and published by K. Maes and G. Lombaert (KU Leuven).
 
 ## References (all verified to exist in a literature search on 2026-11-07 unless marked)
 1. Angelopoulos, A.N., Bates, S. (2021). A gentle introduction to conformal prediction and distribution-free uncertainty quantification. arXiv:2107.07511.

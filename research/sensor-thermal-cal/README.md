@@ -46,4 +46,4 @@ python scripts/run_analysis.py
 - **Weighted conformal prediction** (Tibshirani et al. 2019) is run as a second method. It corrects for a different mix of temperatures within the calibrated range and returns an infinite interval where there is no calibration data.
 
 ## AI-assistance disclosure
-The firmware, logger, analysis code and these documents were written by an AI coding assistant (Claude) at the student's request. The measurements, their interpretation and the final paper are the student's responsibility. Any submission must describe this accurately and follow the journal's policy on AI tools.
+The firmware, logger, analysis code and these documents were written by an AI coding assistant at the student's request. The measurements, their interpretation and the final paper are the student's responsibility. Any submission must describe this accurately and follow the journal's policy on AI tools.

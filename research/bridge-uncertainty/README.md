@@ -185,7 +185,7 @@ Other facts from the paper: the bridge is 115 m long and 12.4 m wide, carries tw
 Write each result into a lab notebook *in your own words* before it goes into the paper.
 
 ## AI-assistance disclosure
-The code scaffold, baseline experiments, figures and draft text were produced with an AI coding assistant (Claude) and reviewed by the student. Science fairs (including ISEF) and journals have rules on disclosing AI assistance and adult or mentor help. **Check the current rules and disclose accurately.**
+The code scaffold, baseline experiments, figures and draft text were produced with an AI coding assistant and reviewed by the student. Science fairs (including ISEF) and journals have rules on disclosing AI assistance and adult or mentor help. **Check the current rules and disclose accurately.**
 
 ## References (verified to exist; read before citing)
 - Maes, K. & Lombaert, G. (2021). Monitoring railway bridge KW51 before, during, and after retrofitting. *J. Bridge Eng.* 26(3). doi:10.1061/(ASCE)BE.1943-5592.0001668
