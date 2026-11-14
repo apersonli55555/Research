@@ -29,21 +29,84 @@
     let mx = 0; Object.values(bins).forEach(b => { b.mean = S.betaPosterior(b.k, b.n, 4 * all || 0.5, 4 * (1 - all) || 0.5).mean; if (b.n >= 3) mx = Math.max(mx, b.mean); });
     if (!mx) return null; Object.values(bins).forEach(b => b.rel = b.n >= 3 ? b.mean / mx : null); return { n: ses.length, bins };
   }
+  /* ---------- data sources for the fishing-time score ---------- */
+  const jget = async (url, key, ttlMin) => {
+    try { const c = JSON.parse(sessionStorage.getItem(key) || 'null'); if (c && Date.now() - c.t < ttlMin * 60000) return c.j; } catch (e) {}
+    const r = await fetch(url); if (!r.ok) throw new Error('HTTP ' + r.status); const j = await r.json();
+    try { sessionStorage.setItem(key, JSON.stringify({ t: Date.now(), j })); } catch (e) {} return j;
+  };
+  /* Three independent weather models; consensus (mean) and disagreement (sd) per hour, aligned to the main forecast's hours. */
+  const MODELS = ['ecmwf_ifs025', 'gfs_seamless', 'icon_seamless'], MODEL_NAMES = { ecmwf_ifs025: 'ECMWF (Europe)', gfs_seamless: 'GFS (US)', icon_seamless: 'ICON (Germany)' };
+  async function ensemble(loc) {
+    const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + loc.lat.toFixed(4) + '&longitude=' + loc.lon.toFixed(4) + '&hourly=pressure_msl,wind_speed_10m,precipitation,cloud_cover&models=' + MODELS.join(',') + '&past_days=1&forecast_days=7&timezone=auto';
+    const j = await jget(url, 'castlab.ens.' + loc.lat.toFixed(3) + ',' + loc.lon.toFixed(3), 30), h = j.hourly, out = { time: h.time, models: [] }, vars = ['pressure_msl', 'wind_speed_10m', 'precipitation', 'cloud_cover'];
+    MODELS.forEach(m => { if (h['wind_speed_10m_' + m] && h['wind_speed_10m_' + m].some(v => v != null)) out.models.push(m); });
+    if (out.models.length < 2) return null;
+    vars.forEach(v => { out[v] = h.time.map((_, i) => { const xs = out.models.map(m => h[v + '_' + m][i]).filter(x => x != null); if (!xs.length) return null; const mu = xs.reduce((a, b) => a + b, 0) / xs.length; return { mu, sd: Math.sqrt(xs.reduce((a, b) => a + (b - mu) * (b - mu), 0) / xs.length), n: xs.length }; }); });
+    out.index = {}; h.time.forEach((t, i) => out.index[t] = i); return out;
+  }
+  /* Nearest USGS water-temperature gage (parameter 00010) within 25 km, latest reading. */
+  async function waterGauge(loc) {
+    const d = 0.25, bb = [loc.lon - d, loc.lat - d, loc.lon + d, loc.lat + d].map(v => v.toFixed(4)).join(','), key = 'castlab.wt.' + loc.lat.toFixed(3) + ',' + loc.lon.toFixed(3);
+    try { const c = JSON.parse(sessionStorage.getItem(key) || 'null'); if (c && Date.now() - c.t < 60 * 60000) return c.j; } catch (e) {}
+    const r = await fetch('https://waterservices.usgs.gov/nwis/site/?format=rdb&bBox=' + bb + '&parameterCd=00010&siteStatus=active&hasDataTypeCd=iv'); let res = null;
+    if (r.ok) {
+      const lines = (await r.text()).split('\n').filter(l => l && l[0] !== '#');
+      if (lines.length > 2) { const hd = lines[0].split('\t'), ix = n => hd.indexOf(n);
+        const sites = lines.slice(2).map(l => { const c = l.split('\t'); return { site: c[ix('site_no')], name: c[ix('station_nm')], type: c[ix('site_tp_cd')], lat: +c[ix('dec_lat_va')], lon: +c[ix('dec_long_va')] }; }).filter(s => isFinite(s.lat)).map(s => Object.assign(s, { km: U.haversine(loc.lat, loc.lon, s.lat, s.lon) / 1000 })).filter(s => s.km <= 25).sort((a, b) => a.km - b.km);
+        for (const s of sites.slice(0, 3)) { const j = await fetch('https://waterservices.usgs.gov/nwis/iv/?format=json&sites=' + s.site + '&parameterCd=00010&period=P1D').then(x => x.ok ? x.json() : null).catch(() => null); const ts = j && j.value.timeSeries[0], vals = ts ? ts.values[0].value.filter(v => isFinite(+v.value) && +v.value > -50) : []; if (vals.length) { const last = vals[vals.length - 1]; res = Object.assign(s, { c: +last.value, at: last.dateTime }); break; } }
+      }
+    }
+    try { sessionStorage.setItem(key, JSON.stringify({ t: Date.now(), j: res })); } catch (e) {} return res;
+  }
+  /* Hour-of-day profile of public reports for the target species near the spot (iNaturalist), relative to all fish reports. */
+  const hoursOf = res => { const hrs = new Array(24).fill(0); (res || []).forEach(o => { const t = o.time_observed_at; if (t && t.length >= 13) hrs[+t.slice(11, 13)]++; }); return hrs; };
+  async function speciesTiming(loc, target) {
+    const fish = await CL.localFish(loc.lat, loc.lon).catch(() => null), taxa = fish ? fish.species.filter(f => f.key === target).sort((a, b) => b.count - a.count).slice(0, 4) : [];
+    if (!taxa.length) return null;
+    const base = 'https://api.inaturalist.org/v1/observations?lat=' + loc.lat.toFixed(3) + '&lng=' + loc.lon.toFixed(3) + '&radius=60&quality_grade=research&per_page=200&order_by=observed_on&fields=time_observed_at&taxon_id=';
+    const [sp, all] = await Promise.all([jget(base + taxa.map(t => t.id).join(','), 'castlab.tsp.' + loc.lat.toFixed(2) + loc.lon.toFixed(2) + target, 720), jget(base + '47178', 'castlab.tall.' + loc.lat.toFixed(2) + loc.lon.toFixed(2), 720)]);
+    const prof = A.timingProfile(hoursOf(sp.results), hoursOf(all.results), 40); if (!prof) return null;
+    return Object.assign(prof, { taxa: taxa.map(t => t.name) });
+  }
+
   const btCache = {};
-  CL.bestTimes = async function (loc) {
-    const key = loc.id + ':' + Math.floor(Date.now() / (20 * 60000)); if (btCache[key]) return btCache[key];
+  /* Score every forecast hour at a spot. target: the species being fished for (optional). */
+  CL.bestTimes = async function (loc, target) {
+    target = target || Store.data.prefs.target || null;
+    const key = loc.id + ':' + (target || '-') + ':' + Math.floor(Date.now() / (20 * 60000)); if (btCache[key]) return btCache[key];
     const w = await U.fetchWeather(loc.lat, loc.lon), h = w.hourly, off = w.utcOffset, toMs = i => Date.parse(h.time[i] + ':00Z') - off * 1000;
+    const [ens, gauge, timing] = await Promise.all([ensemble(loc).catch(() => null), waterGauge(loc).catch(() => null), target ? speciesTiming(loc, target).catch(() => null) : null]);
     const start = w.index, end = h.time.length, ev = A.events(toMs(start) - 6 * HOUR, loc.lat, loc.lon, Math.ceil((end - start) + 12)), own = ownFactor(), all = [];
+    // water temperature: running mean of the previous 120 h of air temperature, shifted to match a nearby gage reading when there is one
+    const airMean = i => { let s = 0, n = 0; for (let k = Math.max(0, i - 120); k <= i; k++) if (h.temperature_2m[k] != null) { s += h.temperature_2m[k]; n++; } return n ? s / n : null; };
+    const est0 = airMean(start), bias = gauge && est0 != null ? gauge.c - est0 : 0, waterAt = i => { const e = airMean(i); return e == null ? null : Math.max(0.5, e + bias); };
+    const ensAt = (v, i) => { if (!ens) return null; const k = ens.index[h.time[i]]; return k == null ? null : ens[v][k]; };
     for (let i = start; i < end; i++) {
-      const ms = toMs(i), sc = A.scoreHour({ ms, dPressure3h: i >= 3 ? h.surface_pressure[i] - h.surface_pressure[i - 3] : null, windKph: h.wind_speed_10m[i], precipMm: h.precipitation[i], code: h.weather_code[i], ev, sunAlt: A.sunAltitude(ms + HOUR / 2, loc.lat, loc.lon) });
-      let index = sc.index; const localHour = +h.time[i].slice(11, 13), ob = own && own.bins[CL.timeOfDay(localHour)];
+      const ms = toMs(i), pN = ensAt('pressure_msl', i), pP = i >= 3 ? ensAt('pressure_msl', i - 3) : null, wE = ensAt('wind_speed_10m', i), rE = ensAt('precipitation', i), cE = ensAt('cloud_cover', i);
+      const dP = pN && pP ? pN.mu - pP.mu : (i >= 3 ? h.surface_pressure[i] - h.surface_pressure[i - 3] : null), wtr = waterAt(i), tf = target ? A.tempFit(target, wtr) : null, lh = +h.time[i].slice(11, 13);
+      const sc = A.scoreHour({ ms, dPressure3h: dP, windKph: wE ? wE.mu : h.wind_speed_10m[i], precipMm: rE ? rE.mu : h.precipitation[i], code: h.weather_code[i], ev, sunAlt: A.sunAltitude(ms + HOUR / 2, loc.lat, loc.lon), cloudPct: cE ? cE.mu : h.cloud_cover[i],
+        tempFit: tf, tempNote: tf == null ? null : tf >= 0.8 ? 'water temperature suits ' + target.toLowerCase() : 'water ' + (wtr < (A.TEMP_PREF[target] || A.TEMP_PREF.Other)[0] ? 'too cold' : 'too warm') + ' for ' + target.toLowerCase(), timing: timing ? timing.profile[lh] : null });
+      let index = sc.index; const ob = own && own.bins[CL.timeOfDay(lh)];
       if (ob && ob.rel != null && !sc.unsafe) index = Math.round(0.75 * index + 25 * ob.rel);
-      all.push({ ms, i, label: h.time[i], localHour, index, rule: sc.index, why: sc.why, unsafe: sc.unsafe, c: sc.components, tempC: h.temperature_2m[i], windKph: h.wind_speed_10m[i] });
+      const lead = (ms - toMs(start)) / 864e5, spread = wE ? wE.sd / 6 + (pN ? pN.sd / 3 : 0) + (rE ? Math.min(1, rE.sd) : 0) : null;
+      const conf = lead > 4 ? 'low' : spread == null ? (lead > 2 ? 'medium' : 'high') : spread > 1.2 ? 'low' : (spread > 0.6 || lead > 2) ? 'medium' : 'high';
+      all.push({ ms, i, label: h.time[i], localHour: lh, index, rule: sc.index, why: sc.why, unsafe: sc.unsafe, c: sc.components, used: sc.used, conf, waterC: wtr, tempC: h.temperature_2m[i], windKph: wE ? wE.mu : h.wind_speed_10m[i] });
     }
     const hours = all.slice(0, 48), top = Math.max(...hours.map(x => x.index)), wins = A.windows(hours, Math.max(50, top - 12)).slice(0, 4), now = toMs(start);
     const first = k => (ev[k].find(t => t >= now - 12 * HOUR && t <= now + 24 * HOUR));
-    return btCache[key] = { w, off, hours, all, loc, wins, ev, own, now, phase: A.moonPhase(now), sunrise: ev.sunrise.find(t => t > now - 14 * HOUR), sunset: ev.sunset.find(t => t > now - 6 * HOUR), first };
+    const sources = { models: ens ? ens.models.map(m => MODEL_NAMES[m]) : ['Open-Meteo best match'], gauge, waterNow: waterAt(start), waterEstimated: !gauge, timing, target, own };
+    return btCache[key] = { w, off, hours, all, loc, wins, ev, own, now, sources, phase: A.moonPhase(now), sunrise: ev.sunrise.find(t => t > now - 14 * HOUR), sunset: ev.sunset.find(t => t > now - 6 * HOUR), first };
   };
+  function sourcesHTML(bt) {
+    const s = bt.sources, wC = s.waterNow, f = c => fmt(c, 1) + ' °C (' + fmt(c * 9 / 5 + 32, 0) + ' °F)';
+    const rows = [['Weather', s.models.length > 1 ? s.models.length + ' models averaged: ' + s.models.join(', ') : 'one forecast model (the multi-model forecast did not load)'],
+      ['Water temperature', s.gauge ? 'measured ' + f(s.gauge.c) + ' at USGS ' + esc(s.gauge.name) + ', ' + fmt(s.gauge.km, 1) + ' km away' : wC != null ? 'about ' + f(wC) + ', estimated from the last 5 days of air temperature (no gage within 25 km)' : 'not available'],
+      ['Species timing', s.target ? (s.timing ? esc(s.timing.n) + ' local reports of ' + esc(s.timing.taxa.join(', ')) + ' with a time of day' : 'not enough timed reports of ' + esc(s.target.toLowerCase()) + ' nearby, so this part is left out') : 'choose a species under "What to use" to include it'],
+      ['Your trips', s.own ? s.own.n + ' logged trips, blended in at 25%' : 'used after 20 logged trips']];
+    return '<details class="more"><summary>Data used for this spot</summary><div style="margin-top:6px">' + rows.map(r => '<div class="stat-line"><span>' + r[0] + '</span><b style="font-weight:500;max-width:70%">' + r[1] + '</b></div>').join('') + '</div></details>';
+  }
+  CL.sourcesHTML = sourcesHTML;
   /* The week ahead: one chip per day (best hour, score, 24-hour sparkline) and the hourly grid for the chosen day. */
   let selDay = 0;
   function daysOf(bt) {
@@ -62,21 +125,57 @@
     const day = days.find(d => d.k === selDay), best = day.best;
     const spark = d => '<svg class="spark" viewBox="0 0 96 26" preserveAspectRatio="none" aria-hidden="true">' + d.hs.map(x => { const hgt = Math.max(2, x.index / 100 * 26); return '<rect x="' + (x.localHour * 4) + '" y="' + (26 - hgt).toFixed(1) + '" width="3" height="' + hgt.toFixed(1) + '" rx="1" class="' + hcls(x) + '"/>'; }).join('') + '</svg>';
     return '<div class="week">' + days.map(d => '<button type="button" class="daychip' + (d.k === selDay ? ' on' : '') + '" data-day="' + d.k + '" aria-pressed="' + (d.k === selDay) + '"><span class="dn">' + d.name + '</span><span class="dd">' + d.date + '</span><b class="' + hcls(d.best) + '">' + d.best.index + '</b>' + spark(d) + '<span class="dh">' + (d.storm && d.best.unsafe ? 'storms' : hr(d.best.localHour)) + '</span></button>').join('') + '</div>' +
-      '<h4 style="margin:14px 0 6px">' + day.name + (day.k === 0 && day.hs[0].localHour > 0 ? ' (from now)' : ', ' + day.date) + '</h4><div class="hours">' + day.hs.map((x, i) => '<div class="hcell ' + hcls(x) + (x === best && !x.unsafe ? ' h-best' : '') + '" style="--i:' + i + '" title="' + esc(x.why.join(', ') || 'steady conditions') + '"><span>' + hr(x.localHour) + '</span><b>' + x.index + '</b></div>').join('') + '</div>' +
-      '<p class="small" style="margin:8px 0 0">Best hour: <b>' + hr(best.localHour) + '</b> (' + best.index + '/100, ' + rating(best.index)[0].toLowerCase() + ')' + (best.why.length ? ', for ' + esc(best.why.join(', ')) : '') + '</p>' +
-      '<div class="legend" style="margin-top:8px"><span><i class="hk h-top"></i>Excellent 75+</span><span><i class="hk h-good"></i>Good 60–74</span><span><i class="hk h-fair"></i>Fair 45–59</span><span><i class="hk h-slow"></i>Slow</span><span><i class="hk h-bad"></i>Thunderstorm</span></div>' +
-      '<p class="small muted" style="margin:8px 0 0">' + (bt.own ? 'Includes your own record by time of day (' + bt.own.n + ' logged trips, 25% weight). ' : '') + 'Each hour is scored 0–100 from light, pressure trend, wind and moon position in this spot\'s forecast. Forecasts get less reliable further out, so treat days 4 to 7 as a rough guide. It is guidance, not a tested prediction' + (bt.own ? '.' : '; after 20 logged trips it starts using your own results.') + '</p>';
+      '<h4 style="margin:14px 0 6px">' + day.name + (day.k === 0 && day.hs[0].localHour > 0 ? ' (from now)' : ', ' + day.date) + '</h4><div class="hours">' + day.hs.map((x, i) => '<div class="hcell ' + hcls(x) + (x === best && !x.unsafe ? ' h-best' : '') + '" style="--i:' + i + '" title="' + esc((x.why.join(', ') || 'steady conditions') + ' · forecast confidence: ' + x.conf) + '"><span>' + hr(x.localHour) + '</span><b>' + x.index + '</b>' + (x.conf === 'low' ? '<i class="lowc" aria-label="low confidence"></i>' : '') + '</div>').join('') + '</div>' +
+      '<p class="small" style="margin:8px 0 0">Best hour: <b>' + hr(best.localHour) + '</b> (' + best.index + '/100, ' + rating(best.index)[0].toLowerCase() + ')' + (best.why.length ? ', for ' + esc(best.why.join(', ')) : '') + '. Forecast confidence: <b>' + best.conf + '</b>.</p>' +
+      '<div class="legend" style="margin-top:8px"><span><i class="hk h-top"></i>Excellent 75+</span><span><i class="hk h-good"></i>Good 60–74</span><span><i class="hk h-fair"></i>Fair 45–59</span><span><i class="hk h-slow"></i>Slow</span><span><i class="hk h-bad"></i>Thunderstorm</span><span><i class="hk lowk"></i>Low forecast confidence</span></div>' +
+      sourcesHTML(bt) + '<p class="small muted" style="margin:8px 0 0">' + (bt.own ? 'Includes your own record by time of day (' + bt.own.n + ' logged trips, 25% weight). ' : '') + 'Each hour is scored 0–100 from light, cloud, pressure trend, wind, moon position, water temperature and when your target species is usually reported. Forecasts get less reliable further out, so treat days 4 to 7 as a rough guide. It is guidance, not a tested prediction; use "Test it against my trips" on the Weather page to see how it does for you' + (bt.own ? '.' : '; after 20 logged trips it starts using your own results.') + '</p>';
   }
   function bindWeek(box, bt) { box._bt = bt; if (box._bound) return; box._bound = true; box.addEventListener('click', e => { const b = e.target.closest('[data-day]'); if (!b || !box._bt) return; selDay = +b.dataset.day; box.innerHTML = timesHTML(box._bt); }); }
   async function drawWeatherBest() {
     const loc = Store.location($('#wxLoc').value); if (!loc || !isFinite(loc.lat)) return;
-    $('#wxBestMethod').innerHTML = '<p>Each hour gets four scores between 0 and 1, combined with fixed weights into a 0–100 index:</p><ul><li><b>Light (' + A.WEIGHTS.light * 100 + '%)</b>: 1 within an hour of sunrise or sunset, fading to 0 by 2.5 hours away; low at midday and at night. Sun times are computed for the spot\'s coordinates.</li><li><b>Pressure trend (' + A.WEIGHTS.pressure * 100 + '%)</b>: 3-hour change in forecast surface pressure. Slowly falling scores highest, steady next, rising or crashing lowest.</li><li><b>Wind (' + A.WEIGHTS.wind * 100 + '%)</b>: 4–20 km/h scores highest; calm a little lower; above 35 km/h scores 0.</li><li><b>Moon position (' + A.WEIGHTS.solunar * 100 + '%)</b>: the "solunar" periods, an hour either side of the moon being overhead or underfoot and half an hour around moonrise and moonset.</li></ul><p>Heavy rain cuts the index by 40%. Any forecast thunderstorm sets it to 0.</p><p><b>How much to trust it.</b> These are widely used angling rules of thumb. Low light and weather changes have reasonable support; evidence for solunar periods is weak, which is why they carry the smallest weight. The index has not been validated against catch data. Once you have logged 20 trips, your own success rate by time of day (a Beta-Binomial estimate, shown in LureLab) is blended in at 25% weight, and LureLab\'s Validation tab tells you whether time of day actually predicts your catches.</p>';
+    $('#wxBestMethod').innerHTML = '<p>Each hour gets up to six scores between 0 and 1. Scores without data are left out and the weights of the rest are scaled up, so a missing source never counts as bad.</p><ul>' +
+      '<li><b>Light (' + A.WEIGHTS.light * 100 + '%)</b>: 1 within an hour of sunrise or sunset, fading to 0 by 2.5 hours away. In daylight, cloud cover raises it (up to 0.55 when fully overcast).</li>' +
+      '<li><b>Pressure trend (' + A.WEIGHTS.pressure * 100 + '%)</b>: 3-hour change in sea-level pressure. Slowly falling scores highest, steady next, rising or crashing lowest.</li>' +
+      '<li><b>Wind (' + A.WEIGHTS.wind * 100 + '%)</b>: 4–20 km/h best, calm a little lower, above 35 km/h zero.</li>' +
+      '<li><b>Moon position (' + A.WEIGHTS.solunar * 100 + '%)</b>: solunar periods around the moon overhead or underfoot, and around moonrise and moonset. Evidence for these is weak, so this carries the least weight.</li>' +
+      '<li><b>Water temperature (' + A.WEIGHTS.temp * 100 + '%)</b>: how close the water is to your target species\' preferred range (approximate ranges from fisheries literature, e.g. Coutant 1977). Measured at the nearest USGS gage within 25 km when there is one; otherwise estimated as the 5-day mean air temperature, which lake surfaces roughly follow. A gage reading also corrects the estimate for the days ahead.</li>' +
+      '<li><b>Species timing (' + A.WEIGHTS.timing * 100 + '%)</b>: from the most recent research-grade iNaturalist reports within 60 km, the share of your species\' reports in each hour divided by the share of all fish reports in that hour. Dividing out all fish removes "when people are out fishing" and leaves when this species is reported unusually often. Needs at least 40 timed reports.</li></ul>' +
+      '<p><b>Weather inputs</b> are the average of three independent models (ECMWF, GFS and ICON via Open-Meteo). Where they disagree on wind, pressure or rain, and for hours more than 2 to 4 days ahead, the hour is marked with lower forecast confidence.</p>' +
+      '<p>Heavy rain cuts the index by 40%. Any forecast thunderstorm sets it to 0. After 20 logged trips, your own success rate by time of day (a Beta-Binomial estimate) is blended in at 25%.</p>' +
+      '<p><b>How much to trust it.</b> These are rules of thumb built from real inputs, not a model trained on catch data, so no accuracy figure can honestly be claimed for anglers in general. Use "Test it against my trips" to see how well it has matched your own results.</p>';
     try {
       const bt = await CL.bestTimes(loc), col = i => { const v = bt.hours[i].index; return bt.hours[i].unsafe ? U.cssVar('--bad') : v >= 60 ? U.cssVar('--ok') : v >= 45 ? U.cssVar('--warn') : U.cssVar('--faint'); };
       U.chart('wxBest', $('#wxBest'), { type: 'bar', data: { labels: bt.hours.map(x => x.label.slice(5, 13).replace('T', ' ') + 'h'), datasets: [{ label: 'Fishing-time index (0–100)', data: bt.hours.map(x => x.index), backgroundColor: bt.hours.map((_, i) => col(i)) }] }, options: CL.baseChartOpts({ plugins: { legend: { display: false }, tooltip: { callbacks: { afterLabel: c => { const x = bt.hours[c.dataIndex]; return (x.why.join(', ') || 'steady conditions') + '\nlight ' + x.c.light.toFixed(2) + ' · pressure ' + x.c.pressure.toFixed(2) + ' · wind ' + x.c.wind.toFixed(2) + ' · moon ' + x.c.solunar.toFixed(2); } } } }, scales: { y: { min: 0, max: 100 }, x: { ticks: { maxTicksLimit: 12 } } } }) });
       $('#wxBestList').innerHTML = timesHTML(bt); bindWeek($('#wxBestList'), bt);
     } catch (e) { $('#wxBestList').innerHTML = '<p class="small muted">Best times need the weather forecast, which could not be loaded.</p>'; }
   }
+  /* ---- backtest: score each logged trip at its start hour and compare with the outcome ---- */
+  async function backtest() {
+    const out = $('#wxTestOut'), cutoff = new Date(Date.now() - 88 * 864e5).toISOString().slice(0, 10);
+    const ses = Store.list('sessions').filter(s => s.source !== 'simulated' && s.date >= cutoff && s.hour != null && isFinite((Store.location(s.locationId) || {}).lat));
+    if (ses.length < 8) { out.innerHTML = 'You have ' + ses.length + ' trip' + (ses.length === 1 ? '' : 's') + ' logged in LureLab in the last 90 days with a start hour and a location. Log at least 8 (including the ones with no fish) to run this check; the weather archive used here only reaches back 90 days.'; return; }
+    out.innerHTML = 'Fetching past weather and scoring ' + ses.length + ' trips…';
+    const byLoc = {}; ses.forEach(s => (byLoc[s.locationId] = byLoc[s.locationId] || []).push(s)); const pts = [];
+    for (const id in byLoc) {
+      const l = Store.location(id), oldest = byLoc[id].map(s => s.date).sort()[0];
+      try { const w = await U.fetchWeather(l.lat, l.lon, oldest, 12), h = w.hourly, off = w.utcOffset, toMs = i => Date.parse(h.time[i] + ':00Z') - off * 1000, ev = A.events(toMs(0), l.lat, l.lon, h.time.length + 6);
+        const airMean = i => { let s = 0, n = 0; for (let k = Math.max(0, i - 120); k <= i; k++) if (h.temperature_2m[k] != null) { s += h.temperature_2m[k]; n++; } return n ? s / n : null; };
+        byLoc[id].forEach(s => { const i = h.time.indexOf(s.date + 'T' + String(s.hour).padStart(2, '0') + ':00'); if (i < 0) return; const ms = toMs(i);
+          const sc = A.scoreHour({ ms, ev, dPressure3h: i >= 3 ? h.surface_pressure[i] - h.surface_pressure[i - 3] : null, windKph: h.wind_speed_10m[i], precipMm: h.precipitation[i], code: h.weather_code[i], sunAlt: A.sunAltitude(ms + HOUR / 2, l.lat, l.lon), cloudPct: h.cloud_cover[i], tempFit: A.TEMP_PREF[s.species] ? A.tempFit(s.species, airMean(i)) : null });
+          pts.push({ x: sc.index, y: s.catches > 0 ? 1 : 0 }); }); }
+      catch (e) { /* skip this spot */ }
+    }
+    const pos = pts.filter(p => p.y), neg = pts.filter(p => !p.y);
+    if (pts.length < 8 || !pos.length || !neg.length) { out.innerHTML = 'Scored ' + pts.length + ' trips, but the check needs at least 8 trips that include both catches and blanks.'; return; }
+    const auc = (P, N) => { let s = 0; P.forEach(a => N.forEach(b => s += a.x > b.x ? 1 : a.x === b.x ? 0.5 : 0)); return s / (P.length * N.length); };
+    const A0 = auc(pos, neg), r = CLStats.rng(20261114), boots = [];
+    for (let k = 0; k < 600; k++) { const smp = pts.map(() => pts[Math.floor(r() * pts.length)]), P = smp.filter(p => p.y), N = smp.filter(p => !p.y); if (P.length && N.length) boots.push(auc(P, N)); }
+    boots.sort((a, b) => a - b); const lo = boots[Math.floor(0.025 * boots.length)], hi = boots[Math.floor(0.975 * boots.length)], m = a => a.reduce((s, p) => s + p.x, 0) / a.length;
+    const verdict = lo > 0.5 ? '<b class="status-ok">Higher scores have gone with more catches for you.</b>' : hi < 0.5 ? '<b class="status-fail">For you, higher scores have gone with fewer catches, so treat the score with caution.</b>' : '<b>So far there is no clear link between the score and your catches.</b> That can mean too few trips, or that other things (spot, lure, skill) matter more.';
+    out.innerHTML = verdict + '<div class="stat-line" style="margin-top:6px"><span>Trips scored</span><b>' + pts.length + ' (' + pos.length + ' with fish, ' + neg.length + ' blank)</b></div><div class="stat-line"><span>Average score: trips with fish / blanks</span><b>' + fmt(m(pos), 0) + ' / ' + fmt(m(neg), 0) + '</b></div><div class="stat-line"><span>Chance a trip with fish scored higher than a blank (AUC)</span><b>' + fmt(A0, 2) + ' (95% interval ' + fmt(lo, 2) + '–' + fmt(hi, 2) + ')</b></div><p class="small muted" style="margin-top:6px">0.5 means no better than chance, 1 means perfect. Past trips are scored from Open-Meteo\'s recorded model weather with light, cloud, pressure, wind, moon and estimated water temperature. Species timing is left out here because it uses reports from after some of your trips.</p>';
+  }
+  $('#wxTest').onclick = () => backtest().catch(e => { $('#wxTestOut').textContent = 'Could not run the check: ' + e.message; });
+
   const wxOrig = CL.modules.weather.render; CL.modules.weather.render = function () { wxOrig(); drawWeatherBest(); };
   $('#wxGo').addEventListener('click', drawWeatherBest); $('#wxLoc').addEventListener('change', drawWeatherBest);
 
@@ -282,7 +381,7 @@
   $('#hmCompare').addEventListener('click', e => { const b = e.target.closest('[data-go-spot]'); if (b) { CL.pickLoc = b.dataset.goSpot; CL.modules.home.render(); window.scrollTo({ top: 0, behavior: 'smooth' }); } });
 
   /* ================= Today page ================= */
-  let homeFish = null, homeSeq = 0;
+  let homeFish = null, homeSeq = 0; CL._timesTok = 0;
   CL.modules.home = { render() {
     const sel = $('#hmLoc'), want = CL.pickLoc || spot(); CL.pickLoc = null; CL.locationOptions(sel, { blank: Store.list('locations').some(l => !l.simulated) ? null : 'No spots yet — search below or use your location' });
     if (want && Store.location(want) && !Store.location(want).simulated) sel.value = want; if (sel.value) setSpot(sel.value); $('#hmCompareCard').hidden = Store.list('locations').filter(l => !l.simulated && isFinite(l.lat)).length < 2; refreshHome();
@@ -294,7 +393,8 @@
     $('#hmTwin').onclick = () => { CL.pickLoc = loc.id; };
     heroCurve(null); $('#hmHeadline').textContent = 'Checking the next 48 hours…'; $('#hmSub').textContent = 'Reading the forecast, sun and moon for ' + loc.name + '.';
     $('#hmTimes').innerHTML = $('#hmNow').innerHTML = $('#hmFish').innerHTML = '<p class="muted small">Loading…</p>';
-    CL.bestTimes(loc).then(bt => { if (seq !== homeSeq) return; const w = bt.w, cur = bt.hours[0], r = rating(cur.index);
+    renderHomeTimes(loc, seq);
+    function renderHomeTimes(loc, seq) { const tok = ++CL._timesTok; CL.bestTimes(loc, Store.data.prefs.target).then(bt => { if (seq !== homeSeq || tok !== CL._timesTok) return; const w = bt.w, cur = bt.hours[0], r = rating(cur.index);
       $('#hmTimes').innerHTML = timesHTML(bt); bindWeek($('#hmTimes'), bt); heroCurve(bt);
       { const dayOf = ms => Math.floor((ms + bt.off * 1000) / 864e5), d0 = dayOf(bt.now), hr = h => ((h + 11) % 12 + 1) + (h < 12 ? ' am' : ' pm'), best = k => { const hs = bt.hours.filter(x => dayOf(x.ms) === d0 + k); return hs.length ? hs.reduce((a, x) => x.index > a.index ? x : a, hs[0]) : null; }, t = best(0), tm = best(1);
         if (t && t.unsafe && (!tm || tm.unsafe)) { $('#hmHeadline').textContent = 'Stay off the water today'; $('#hmSub').textContent = 'Thunderstorms are in the forecast.'; }
@@ -302,12 +402,13 @@
         else if (t) { $('#hmHeadline').textContent = 'Best hour today: ' + hr(t.localHour); $('#hmSub').textContent = 'Rated ' + t.index + ' out of 100' + (t.why.length ? ' for ' + t.why.slice(0, 3).join(', ') : '') + '.' + (tm ? ' Tomorrow peaks at ' + hr(tm.localHour) + ' (' + tm.index + ').' : ''); } }
       const night = A.sunAltitude(bt.now + HOUR / 2, loc.lat, loc.lon) < -0.8, gcls = cur.unsafe ? 'g-bad' : cur.index >= 60 ? 'g-ok' : cur.index >= 45 ? 'g-warn' : 'g-low';
       $('#hmNow').innerHTML = '<div class="nowtop"><div class="nowscore">' + gauge(cur.index, gcls) + '<div><div class="nowlabel">Fishing right now</div><div class="nowword">' + (cur.unsafe ? 'Unsafe' : r[0]) + '</div><div class="small muted">' + esc(cur.why.slice(0, 2).join(', ') || 'steady conditions') + '</div></div></div><div class="nowwx">' + wxIcon(w.code, night) + '<div><div class="nowtemp">' + fmt(w.tempC * 9 / 5 + 32, 0) + '°<span>F</span></div><div class="small muted">' + fmt(w.tempC, 0) + ' °C, ' + esc((U.WMO[w.code] || '').toLowerCase()) + '</div></div></div></div><div class="stat-line"><span>Wind</span><b>' + fmt(w.windKph / 1.609, 0) + ' mph / ' + fmt(w.windKph, 0) + ' km/h</b></div><div class="stat-line"><span>Pressure</span><b>' + fmt(w.pressureHpa, 0) + ' hPa, ' + esc(w.pressureTrend || '—') + '</b></div><div class="stat-line"><span>Cloud cover</span><b>' + fmt(w.cloudPct, 0) + '%</b></div><div class="stat-line"><span>Sunrise and sunset</span><b>' + (bt.sunrise ? clock(bt.sunrise, bt.off) : '—') + ' / ' + (bt.sunset ? clock(bt.sunset, bt.off) : '—') + '</b></div><div class="stat-line"><span>Moon</span><b>' + esc(bt.phase.name) + ', ' + Math.round(bt.phase.fraction * 100) + '% lit</b></div>' + (bt.hours.slice(0, 6).some(x => x.unsafe) ? '<p class="note bad" style="margin-top:8px">Thunderstorms are forecast in the next few hours. Stay off the water.</p>' : '') + '<p class="small muted" style="margin-top:6px">Forecast for ' + esc(loc.name) + ' from Open-Meteo.</p>';
-    }).catch(err => { if (seq !== homeSeq) return; heroCurve(null); $('#hmHeadline').textContent = 'No forecast right now'; $('#hmSub').textContent = 'The weather service did not answer. Fish reports and gear suggestions below still work.'; $('#hmTimes').innerHTML = '<p class="note bad">Could not load the forecast (' + esc(err.message) + '). Check your connection and try again.</p>'; $('#hmNow').innerHTML = ''; });
-    CL.localFish(loc.lat, loc.lon).then(d => { if (seq !== homeSeq) return; homeFish = d; $('#hmFish').innerHTML = fishHTML(d, true, true); targetOptions($('#hmTarget'), d); $('#hmSetup').innerHTML = adviceHTML(CL.baitAdvice($('#hmTarget').value, d), d); })
+    }).catch(err => { if (seq !== homeSeq || tok !== CL._timesTok) return; heroCurve(null); $('#hmHeadline').textContent = 'No forecast right now'; $('#hmSub').textContent = 'The weather service did not answer. Fish reports and gear suggestions below still work.'; $('#hmTimes').innerHTML = '<p class="note bad">Could not load the forecast (' + esc(err.message) + '). Check your connection and try again.</p>'; $('#hmNow').innerHTML = ''; }); }
+    CL._renderHomeTimes = renderHomeTimes;
+    CL.localFish(loc.lat, loc.lon).then(d => { if (seq !== homeSeq) return; homeFish = d; $('#hmFish').innerHTML = fishHTML(d, true, true); targetOptions($('#hmTarget'), d); if (!Store.data.prefs.target && $('#hmTarget').value) { Store.data.prefs.target = $('#hmTarget').value; Store.save('prefs'); renderHomeTimes(loc, seq); } else if (Store.data.prefs.target && Array.from($('#hmTarget').options).some(o => o.value === Store.data.prefs.target)) $('#hmTarget').value = Store.data.prefs.target; $('#hmSetup').innerHTML = adviceHTML(CL.baitAdvice($('#hmTarget').value, d), d); })
       .catch(err => { if (seq !== homeSeq) return; $('#hmFish').innerHTML = '<p class="note bad">Could not load fish reports (' + esc(err.message) + ').</p>'; targetOptions($('#hmTarget'), null); $('#hmSetup').innerHTML = adviceHTML(CL.baitAdvice($('#hmTarget').value, null), null); });
   }
   $('#hmLoc').onchange = () => { setSpot($('#hmLoc').value); refreshHome(); };
-  $('#hmTarget').onchange = () => { $('#hmSetup').innerHTML = adviceHTML(CL.baitAdvice($('#hmTarget').value, homeFish), homeFish); };
+  $('#hmTarget').onchange = () => { Store.data.prefs.target = $('#hmTarget').value; Store.save('prefs'); $('#hmSetup').innerHTML = adviceHTML(CL.baitAdvice($('#hmTarget').value, homeFish), homeFish); const loc = Store.location($('#hmLoc').value); if (loc && CL._renderHomeTimes) { $('#hmTimes').innerHTML = '<p class="muted small">Re-scoring for ' + esc($('#hmTarget').value.toLowerCase()) + '…</p>'; CL._renderHomeTimes(loc, homeSeq); } };
   const pickSpot = x => { const l = CL.ensureLocation(x.name, x.lat, x.lon, x.type); CL.pickLoc = l.id; CL.modules.home.render(); U.toast('Spot set to ' + l.name + '.'); };
   searchUI('#hmSearch', '#hmSearchOut', pickSpot);
   $('#hmGps').onclick = () => { if (!navigator.geolocation) return U.toast('This browser cannot share your location. Search by name instead.'); U.toast('Getting your location…'); navigator.geolocation.getCurrentPosition(async p => { const w = await reverseWater(p.coords.latitude, p.coords.longitude); pickSpot({ name: w ? w.name : 'My location', lat: p.coords.latitude, lon: p.coords.longitude, type: w ? w.type : 'Other' }); }, err => U.toast('Location not available (' + err.message + '). Search by name instead.'), { enableHighAccuracy: true, timeout: 15000 }); };

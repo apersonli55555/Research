@@ -82,4 +82,20 @@ const EI = 100e9 * Math.PI / 64 * 1e-8;
   truthy('midday, rising pressure, gale scores low', A.scoreHour({ ms: Date.UTC(2013, 2, 5, 10), dPressure3h: 3, windKph: 45, precipMm: 0, code: 1, ev: { sunrise: ev.sunrise, sunset: ev.sunset, moonrise: [], moonset: [], transit: [], underfoot: [] } }).index < 25);
 })();
 
+// ---- new score inputs ----
+(function () {
+  near('temp fit inside preferred range = 1', A.tempFit('Walleye', 21), 1, 1e-12);
+  near('temp fit 5 C below range = exp(-0.5)', A.tempFit('Walleye', 13), Math.exp(-0.5), 1e-12);
+  truthy('temp fit unknown water = null', A.tempFit('Walleye', null) === null);
+  const all = new Array(24).fill(10), sp = new Array(24).fill(2); sp[6] = 30; sp[19] = 30;
+  const tp = A.timingProfile(sp, all, 40); truthy('timing profile peaks at the over-represented hours', tp && tp.profile[6] === 1 || tp.profile[19] === 1);
+  truthy('timing profile flat where species matches all-fish share', Math.abs(tp.profile[12] - tp.profile[13]) < 1e-9 && tp.profile[12] < 0.5);
+  truthy('timing profile needs enough reports', A.timingProfile(new Array(24).fill(1), all, 40) === null);
+  const ev = A.events(Date.UTC(2013, 2, 5, 0, 0), 50.5, 30.5, 24), noon = { ms: Date.UTC(2013, 2, 5, 10), ev, dPressure3h: 0, windKph: 10, precipMm: 0, code: 1, sunAlt: 30 };
+  truthy('overcast raises the light score at midday', A.scoreHour(Object.assign({}, noon, { cloudPct: 100 })).components.light > A.scoreHour(Object.assign({}, noon, { cloudPct: 0 })).components.light);
+  const sNo = A.scoreHour(noon), sGood = A.scoreHour(Object.assign({}, noon, { tempFit: 1, timing: 1 })), sBad = A.scoreHour(Object.assign({}, noon, { tempFit: 0, timing: 0 }));
+  truthy('missing inputs are left out, not counted as zero', sNo.used.indexOf('temp') < 0 && sNo.index > sBad.index);
+  truthy('good water temperature and timing raise the score', sGood.index > sNo.index);
+})();
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed'); process.exit(fail ? 1 : 0);

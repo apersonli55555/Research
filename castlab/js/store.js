@@ -108,7 +108,7 @@
   };
   /* Weather from Open-Meteo (no key). Returns conditions at a given local date/hour, or current. Also the 3-hour pressure trend. */
   U.fetchWeather = async function (lat, lon, dateStr, hour) {
-    const today = U.today(), past = dateStr && dateStr < today ? Math.ceil((Date.parse(today) - Date.parse(dateStr)) / 864e5) + 1 : 1;
+    const today = U.today(), past = Math.max(6, dateStr && dateStr < today ? Math.ceil((Date.parse(today) - Date.parse(dateStr)) / 864e5) + 1 : 1);
     if (past > 92) throw new Error('Open-Meteo forecast API only covers the last 92 days; enter weather manually.');
     const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat.toFixed(4) + '&longitude=' + lon.toFixed(4) + '&hourly=temperature_2m,wind_speed_10m,surface_pressure,cloud_cover,precipitation,weather_code&past_days=' + past + '&forecast_days=7&timezone=auto';
     const ck = 'castlab.wx.' + lat.toFixed(3) + ',' + lon.toFixed(3) + ',' + past, fresh = !dateStr || dateStr >= today; let j = null;

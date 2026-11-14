@@ -296,3 +296,9 @@ details.more summary{cursor:pointer;font-weight:600}
 details.more[open]>*:not(summary){animation:rise .3s cubic-bezier(.2,.7,.2,1) both}
 .canvas-wrap{transition:box-shadow .2s}.canvas-wrap:hover{box-shadow:0 10px 30px -18px rgba(15,42,61,.5)}
 @media (prefers-reduced-motion:reduce){.leaflet-overlay-pane path.leaflet-interactive,.badge,.pill,.toast.show,details.more[open]>*:not(summary){animation:none}.tour a,.rec,.kpi,.tabs button,.nav a,.nav a .ni,.canvas-wrap{transition:none}.tour a:hover,.kpi:hover,.nav a:hover .ni{transform:none}}
+
+/* ---- forecast confidence marker ---- */
+.hcell{position:relative}
+.hcell .lowc{position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--muted);opacity:.7}
+.h-top .lowc{background:var(--panel)}
+.legend i.hk.lowk{width:8px;height:8px;border-radius:50%;background:var(--muted);border:0;opacity:.7}

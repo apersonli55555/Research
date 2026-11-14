@@ -167,7 +167,7 @@
   async function loadWeather() {
     const l = Store.location($('#wxLoc').value); if (!l) return; $('#wxNow').innerHTML = '<p class="muted small">Loading Open-Meteo…</p>';
     try {
-      const w = await U.fetchWeather(l.lat, l.lon), h = w.hourly, now = w.index, lab = h.time.map(t => t.slice(5, 13).replace('T', ' ') + 'h');
+      const w = await U.fetchWeather(l.lat, l.lon), h0 = w.hourly, cut = Math.max(0, w.index - 24), h = {}; Object.keys(h0).forEach(k => h[k] = h0[k].slice(cut)); const now = w.index - cut, lab = h.time.map(t => t.slice(5, 13).replace('T', ' ') + 'h');
       $('#wxNow').innerHTML = '<div class="grid g4" style="margin-top:10px">' + [['Now', U.WMO[w.code] || 'code ' + w.code, w.timezone], ['Air temperature', fmt(w.tempC, 1) + ' °C', fmt(w.tempC * 9 / 5 + 32, 0) + ' °F'], ['Pressure', fmt(w.pressureHpa, 1) + ' hPa', '3-h trend: ' + (w.pressureTrend || '—')], ['Wind', fmt(w.windKph, 0) + ' km/h', 'cloud ' + fmt(w.cloudPct, 0) + '% · precip ' + fmt(w.precipMm, 1) + ' mm']].map(k => '<div class="kpi"><div class="l">' + k[0] + '</div><div class="v" style="font-size:19px">' + k[1] + '</div><div class="s">' + k[2] + '</div></div>').join('') + '</div><p class="small muted" style="margin-top:8px">Source: Open-Meteo forecast API (model output; hours before "now" are the model\'s best analysis, not station observations). Vertical line = current hour.</p>';
       const nowLine = { id: 'now', afterDraw(c) { const x = c.scales.x.getPixelForValue(now), a = c.chartArea; c.ctx.save(); c.ctx.strokeStyle = U.cssVar('--muted'); c.ctx.setLineDash([4, 4]); c.ctx.beginPath(); c.ctx.moveTo(x, a.top); c.ctx.lineTo(x, a.bottom); c.ctx.stroke(); c.ctx.restore(); } };
       const col = U.chartColors();
@@ -251,7 +251,7 @@
     $('#rsDatasets').innerHTML = sets.map((s, i) => '<button class="btn sm" data-set="' + i + '">' + s[0] + ' (' + Store.list(s[1]).length + ') CSV</button>').join('') + '<button class="btn sm primary" id="rsJson">Everything (JSON)</button>';
     $('#rsDatasets').onclick = e => { const b = e.target.closest('[data-set]'); if (b) { const s = sets[+b.dataset.set]; U.download('castlab-' + s[1] + '.csv', U.toCSV(s[2]()), 'text/csv'); } if (e.target.id === 'rsJson') exportAll(); };
     $('#rsMethods').innerHTML = CL.methodsOverview();
-    $('#rsVerify').innerHTML = CL.selfTest().map(t => '<div class="stat-line"><span>' + esc(t.name) + '</span><b class="' + (t.ok ? 'status-ok' : 'status-fail') + '">' + (t.ok ? 'pass' : 'FAIL') + ' · ' + esc(t.detail) + '</b></div>').join('') + '<p class="small muted" style="margin-top:6px">The full 56-check suite is in <code>castlab/tests/run.js</code> (run with Node).</p>';
+    $('#rsVerify').innerHTML = CL.selfTest().map(t => '<div class="stat-line"><span>' + esc(t.name) + '</span><b class="' + (t.ok ? 'status-ok' : 'status-fail') + '">' + (t.ok ? 'pass' : 'FAIL') + ' · ' + esc(t.detail) + '</b></div>').join('') + '<p class="small muted" style="margin-top:6px">The full 65-check suite is in <code>castlab/tests/run.js</code> (run with Node).</p>';
   } };
   CL.selfTest = function () {
     const out = [], chk = (name, got, want, tol) => out.push({ name, ok: Math.abs(got - want) <= tol, detail: (+got).toPrecision(5) + ' vs ' + want });

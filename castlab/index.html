@@ -174,11 +174,12 @@
 
     <!-- WEATHER -->
     <section class="view" id="v-weather" hidden>
-      <div class="topbar"><div><h1>Weather</h1><p>Hourly conditions from Open-Meteo for any saved location: the past three days and a seven-day forecast. Forecast values are model output, not observations. LureLab stores the hour's values with each session so weather can be analysed against catch outcomes.</p></div><button class="btn menu-btn" data-menu type="button">Menu</button></div>
+      <div class="topbar"><div><h1>Weather</h1><p>Hourly conditions from Open-Meteo for any saved location: the past day and a seven-day forecast. Forecast values are model output, not observations. LureLab stores the hour's values with each session so weather can be analysed against catch outcomes.</p></div><button class="btn menu-btn" data-menu type="button">Menu</button></div>
       <div class="card"><div class="row"><label>Location<select id="wxLoc"></select></label><div style="flex:0 0 auto"><button class="btn primary" id="wxGo" type="button">Load weather</button></div></div><div id="wxNow"></div></div>
       <div class="card" style="margin-top:14px"><div class="card-h"><h3>Fishing-time index, next 48 hours</h3><div class="btns"><button class="btn sm" data-png="wxBest">PNG</button><button class="btn sm" data-csv="wxBest">CSV</button></div></div>
         <div class="chartbox"><canvas id="wxBest"></canvas></div><div id="wxBestList"></div>
-        <details class="more"><summary>How the index is calculated</summary><div class="method" id="wxBestMethod"></div></details></div>
+        <details class="more"><summary>How the index is calculated</summary><div class="method" id="wxBestMethod"></div></details>
+        <div class="card" style="margin-top:12px;background:var(--panel-2)"><div class="card-h"><h3>How accurate is it for you?</h3><button class="btn sm primary" id="wxTest" type="button">Test it against my trips</button></div><div id="wxTestOut" class="small muted">Scores each trip you logged in LureLab in the last 90 days at the hour you started, then checks whether higher scores went with catching fish.</div></div></div>
       <div class="grid g2" style="margin-top:14px">
         <div class="card"><div class="card-h"><h3>Air temperature &amp; precipitation</h3><div class="btns"><button class="btn sm" data-png="wxTemp">PNG</button><button class="btn sm" data-csv="wxTemp">CSV</button></div></div><div class="chartbox"><canvas id="wxTemp"></canvas></div></div>
         <div class="card"><div class="card-h"><h3>Surface pressure &amp; wind</h3><div class="btns"><button class="btn sm" data-png="wxPress">PNG</button><button class="btn sm" data-csv="wxPress">CSV</button></div></div><div class="chartbox"><canvas id="wxPress"></canvas></div></div>

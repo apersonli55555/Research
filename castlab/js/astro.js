@@ -40,21 +40,42 @@
   /* Fishing-time index for one hour. A transparent rule of thumb, NOT a validated prediction.
      h: { ms (hour start, UTC), dPressure3h (hPa), windKph, precipMm, code (WMO), ev (events covering the hour) }.
      Returns each component in [0,1], the weighted index 0-100 and plain-language reasons. */
-  const W = { light: 0.35, pressure: 0.25, wind: 0.20, solunar: 0.20 };
+  /* Weights for the six components. Components without data are left out and the rest are renormalised. */
+  const W = { light: 0.28, pressure: 0.18, wind: 0.14, solunar: 0.10, temp: 0.15, timing: 0.15 };
   function near(ms, list, full, zero) { let best = 0; for (const t of list) { const d = Math.abs(ms - t) / 60000; best = Math.max(best, d <= full ? 1 : d >= zero ? 0 : 1 - (d - full) / (zero - full)); } return best; }
+  /* h: { ms, ev, dPressure3h, windKph, precipMm, code, sunAlt, cloudPct?, tempFit? (0-1), tempNote?, timing? (0-1) } */
   function scoreHour(h) {
     const mid = h.ms + 30 * 60000, ev = h.ev, why = [], c = {};
     const dawn = near(mid, ev.sunrise, 60, 150), dusk = near(mid, ev.sunset, 60, 150);
-    c.light = Math.max(dawn, dusk, h.sunAlt != null && h.sunAlt < -6 ? 0.25 : 0.1); if (dawn > 0.6) why.push('around sunrise'); else if (dusk > 0.6) why.push('around sunset');
+    c.light = Math.max(dawn, dusk, h.sunAlt != null && h.sunAlt < -6 ? 0.25 : 0.1);
+    if (dawn > 0.6) why.push('around sunrise'); else if (dusk > 0.6) why.push('around sunset');
+    else if (h.sunAlt != null && h.sunAlt > 6 && h.cloudPct != null) { const ov = 0.1 + 0.45 * h.cloudPct / 100; if (ov > c.light) { c.light = ov; if (h.cloudPct >= 70) why.push('overcast'); } }
     const major = Math.max(near(mid, ev.transit, 60, 120), near(mid, ev.underfoot, 60, 120)), minor = Math.max(near(mid, ev.moonrise, 30, 75), near(mid, ev.moonset, 30, 75));
     c.solunar = Math.max(major, 0.6 * minor); if (major > 0.6) why.push('moon overhead/underfoot'); else if (minor > 0.6) why.push('moonrise/moonset');
     const dp = h.dPressure3h;
-    if (dp == null || !isFinite(dp)) c.pressure = 0.5; else if (dp <= -4) { c.pressure = 0.3; why.push('pressure dropping fast (front arriving)'); } else if (dp <= -0.5) { c.pressure = 1; why.push('falling pressure'); } else if (dp < 0.5) c.pressure = 0.65; else if (dp < 2.5) c.pressure = 0.45; else { c.pressure = 0.3; why.push('pressure rising quickly'); }
+    if (dp == null || !isFinite(dp)) c.pressure = null; else if (dp <= -4) { c.pressure = 0.3; why.push('pressure dropping fast (front arriving)'); } else if (dp <= -0.5) { c.pressure = 1; why.push('falling pressure'); } else if (dp < 0.5) c.pressure = 0.65; else if (dp < 2.5) c.pressure = 0.45; else { c.pressure = 0.3; why.push('pressure rising quickly'); }
     const w = h.windKph;
-    if (w == null || !isFinite(w)) c.wind = 0.5; else if (w < 4) c.wind = 0.6; else if (w <= 20) { c.wind = 1; if (w >= 8) why.push('light chop'); } else if (w <= 35) { c.wind = 0.4; why.push('windy'); } else { c.wind = 0; why.push('very windy'); }
-    let index = 100 * (W.light * c.light + W.pressure * c.pressure + W.wind * c.wind + W.solunar * c.solunar), unsafe = false;
+    if (w == null || !isFinite(w)) c.wind = null; else if (w < 4) c.wind = 0.6; else if (w <= 20) { c.wind = 1; if (w >= 8) why.push('light chop'); } else if (w <= 35) { c.wind = 0.4; why.push('windy'); } else { c.wind = 0; why.push('very windy'); }
+    c.temp = h.tempFit == null || !isFinite(h.tempFit) ? null : h.tempFit;
+    if (c.temp != null && h.tempNote && (c.temp >= 0.8 || c.temp <= 0.35)) why.push(h.tempNote);
+    c.timing = h.timing == null || !isFinite(h.timing) ? null : h.timing;
+    if (c.timing != null && c.timing >= 0.8) why.push('a busy hour in local reports');
+    let num = 0, den = 0; for (const k in W) if (c[k] != null) { num += W[k] * c[k]; den += W[k]; }
+    let index = den ? 100 * num / den : 0, unsafe = false;
     if (h.code >= 95) { index = 0; unsafe = true; why.length = 0; why.push('thunderstorm: stay off the water'); } else if (h.precipMm >= 4) { index *= 0.6; why.push('heavy rain'); }
-    return { index: Math.round(index), components: c, why, unsafe };
+    return { index: Math.round(index), components: c, why, unsafe, used: Object.keys(W).filter(k => c[k] != null) };
+  }
+  /* Preferred water-temperature ranges (°C) by target, approximate values from fisheries literature summaries
+     (e.g. Coutant 1977; Wismer & Christie 1987). fit = 1 inside the range, Gaussian fall-off (sd 5 °C) outside. */
+  const TEMP_PREF = { 'Largemouth bass': [21, 29], 'Smallmouth bass': [20, 27], 'Walleye': [18, 24], 'Northern pike': [15, 21], 'Muskellunge': [18, 25], 'Yellow perch': [18, 24], 'Crappie': [18, 25], 'Bluegill / sunfish': [22, 30], 'Channel catfish': [24, 30], 'Trout': [10, 17], 'Salmon / steelhead': [9, 15], 'Striped bass': [18, 25], 'Redfish': [20, 28], 'Other': [15, 26] };
+  function tempFit(target, waterC) { const r = TEMP_PREF[target] || TEMP_PREF.Other; if (waterC == null || !isFinite(waterC)) return null; const d = waterC < r[0] ? r[0] - waterC : waterC > r[1] ? waterC - r[1] : 0; return Math.exp(-d * d / 50); }
+  /* Relative hour-of-day activity of a species from public report times: (species share in hour) / (all-fish share in hour),
+     with +1 pseudo-counts, smoothed over neighbouring hours, scaled so the best hour = 1. Returns null when too few reports. */
+  function timingProfile(spHours, allHours, minN) {
+    const S = spHours.reduce((a, b) => a + b, 0), Aa = allHours.reduce((a, b) => a + b, 0); if (S < (minN || 40) || Aa < 40) return null;
+    const ratio = spHours.map((s, i) => ((s + 1) / (S + 24)) / ((allHours[i] + 1) / (Aa + 24)));
+    const sm = ratio.map((_, i) => (ratio[(i + 23) % 24] + 2 * ratio[i] + ratio[(i + 1) % 24]) / 4), mx = Math.max(...sm);
+    return { profile: sm.map(v => v / mx), n: S, nAll: Aa };
   }
   /* Group consecutive hours scoring >= threshold into windows, best first. hours: [{ms, index, why}] */
   function windows(hours, threshold) {
@@ -63,6 +84,6 @@
     return out.map(w => Object.assign(w, { why: Array.from(w.why) })).sort((a, b) => b.peak - a.peak);
   }
 
-  root.CLAstro = { sunAltitude, moonAltitude, moonPhase, events, scoreHour, windows, WEIGHTS: W };
+  root.CLAstro = { sunAltitude, moonAltitude, moonPhase, events, scoreHour, windows, tempFit, timingProfile, TEMP_PREF, WEIGHTS: W };
   if (typeof module !== 'undefined' && module.exports) module.exports = root.CLAstro;
 })(typeof window !== 'undefined' ? window : globalThis);

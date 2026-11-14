@@ -12,7 +12,7 @@ Open `castlab/index.html` through any static web server (for example `python3 -m
 | **Catch log** | Diary of fish landed (species, size, lure, place) with personal bests, plus what other people have reported in the area |
 | **Research dashboard** | Session counts, catch probability and catch rate with credible intervals, prediction track record, experiments and simulation-vs-measurement summaries, all computed live from your records |
 | **Fishing map** | Leaflet/OpenStreetMap map of saved locations, sessions and GPS observations. Click any lake or river to name it and open its best times or shoreline twin; search water bodies by name; optional layer of fish reported by others |
-| **Weather & best times** | Open-Meteo hourly forecast plus a 48-hour fishing-time index built from sunrise/sunset, pressure trend, wind and moon position, with the formula shown |
+| **Weather & best times** | Hour-by-hour fishing score for 7 days from light, cloud, pressure trend, wind, moon, water temperature against the target species' preferred range, and when that species is reported locally. Weather is averaged over three models (ECMWF, GFS, ICON) with a confidence flag where they disagree; water temperature comes from the nearest USGS gage or is estimated from air temperature. Includes a check of the score against the user's own logged trips |
 | **BaitRadar inventory** | Lure, bait and tackle inventory with reorder alerts and value. Stock drops automatically when sessions log lures lost; each item shows its observed catch rate from LureLab |
 | **GearMatch** | Species and technique setup recommendations (rod power, line, lure weight, drag) matched against your inventory and saved rods, with a one-click hand-off to the physics simulator |
 | **LureLab** | Session log (including blanks), Beta-Binomial and Gamma-Poisson estimates, Bayesian logistic regression, trip predictions, registered randomised lure experiments, prequential validation and frozen forward predictions |
@@ -35,6 +35,7 @@ Every graph has PNG and CSV export buttons.
   * AWS Terrain Tiles: elevation; source and accuracy vary by location
   * iNaturalist: research-grade fish records near a spot. These are reports (catches, sightings, found fish), not population counts
   * OpenStreetMap Nominatim: names of lakes and rivers
+  * USGS water temperature (parameter 00010) from the nearest gage within 25 km, for the fishing-time score
 * The fishing-time index is a transparent rule of thumb, labelled as guidance and not validated against catch data. After 20 logged trips it blends in the user's own success rate by time of day.
 * Bait and gear suggestions are labelled as common guidance; only the "worked for you" lines are measured results.
 * Model accuracy is reported only from out-of-sample predictions: prequential forward-chaining, and forward predictions frozen before the trip.
@@ -60,7 +61,7 @@ castlab/
   js/gearsim.js       physics simulator UI
   js/castcheck.js     shoreline twin (ES module, three.js)
   vendor/             Leaflet 1.9.4, Chart.js 4.4.7, three.js r170 (+ OrbitControls), served locally
-  tests/run.js        56 numerical verification checks (node castlab/tests/run.js)
+  tests/run.js        65 numerical verification checks (node castlab/tests/run.js)
   tests/browser_smoke.cjs  end-to-end headless-browser test of every section (Playwright)
 ```
 
