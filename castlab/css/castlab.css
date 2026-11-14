@@ -280,3 +280,19 @@ details.more summary{cursor:pointer;font-weight:600}
 .pal-empty{padding:16px 18px;margin:0;color:var(--muted)}
 @media (max-width:760px){.week{grid-template-columns:repeat(4,minmax(0,1fr))}.sidebtn kbd{display:none}}
 @media (prefers-reduced-motion:reduce){.auth-pitch>*,.auth.card,.hours .hcell,.reel .fishcard,.gauge .gv,.pal-box{animation:none}.btn,.daychip{transition:none}}
+
+/* ---- v5: every part animates ---- */
+.leaflet-overlay-pane path.leaflet-interactive{animation:mk .6s cubic-bezier(.2,.7,.2,1) both}
+@keyframes mk{from{opacity:0}to{opacity:1}}
+.tour a,.rec,.kpi{transition:transform .18s cubic-bezier(.2,.7,.2,1),background .15s}
+.tour a:hover,.kpi:hover{transform:translateY(-3px)}
+.tabs button{transition:background .18s,color .18s}
+.nav a{transition:background .15s,opacity .15s}
+.nav a .ni{transition:transform .2s cubic-bezier(.2,.7,.2,1.4)}
+.nav a:hover .ni{transform:scale(1.15) rotate(-6deg)}
+.badge,.pill{animation:pop .35s cubic-bezier(.2,.8,.3,1.2) both}
+.toast.show{animation:toastIn .3s cubic-bezier(.2,.8,.3,1.2) both}
+@keyframes toastIn{from{transform:translateX(-50%) translateY(20px) scale(.95)}to{transform:translateX(-50%)}}
+details.more[open]>*:not(summary){animation:rise .3s cubic-bezier(.2,.7,.2,1) both}
+.canvas-wrap{transition:box-shadow .2s}.canvas-wrap:hover{box-shadow:0 10px 30px -18px rgba(15,42,61,.5)}
+@media (prefers-reduced-motion:reduce){.leaflet-overlay-pane path.leaflet-interactive,.badge,.pill,.toast.show,details.more[open]>*:not(summary){animation:none}.tour a,.rec,.kpi,.tabs button,.nav a,.nav a .ni,.canvas-wrap{transition:none}.tour a:hover,.kpi:hover,.nav a:hover .ni{transform:none}}

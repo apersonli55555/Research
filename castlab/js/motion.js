@@ -4,20 +4,57 @@
   'use strict';
   const { $, $$, esc } = U, reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  /* ---- page transition + count-up when a section becomes visible ---- */
-  let lastView = null;
+  /* ---- page transition, scroll reveals, tab transitions, count-up ---- */
+  CL._viewAt = performance.now();
+  let lastView = null, seen = new WeakSet(), queue = [], qTimer = 0;
+  const lastAnim = new WeakMap(), SEL = '.card, .kpi, .tour a, .rec, .fishchip, .daychip';
   function countUp(el) {
     const m = el.textContent.trim().match(/^(-?\d+(?:\.\d+)?)(.*)$/); if (!m || el._counted === el.textContent) return;
     const end = parseFloat(m[1]), dec = (m[1].split('.')[1] || '').length, tail = m[2], final = el.textContent, t0 = performance.now(), dur = 650;
     const step = now => { const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3); el.textContent = (end * e).toFixed(dec) + tail; if (k < 1 && el.isConnected) requestAnimationFrame(step); else { el.textContent = final; el._counted = final; } };
     requestAnimationFrame(step);
   }
-  function entered(view) {
-    if (reduce || !view || view.id === lastView) return; lastView = view.id;
-    view.animate([{ opacity: 0, transform: 'translateY(12px)' }, { opacity: 1, transform: 'none' }], { duration: 300, easing: 'cubic-bezier(.2,.7,.2,1)' });
-    setTimeout(() => $$('.kpi .v', view).forEach(countUp), 60);
+  function flush() {
+    qTimer = 0;
+    queue.forEach((el, i) => {
+      if (!el.isConnected) return; const d = Math.min(i * 45, 400);
+      el.animate([{ opacity: 0, transform: 'translateY(16px) scale(.985)' }, { opacity: 1, transform: 'none' }], { duration: 520, delay: d, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'backwards' });
+      if (el.classList.contains('kpi')) { const v = el.querySelector('.v'); if (v) setTimeout(() => countUp(v), d); }
+    });
+    queue = [];
   }
-  new MutationObserver(() => entered($$('.view').find(v => !v.hidden))).observe($('#main'), { attributes: true, attributeFilter: ['hidden'], subtree: true });
+  function enqueue(el) { queue.push(el); if (!qTimer) qTimer = requestAnimationFrame(flush); }
+  const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { io.unobserve(e.target); enqueue(e.target); } }), { rootMargin: '0px 0px -6% 0px' }) : null;
+  function scan(root, quiet) {
+    if (reduce || !root || root.nodeType !== 1) return;
+    const list = root.matches && root.matches(SEL) ? [root] : []; root.querySelectorAll(SEL).forEach(x => list.push(x));
+    list.forEach(el => { if (seen.has(el)) return; seen.add(el); if (quiet || el.closest('[hidden]')) return; if (io) io.observe(el); else enqueue(el); });
+  }
+  function entered(view) {
+    if (!view || view.id === lastView) return; lastView = view.id; CL._viewAt = performance.now();
+    if (reduce) return; seen = new WeakSet();
+    view.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 260, easing: 'ease-out' });
+    scan(view);
+    if (view.id === 'v-gearsim' && !CL._gsDemo) { CL._gsDemo = true; setTimeout(() => { if (!$('#v-gearsim').hidden) $('#gsAnimate').click(); }, 700); }
+  }
+  new MutationObserver(muts => {
+    const view = $$('.view').find(v => !v.hidden); if (view && view.id !== lastView) entered(view);
+    if (reduce) return; const now = performance.now();
+    muts.forEach(m => {
+      if (m.type === 'attributes') {
+        const t = m.target;
+        if (/\b(lltab|cctab|gstab)\b/.test(t.className) && !t.hidden) { t.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 280, easing: 'cubic-bezier(.2,.7,.2,1)' }); seen = new WeakSet(); scan(t); }
+        return;
+      }
+      const p = m.target; if (!p || !p.closest || !p.closest('.view') || p.closest('.leaflet-container')) return;
+      const quiet = now - (lastAnim.get(p) || 0) < 1500; lastAnim.set(p, now);   // repeated redraws (sliders, typing) stay still
+      m.addedNodes.forEach(n => scan(n, quiet));
+    });
+  }).observe($('#main'), { attributes: true, attributeFilter: ['hidden'], subtree: true, childList: true });
+  setTimeout(() => entered($$('.view').find(v => !v.hidden)), 0);
+
+  /* ---- charts grow in when a page opens (not on every slider redraw) ---- */
+  if (window.Chart && !reduce) Chart.defaults.animation.delay = c => (c.type === 'data' && c.mode === 'default' && performance.now() - CL._viewAt < 1800) ? Math.min(c.dataIndex, 40) * 14 + c.datasetIndex * 90 : 0;
 
   /* ---- cursor glow on the Today header ---- */
   const hero = $('.hero');

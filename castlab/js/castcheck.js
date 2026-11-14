@@ -135,7 +135,10 @@ function init3D() {
   const wgeo = geo.clone(); three.terrain = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ vertexColors: true }));
   three.water = new THREE.Mesh(wgeo, new THREE.MeshPhongMaterial({ color: new THREE.Color(U.cssVar('--water')), transparent: true, opacity: 0.78, shininess: 80 }));
   scene.add(three.terrain, three.water); three.grid = { step, nx, ny };
-  const span = Math.max(W, H); camera.near = span / 1000; camera.far = span * 20; camera.position.set(span * 0.55, span * 0.55, span * 0.75); controls.target.set(0, 0, 0); camera.updateProjectionMatrix(); controls.update();
+  const span = Math.max(W, H); camera.near = span / 1000; camera.far = span * 20; controls.target.set(0, 0, 0); camera.updateProjectionMatrix();
+  const end = new THREE.Vector3(span * 0.55, span * 0.55, span * 0.75), from = new THREE.Vector3(span * 0.05, span * 1.9, span * 0.25);
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { camera.position.copy(end); controls.update(); }
+  else { const t0 = performance.now(), fly = now => { const k = Math.min(1, (now - t0) / 1600), e = 1 - Math.pow(1 - k, 3); camera.position.lerpVectors(from, end, e); controls.update(); render3D(); if (k < 1) requestAnimationFrame(fly); }; camera.position.copy(from); controls.update(); requestAnimationFrame(fly); }
   update3D();
 }
 function update3D() {
