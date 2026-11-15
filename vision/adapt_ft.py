@@ -7,6 +7,10 @@ For each budget k (real falls + k real non-falls from our training pool) and eac
              (L2-SP, Li et al. 2018); no other weight decay
   real-only  the run-6 recipe from the Kinetics checkpoint on the same clips
   synthetic  the starting model itself, not adapted
+  init-only  ablation added after run 13 (described in AGENTS.md before it was run): same synthetic
+             starting model and same clips, but the run-6 recipe with ordinary weight decay and NO
+             pull towards the synthetic weights. It separates the starting point from the penalty and
+             is not part of the rule.
 
 Everything below was fixed in AGENTS.md before this script produced any result on real data:
 budgets, draws, steps, learning rate, ALPHA, and the rule
@@ -43,7 +47,7 @@ def fit(method, frames, y, seed, dev, init, steps):
     import torch
     torch.manual_seed(seed); rng = np.random.default_rng(seed)
     anchored = method == "anchored"
-    model, mean, std = load_model(dev, init if anchored else None)
+    model, mean, std = load_model(dev, init if method in ("anchored", "init") else None)
     params = [p for p in model.parameters() if p.requires_grad]
     ref = [p.detach().clone() for p in params] if anchored else None
     opt = torch.optim.AdamW(params, lr=LR, weight_decay=0.0 if anchored else WD)
@@ -162,7 +166,7 @@ def main():
     for k in budgets:
         for d in range(a.draws):
             idx = np.r_[rng.choice(pos, k, replace=False), rng.choice(neg, k, replace=False)]   # drawn even when resuming
-            for method in ("anchored", "real"):
+            for method in ("anchored", "real", "init"):
                 key = f"{method}_k{k}_d{d}"
                 if key in res:
                     continue
@@ -181,6 +185,8 @@ def main():
         g = lambda m, t="fallornot": [res[f"{m}_k{k}_d{d}"][t] for d in range(a.draws) if t in res[f"{m}_k{k}_d{d}"]]
         rows.append(dict(k=k, anchored=float(np.mean(g("anchored"))), anchored_sd=float(np.std(g("anchored"))),
                          real=float(np.mean(g("real"))), real_sd=float(np.std(g("real"))),
+                         init=float(np.mean(g("init"))), init_sd=float(np.std(g("init"))),
+                         hmdb_init=(g("init", "hmdb51") or [None])[0],
                          hmdb_anchored=(g("anchored", "hmdb51") or [None])[0], hmdb_real=(g("real", "hmdb51") or [None])[0]))
     every = all(r["anchored"] >= max(r["real"], syn) - TOL for r in rows)
     ma, mr = float(np.mean([r["anchored"] for r in rows])), float(np.mean([r["real"] for r in rows]))
@@ -193,13 +199,15 @@ def main():
          f"Rule: on FallOrNot, (i) at every budget anchored mean AUROC >= max(real-only mean, synthetic-only) - {TOL}; "
          "(ii) averaged over budgets anchored > both baselines", "",
          f"FallOrNot AUROC, mean ± s.d. over {a.draws} draws of k real falls + k real non-falls; synthetic-only {syn:.3f}", "",
-         "| k | anchored | real-only | HMDB51 anchored (draw 0) | HMDB51 real-only (draw 0) |", "|---|---|---|---|---|"]
+         "| k | anchored | real-only | init-only (no penalty) | HMDB51 anchored (draw 0) | HMDB51 real-only (draw 0) | HMDB51 init-only (draw 0) |",
+         "|---|---|---|---|---|---|---|"]
     for r in rows:
         L.append(f"| {r['k']} | {r['anchored']:.3f} ± {r['anchored_sd']:.3f} | {r['real']:.3f} ± {r['real_sd']:.3f} | "
-                 f"{f(r['hmdb_anchored'])} | {f(r['hmdb_real'])} |")
+                 f"{r['init']:.3f} ± {r['init_sd']:.3f} | {f(r['hmdb_anchored'])} | {f(r['hmdb_real'])} | {f(r['hmdb_init'])} |")
     L += ["", f"- HMDB51 synthetic-only: {f(res['synthetic'].get('hmdb51'))}",
           f"- every budget within {TOL} of the better baseline: {every}",
           f"- mean over budgets: anchored {ma:.3f}, real-only {mr:.3f}, synthetic-only {syn:.3f} -> higher than both: {avg}",
+          f"- ablation, mean over budgets: init-only (same start, no penalty) {np.mean([r['init'] for r in rows]):.3f}",
           "", f"FINE-TUNING METHOD RESULT: {'SUCCESS' if every and avg else 'NOT MET'}"]
     text = "\n".join(L)
     open(os.path.join(out, "adapt_ft.md"), "w").write(text + "\n")
