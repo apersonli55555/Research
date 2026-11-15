@@ -460,3 +460,24 @@ Mean over budgets: anchored 0.901, real-only 0.867, synthetic-only 0.873. Every 
 - **With the full real pool it does not beat real-only:** equal on FallOrNot, and significantly, though slightly, worse on OF-ItW (−0.008, p = 0.002). Do not claim it is the best method at every budget.
 - **HMDB51 (out of domain):** 0.902, between real-only (0.888) and synthetic-only (0.917); neither difference is significant. It recovers about half of the gap that real-only training loses there.
 - **Caveats:** the technique (regularising towards a source model, "biased regularisation") is known in transfer learning; what is new is the test on this problem, not the idea. Plain pooling of synthetic and real clips was not run at these small budgets, so the table does not compare against it. The s.d. is over random training draws with the test set fixed. The OF-ItW synthetic-only value here (0.873) differs from run 11 (0.872) in the third decimal because this script standardises features with synthetic statistics only.
+
+# Run 13: anchored fine-tuning (method test for end-to-end models, rule fixed in advance: MET)
+
+`adapt_ft.py` (Colab L4; commit `3ef3562`, which also committed the rule to `AGENTS.md` before any result). Copied from the Colab text output.
+
+**Method.** Start from the synthetic-fine-tuned VideoMAE-B (`model_synthetic`, seed 0, run 6) and fine-tune end to end on k real falls + k real non-falls with loss = cross-entropy + (0.01 / 2) × squared distance of all weights from the synthetic model (L2-SP); no other weight decay. Baselines: real-only fine-tuning from the Kinetics checkpoint on the same clips (run-6 recipe); the synthetic model itself. Learning rate 5e-5, batch 8, one-cycle schedule, steps = max(60, 5 × clips / 8) for both. Three random draws per budget (seed 0); mean ± s.d. over draws.
+
+FallOrNot AUROC (synthetic-only: 0.829, identical to run 6 seed 0), and HMDB51 AUROC for the first draw of each budget (synthetic-only: 0.967):
+
+| k | Anchored | Real-only | HMDB51 anchored (draw 0) | HMDB51 real-only (draw 0) |
+|---|---|---|---|---|
+| 8 | 0.826 ± 0.003 | 0.652 ± 0.042 | 0.960 | 0.880 |
+| 30 | 0.855 ± 0.007 | 0.813 ± 0.013 | 0.941 | 0.888 |
+| 125 | 0.898 ± 0.010 | 0.894 ± 0.008 | 0.942 | 0.815 |
+
+Mean over budgets: anchored 0.860, real-only 0.786, synthetic-only 0.829. Every budget within 0.01 of the better baseline: yes. **FINE-TUNING METHOD RESULT: SUCCESS.**
+
+## Reading
+- **The anchoring result carries over from frozen probes to end-to-end fine-tuning.** With 8 real falls, anchored fine-tuning keeps the synthetic model's level (0.826 vs. 0.829) while real-only fine-tuning collapses (0.652); with 30 it is ahead of both (0.855 vs. 0.813 and 0.829); with 125 it matches real-only (0.898 vs. 0.894, within the spread over draws).
+- **Out of domain (HMDB51, secondary, one draw per budget, no intervals):** anchored models stay at 0.94 to 0.96, far above real-only fine-tuning on the same clips (0.82 to 0.89), but below the unadapted synthetic model (0.967): adapting to OOPS! clips costs about 0.01 to 0.03 on HMDB51.
+- **Caveats:** one test set in the rule (FallOrNot; pixel clips for OF-ItW were not stored); three draws; one starting model (seed 0); the penalty strength 0.01 was fixed, not tuned, and no ablation separates the effect of the synthetic starting point from the effect of the penalty; the tolerance was 0.01 (0.005 for the probe test in run 12). L2-SP is an existing technique (Li et al., 2018).
