@@ -1,8 +1,9 @@
-% CVPR 2027 submission version. Generated from ../paper.tex (same text and numbers) by ../make_cvpr.py.
+% Conference-template version. Generated from ../paper.tex (same text and numbers) by ../make_cvpr.py. Do not edit by hand.
 \documentclass[10pt,twocolumn,letterpaper]{article}
 \usepackage[review]{cvpr}
 \usepackage{graphicx}
 \usepackage{booktabs}
+\usepackage{adjustbox}
 \usepackage{amsmath}
 \usepackage{multirow}
 \usepackage{rotating}
@@ -14,36 +15,40 @@
 \def\confName{CVPR}
 \def\confYear{2027}
 
-\title{How Much Is a Real Fall Worth? Real, Synthetic and Staged Training Data\\for Video Fall Detection, Tested on Two Real-World Sources}
-\author{Anonymous CVPR submission}
+\title{How Much Is a Real Fall Worth? Staged, Synthetic, Labelled and Unlabelled Real Video for Fall Detection}
+\author{Anonymous submission}
 
 \begin{document}
 \maketitle
 \begin{abstract}
-Video fall detectors are commonly trained and evaluated on falls staged by actors in a laboratory, where they score near perfectly. We ask which training data actually prepares a detector for real falls. We build \textbf{FallOrNot}, a real-world test set from the OOPS!\ dataset of in-the-wild accident videos, sampled independently of any model and labelled for whether a person falls, so that \emph{other accidents} act as false-alarm negatives. Using frozen CLIP and VideoMAE features with linear probes, and end-to-end fine-tuned VideoMAE, we compare staged (UR Fall), synthetic (OmniFall OF-Syn) and real (OOPS!) training data, and test on FallOrNot and on an independent real-world source, HMDB51. Staged-trained probes that score 1.00 in-domain reach 0.76 AUROC on FallOrNot. On FallOrNot, 131 real training falls lift the best probe to 0.90, and about 30 real falls outperform 2,136 synthetic ones, whose benefit plateaus near 0.82. On HMDB51, however, the ranking flips: synthetic training is best and real training is no better than staged. The flip holds for fine-tuned models, averaged over three seeds. Training on synthetic and real data together never falls more than 0.03 AUROC below the best source on any test, whereas every single source falls at least 0.09 below it on some test. Two tests specified in advance (fine-tuning beating frozen probes, and source-balanced mixing beating plain mixing, each on both test sets) were not met. Real training clips from compilations absent from the test set give the same result as random subsets of equal size, so shared compilations do not explain the real-data advantage. A second annotator agreed moderately with the first ($\kappa=0.50$); re-grading with their labels preserves the main findings but weakens the in-domain real-over-synthetic advantage. Conclusions about training data drawn from a single real-world benchmark do not generalise; fall detectors should be evaluated on several.
+Video fall detectors are usually trained and evaluated on falls staged by actors, where they score near perfectly. We ask which training data prepares a detector for real falls, and whether real video has to be labelled to be useful. We build \textbf{FallOrNot}, a test set sampled from OOPS!\ accident videos independently of any model and labelled for whether a person falls, so that \emph{other accidents} act as false-alarm negatives; we also test on OmniFall's in-the-wild split (OF-ItW) and on HMDB51. With frozen CLIP and VideoMAE features, staged-trained probes that score 1.00 in-domain reach 0.76 AUROC on FallOrNot, synthetic training 0.81 and 131 hand-labelled real falls 0.90, but on HMDB51 the ranking flips and synthetic training is best. Our main result is that much of the benefit of real data needs no labels. Accident videos come with the time at which something goes wrong, so the clip before it is a free real non-fall. Starting from the synthetic-trained probe, we pseudo-label 7,063 unlabelled accident clips, add the free negatives, and retrain on real clips only. Under a success rule fixed before any result, this zero-label probe beats synthetic training on FallOrNot ($0.894$ vs.\ $0.814$) and OF-ItW ($0.937$ vs.\ $0.872$), equals a probe trained on 125 hand-labelled falls, and is the best probe on HMDB51 ($0.953$). Controls locate the gain: a random-start version still reaches $0.865\pm0.011$ on FallOrNot, so most of the in-domain gain is accident-versus-ordinary-activity structure; pseudo-labelling adds fall-specific information beyond a plain accident detector, but against synthetic training the gain on falls versus other accidents is significant only out of domain ($p=0.005$; in domain $p=0.065$). With a few labels, a probe anchored to the synthetic solution is never meaningfully worse than the better single source. Tests fixed in advance that were not met are reported.
 \end{abstract}
 
 %=====================================================================
 \section{Introduction}
 Falls are the second-leading cause of unintentional injury death worldwide, and about 71\% of fall deaths occur in people aged 60 or older~\cite{who_falls}; long periods on the floor after a fall are associated with worse outcomes~\cite{fleming2008}. Camera-based fall detection promises automatic alerts without wearables, and published detectors often report near-perfect accuracy. Most of that evidence comes from staged datasets in which young actors fall onto mattresses in front of fixed cameras~\cite{kwolek2014,charfi2013}.
 
-Real falls are different: they are sudden, partly occluded, filmed from arbitrary viewpoints, and embedded among other abrupt events such as collisions, dropped objects and people catching themselves. OmniFall~\cite{omnifall} recently showed a large drop from staged to in-the-wild falls on fall-containing OOPS!~\cite{epstein2020oops} videos, and argued that synthetic training videos generalise better than staged ones. This leaves practical questions open for anyone building a detector: \emph{how much real data is needed, is real data worth more than synthetic data, does the answer change with the test set, and how often do detectors raise alarms for accidents that are not falls?}
+Real falls are different: they are sudden, partly occluded, filmed from arbitrary viewpoints, and embedded among other abrupt events such as collisions, dropped objects and people catching themselves. OmniFall~\cite{omnifall} recently showed a large drop from staged to in-the-wild falls on fall-containing OOPS!~\cite{epstein2020oops} videos, and argued that synthetic training videos generalise better than staged ones. This leaves practical questions open for anyone building a detector: \emph{how much real data is needed, is real data worth more than synthetic data, does the answer change with the test set, how often do detectors raise alarms for accidents that are not falls, and does real video have to be labelled at all?}
+
+The last question matters most in practice, because labelling is the bottleneck: we hand-labelled 165 test videos and 268 training clips, while OOPS!\ contains thousands of accident videos that nobody has labelled for falls. Those videos are not unstructured, however. Each comes with the time at which something goes wrong, so the seconds before it show ordinary activity, a \emph{real non-fall that costs nothing}. We show that this timing signal, combined with pseudo-labels from a detector that has never seen a real fall, trains a probe without any human label that matches hand-labelled training on our test set and transfers better to an independent source than either hand-labelled real or synthetic training. We then take the result apart with controls fixed in advance, and report where it holds and where it does not.
 
 \paragraph{Contributions.}
 \begin{enumerate}\setlength\itemsep{1pt}
-\item \textbf{FallOrNot}, a real-world test set sampled from \emph{all} annotated OOPS!\ accidents independently of any model, so that non-fall accidents are hard false-alarm negatives, plus pre-accident clips of ordinary activity.
-\item A controlled comparison of \textbf{staged, synthetic and real training data} with identical encoders, probes and clips, including an equal-budget curve and a learning curve over the number of real falls.
-\item Evidence that \textbf{rankings flip between real-world test sets}: real data wins on FallOrNot, synthetic data wins on an independent source (HMDB51), for both frozen probes and fine-tuned models; synthetic + real has the smallest worst-case shortfall.
-\item Two tests \textbf{specified in advance} (fine-tuning and source-balanced mixing; neither met), a compilation leakage check, a second-annotator agreement study, and a re-analysis with the second annotator's labels.
+\item \textbf{Zero-label adaptation} (\cref{sec:nolabel}). From 7,063 unlabelled accident clips and their free pre-accident negatives, a probe trained with no human label reaches 0.894, 0.937 and 0.953 AUROC on three test sets (synthetic-only: 0.814, 0.872, 0.917), under a success rule committed before any result. It is worth about 125 hand-labelled falls in domain.
+\item \textbf{Controls that locate the gain.} A random-start control and a plain accident detector show that most of the in-domain gain is accident-versus-ordinary-activity structure, that pseudo-labelling adds fall-specific information beyond it, and that separating falls from \emph{other accidents} without labels is established out of domain ($p=0.005$) but not in domain ($p=0.065$).
+\item \textbf{FallOrNot}, a real-world test set sampled from \emph{all} annotated OOPS!\ accidents independently of any model, so that non-fall accidents are hard false-alarm negatives; its labels agree with OmniFall's on 27 of 28 shared videos.
+\item A controlled comparison of \textbf{staged, synthetic and hand-labelled real training data} on three test sets, showing that the ranking of labelled sources \textbf{flips between real-world test sets}, for frozen probes and fine-tuned models.
+\item For the few-label case, an \textbf{anchored probe} that is never meaningfully worse than the better single source from 4 to 125 real falls (rule fixed in advance, met on two test sets), and an ablation showing that for fine-tuning the same benefit comes simply from starting at the synthetic-trained model (\cref{sec:anchor}).
+\item A record of every test specified in advance, including two that were not met, plus a compilation leakage check and a second-annotator study.
 \end{enumerate}
 
 %=====================================================================
 \section{Related work}
-\paragraph{Staged fall datasets.} UR Fall~\cite{kwolek2014} records 30 falls from a side and a ceiling camera and 40 activities of daily living; Le2i~\cite{charfi2013} and the Multiple Cameras Fall Dataset~\cite{auvinet_mcfd} are other widely used staged sets. Detectors evaluated on such data routinely approach ceiling performance.
+\paragraph{Staged and simulated falls.} UR Fall~\cite{kwolek2014}, Le2i~\cite{charfi2013} and the Multiple Cameras Fall Dataset~\cite{auvinet_mcfd} are widely used staged sets on which detectors approach ceiling performance. For wearable accelerometers, algorithms tuned on simulated falls lose accuracy on real-world falls~\cite{bagala2012,klenk2016}; we study the analogous question for video.
 
-\paragraph{Simulated vs.\ real falls.} For wearable accelerometers, algorithms tuned on simulated falls lose accuracy on real-world falls~\cite{bagala2012}, and the FARSEEING repository collects body-worn sensor signals from real falls~\cite{klenk2016}. We study the analogous question for video.
+\paragraph{Learning with weak or no labels.} Weakly supervised fall detection trains from video-level labels with multiple-instance learning~\cite{wu2023weakfall,madsen2024weakfall}; a human still labels every video. Multiple-instance learning from video-level labels is also the standard formulation of weakly supervised video anomaly detection~\cite{sultani2018anomaly}. Self-training with pseudo-labels~\cite{xie2020noisystudent} is a standard way to use unlabelled data, and unsupervised domain adaptation has been applied to fall detection across sensing modalities, from labelled RGB to unlabelled depth video with thresholded pseudo-labels~\cite{xiao2023umafd}; the OOPS!\ paper itself studies self-supervised representations learned from unlabelled video~\cite{epstein2020oops}. Our zero-label experiment (\cref{sec:nolabel}) uses self-training in a setting we have not seen studied for falls: the unlabelled data are web accident videos, and the only supervision taken from them is the accident time that OOPS!\ already provides, which yields real non-falls at no labelling cost. We do not propose a new learning algorithm; the contribution is the supervision source, the measurement of what it is worth in hand labels, and controls that separate the timing signal from the pseudo-labels.
 
-\paragraph{In-the-wild video.} OOPS!~\cite{epstein2020oops} contains about 20k web videos of unintentional actions with annotated transition times. \textbf{OmniFall}~\cite{omnifall}, the closest work, unifies eight staged datasets, adds 12k synthetic videos (OF-Syn) and an in-the-wild test set of 818 fall-containing OOPS!\ videos (OF-ItW), shows a large staged-to-wild drop, finds synthetic training better than staged, and reports an upper-bound model trained with in-the-wild data. We do not claim to be first to show the staged-to-wild gap. Our work differs in (i) negatives drawn from all accidents by a model-independent sample, (ii) the question of how much real data is needed and whether it beats synthetic data at equal budget, and (iii) testing every conclusion on a second, independent real-world source.
+\paragraph{In-the-wild video.} OOPS!~\cite{epstein2020oops} contains about 20k web videos of unintentional actions with annotated transition times. \textbf{OmniFall}~\cite{omnifall}, the closest work, unifies eight staged datasets, adds 12k synthetic videos (OF-Syn) and an in-the-wild test set of 818 fall-containing OOPS!\ videos (OF-ItW), shows a large staged-to-wild drop, finds synthetic training better than staged, and reports an upper-bound model trained with in-the-wild data. We do not claim to be first to show the staged-to-wild gap. Our work differs in (i) asking whether real accident video can be used \emph{without} labels, (ii) negatives drawn from all accidents by a model-independent sample, (iii) the question of how much labelled real data is needed and whether it beats synthetic data at equal budget, and (iv) testing every conclusion on an independent real-world source.
 
 \paragraph{Encoders.} We use CLIP~\cite{radford2021clip} through OpenCLIP~\cite{openclip} with DataComp weights~\cite{gadre2023datacomp}, and VideoMAE~\cite{tong2022videomae} fine-tuned on Kinetics-400~\cite{kay2017kinetics}.
 
@@ -74,13 +79,14 @@ Real falls are different: they are sudden, partly occluded, filmed from arbitrar
 \paragraph{Test specified in advance.} Before running any fine-tuning we committed one success rule to the project repository together with the fixed hyper-parameters: fine-tuning on synthetic + real data must beat the best frozen probe on \emph{both} test sets, with the paired 95\% CI above zero. It was not registered with an external registry.
 
 %=====================================================================
-\section{Results}
+\section{Which labelled training data?}
 \subsection{Staged training does not transfer}
 All staged-trained probes reach AUROC $\ge0.998$ in five-fold cross-validation on UR Fall (grouped by sequence), and zero-shot CLIP reaches 0.912. On FallOrNot the same probes reach 0.723--0.765 (\cref{tab:fallornot}), and the best catches 30\% of falls at 5\% false positives (VideoMAE, recall 0.304). In-domain staged numbers cannot rank methods: every probe is at ceiling.
 
 \begin{table}[t]\centering\small
 \caption{AUROC on \textbf{FallOrNot} (255 clips, 102 falls) by training data. Zero-shot CLIP: 0.717. Best per row in bold. Runs 3--4, 10.}
 \label{tab:fallornot}
+\begin{adjustbox}{max width=\linewidth}
 \begin{tabular}{lcccc}\toprule
 Representation & Staged & Synthetic & Real & Syn.\ + real\\\midrule
 CLIP appearance & 0.723 & 0.728 & 0.732 & \textbf{0.800}\\
@@ -90,12 +96,13 @@ CLIP + VideoMAE & 0.759 & 0.814 & \textbf{0.899} & 0.872\\\midrule
 \multicolumn{5}{l}{\footnotesize CLIP + VideoMAE 95\% CIs: staged [0.698, 0.814]; synthetic [0.753, 0.869];}\\[-2pt]
 \multicolumn{5}{l}{\footnotesize real [0.858, 0.935]; synthetic + real [0.825, 0.914].}\\\bottomrule
 \end{tabular}
+\end{adjustbox}
 \end{table}
 
 \subsection{On FallOrNot, a few real falls beat thousands of synthetic ones}
-With CLIP + VideoMAE, real training beats staged training by $+0.139$ [$+0.085$, $+0.193$] ($p<0.001$) and synthetic training by $+0.085$ [$+0.030$, $+0.137$] ($p=0.001$). Synthetic training scores higher than staged, the direction OmniFall reports~\cite{omnifall}, but the difference is not significant here ($+0.054$ [$-0.000$, $+0.110$], $p=0.053$; CLIP temporal $+0.067$, $p=0.030$). Adding synthetic data to real data does not help this representation ($-0.027$ [$-0.068$, $+0.012$], $p=0.19$). Recall at 5\% false positives rises from 0.167 (staged) to 0.431 (real) and 0.480 (synthetic + real).
+With CLIP + VideoMAE, real training beats staged training by $+0.139$ [$+0.085$, $+0.193$] ($p<0.001$) and synthetic training by $+0.085$ [$+0.030$, $+0.137$] ($p=0.001$). Synthetic training scores higher than staged, the direction OmniFall reports~\cite{omnifall}, but the difference is not significant here ($+0.054$ [$-0.000$, $+0.110$], $p=0.053$; CLIP temporal $+0.067$, $p=0.030$). Adding synthetic data to real data does not help this representation ($-0.027$, $p=0.19$).
 
-\emph{Motion is what benefits from real data.} Real training helps CLIP temporal ($+0.138$ [$+0.073$, $+0.198$] over staged, $p<0.001$) but not CLIP appearance ($+0.009$, $p=0.76$) or VideoMAE alone ($+0.022$, $p=0.49$). Under staged training, the encoder choice makes no significant difference on FallOrNot (all $p\ge0.30$); here the training data matters more than the encoder. This does not hold on HMDB51, where staged-trained VideoMAE is far weaker than the CLIP-based probes (\cref{tab:hmdb}).
+\emph{Motion is what benefits from real data.} Real training helps CLIP temporal ($+0.138$ [$+0.073$, $+0.198$] over staged, $p<0.001$) but not CLIP appearance ($+0.009$, $p=0.76$) or VideoMAE alone ($+0.022$, $p=0.49$).
 
 \emph{Equal budget} (\cref{fig:budget}): training on $k$ falls plus $k$ non-falls from one source, synthetic data plateaus near 0.82 from about 125 falls up to all 2,136 (0.812--0.825), staged data stays near 0.75, and real data keeps rising: 30 real falls (0.836 $\pm$ 0.018) already exceed every synthetic budget, and about 8 real falls match the whole staged set. With only 4 falls, real data is unreliable (0.670 $\pm$ 0.130).
 
@@ -107,7 +114,25 @@ With CLIP + VideoMAE, real training beats staged training by $+0.139$ [$+0.085$,
 
 \paragraph{Falls vs.\ other accidents.} Restricted to accident-moment clips (165 clips, 102 falls), CLIP + VideoMAE reaches 0.715 (staged), 0.772 (synthetic), 0.860 (real) and 0.848 (synthetic + real); zero-shot CLIP reaches 0.686. Telling a fall from another accident remains the hardest part of the task.
 
-\paragraph{Compilation leakage check.}\label{sec:leak} Of the 268 real training clips, 111 come from a compilation that also contributes test clips. Retraining on the 157 clips (77 falls) from compilations absent from the test set gives 0.866, against $0.874\pm0.014$ for random subsets of the same size and class counts (CLIP temporal: 0.838 vs.\ $0.853\pm0.013$). We find no clear evidence that shared compilations inflate the real-data result: most of the drop from 0.899 comes from the smaller training set, and the compilation-disjoint probe still exceeds synthetic (0.814) and staged (0.759) training.
+\paragraph{Compilation leakage check.}\label{sec:leak} Of the 268 real training clips, 111 come from a compilation that also contributes test clips. Retraining on the 157 clips (77 falls) from compilations absent from the test set gives 0.866, against $0.874\pm0.014$ for random subsets of the same size and class counts We find no clear evidence that shared compilations inflate the real-data result.
+
+\subsection{A third, larger test set with independent labels}\label{sec:ofitw}
+To check the FallOrNot result at larger scale and with labels that are not ours, we score the same probes on OmniFall's in-the-wild test split (OF-ItW~\cite{omnifall}): 571 OOPS!\ videos annotated by OmniFall's team, from which we cut 1,671 clips (636 falls; one clip per fall segment, and one per other segment of at least 1\,s that is not ``fallen'' and does not overlap a fall). Our 20 real training clips from these videos are removed. \Cref{tab:ofitw} confirms the FallOrNot ordering, with every step significant ($p<0.001$, paired, by compilation): synthetic over staged $+0.058$ [$+0.040$, $+0.077$], our real clips over synthetic $+0.055$ [$+0.039$, $+0.071$]. Probes trained on our 248 hand-labelled clips (0.927) come close to probes trained on OF-ItW's own 734 training clips (0.951), and on the 28 videos labelled by both teams the labels agree on 27 ($\kappa=0.78$; a small sample skewed towards falls). Simply pooling synthetic and real clips is significantly worse than real alone here ($-0.022$ [$-0.031$, $-0.013$]). OF-ItW negatives are other moments of fall videos rather than other accidents, and the footage is again OOPS!, so this is a second in-domain test, not an out-of-domain one.
+
+\begin{table}[t]\centering\small
+\caption{AUROC on the \textbf{OF-ItW test split} (1,671 clips, 636 falls; labels by OmniFall's team). ``Real (ours)'': our 248 training clips; ``Real (OF)'': OF-ItW train + val, 734 clips. Zero-shot CLIP: 0.731. Run 11.}
+\label{tab:ofitw}
+\setlength\tabcolsep{3.5pt}
+\begin{adjustbox}{max width=\linewidth}
+\begin{tabular}{lccccc}\toprule
+Representation & Staged & Syn. & \shortstack{Real\\(ours)} & \shortstack{Real\\(OF)} & \shortstack{Syn.\ +\\real (OF)}\\\midrule
+CLIP appearance & 0.746 & 0.727 & 0.781 & \textbf{0.829} & 0.825\\
+CLIP temporal & 0.785 & 0.846 & 0.900 & \textbf{0.925} & 0.883\\
+VideoMAE & 0.771 & 0.817 & 0.844 & \textbf{0.909} & 0.899\\
+CLIP + VideoMAE & 0.815 & 0.872 & 0.927 & \textbf{0.951} & 0.929\\\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
 
 \subsection{On an independent source, the ranking flips}
 On HMDB51 (\cref{tab:hmdb}, \cref{fig:flip}) the real-data advantage disappears. With CLIP + VideoMAE, real training is slightly \emph{worse} than synthetic ($-0.029$ [$-0.057$, $-0.003$], $p=0.029$) and no better than staged ($-0.011$, $p=0.57$). Synthetic training rescues VideoMAE ($+0.214$ over staged, $p<0.001$), and CLIP appearance trained on real OOPS!\ data falls to 0.626. HMDB51 falls look closer to staged falls than OOPS!\ accidents do: staged probes reach 0.899 there but 0.759 on FallOrNot, and zero-shot CLIP 0.834 vs.\ 0.717. Many HMDB51 falls come from films.
@@ -115,6 +140,7 @@ On HMDB51 (\cref{tab:hmdb}, \cref{fig:flip}) the real-data advantage disappears.
 \begin{table}[t]\centering\small
 \caption{AUROC on \textbf{HMDB51} (1,100 clips, 100 falls; nothing trained on it). Zero-shot CLIP: 0.834. Run 5.}
 \label{tab:hmdb}
+\begin{adjustbox}{max width=\linewidth}
 \begin{tabular}{lcccc}\toprule
 Representation & Staged & Synthetic & Real & Syn.\ + real\\\midrule
 CLIP appearance & 0.783 & \textbf{0.813} & 0.626 & 0.803\\
@@ -124,6 +150,7 @@ CLIP + VideoMAE & 0.899 & \textbf{0.917} & 0.888 & 0.901\\\midrule
 \multicolumn{5}{l}{\footnotesize Hard subset (320 clips), CLIP + VideoMAE: staged 0.833, synthetic 0.880,}\\[-2pt]
 \multicolumn{5}{l}{\footnotesize real 0.777, synthetic + real 0.855.}\\\bottomrule
 \end{tabular}
+\end{adjustbox}
 \end{table}
 
 \begin{figure}[t]\centering
@@ -133,74 +160,148 @@ CLIP + VideoMAE & 0.899 & \textbf{0.917} & 0.888 & 0.901\\\midrule
 \end{figure}
 
 \subsection{Fine-tuning (test specified in advance)}
-The test specified in advance was \textbf{not met} for any of three seeds. On FallOrNot, fine-tuning on synthetic + real differs from the best probe by $-0.011$ to $-0.002$; on HMDB51 by $+0.028$ to $+0.049$ (CI above zero for two of three seeds). Averaged over seeds (\cref{tab:ft}), the flip reappears: real-trained models are best on FallOrNot and synthetic-trained models are best on HMDB51. Synthetic + real is within 0.008 of the best mean on both test sets, with the smallest seed-to-seed spread on FallOrNot (on HMDB51, synthetic-only varies least). Real-only fine-tuning varies strongly out of domain (HMDB51 hard subset 0.751--0.872).
+The test specified in advance was \textbf{not met} for any of three seeds. On FallOrNot, fine-tuning on synthetic + real differs from the best probe by $-0.011$ to $-0.002$; on HMDB51 by $+0.028$ to $+0.049$ (CI above zero for two of three seeds). Averaged over seeds (\cref{tab:ft}), the flip reappears: real-trained models are best on FallOrNot and synthetic-trained models are best on HMDB51. Synthetic + real is within 0.008 of the best mean on both test sets.
 
 \begin{table}[t]\centering\small
 \caption{Fine-tuned VideoMAE, AUROC mean $\pm$ s.d.\ over 3 seeds. Runs 6--7.}
 \label{tab:ft}
+\begin{adjustbox}{max width=\linewidth}
 \begin{tabular}{lccc}\toprule
 Trained on & FallOrNot & HMDB51 & HMDB51 hard\\\midrule
 Synthetic & 0.838 $\pm$ 0.017 & \textbf{0.960 $\pm$ 0.006} & \textbf{0.922 $\pm$ 0.015}\\
 Real & \textbf{0.902 $\pm$ 0.012} & 0.920 $\pm$ 0.026 & 0.795 $\pm$ 0.067\\
 Synthetic + real & 0.894 $\pm$ 0.005 & 0.954 $\pm$ 0.011 & 0.890 $\pm$ 0.027\\\bottomrule
 \end{tabular}
+\end{adjustbox}
 \end{table}
 
-\subsection{Which training source is safest?}
-No single source is best everywhere, so we ask how far each one falls below the best source on each test (\cref{tab:regret}). By plain worst-case AUROC, real-only training is as good as the mixture, because HMDB51 is the easier test set. But real-only training loses up to 0.103 (probes) and 0.127 (fine-tuned) on the HMDB51 hard subset, and synthetic-only training loses up to 0.088 and 0.101 on FallOrNot's accident negatives. Synthetic + real never loses more than 0.027 (probes) or 0.032 (fine-tuned). These shortfalls are differences of point estimates and carry the uncertainty of the underlying scores.
+\subsection{Which labelled source is safest?}
+No single labelled source is best everywhere. Measured by the shortfall from the best source on each test (FallOrNot, its hard subset, HMDB51, its hard subset), real-only training loses up to 0.103 (probes) and 0.127 (fine-tuned) on the HMDB51 hard subset, and synthetic-only training up to 0.088 and 0.101 on FallOrNot's accident negatives, whereas synthetic + real never loses more than 0.027 (probes) or 0.032 (fine-tuned). By plain worst-case AUROC, real-only training is as good as the mixture.
 
-\paragraph{Source-balanced mixing.} In the plain mixture the 5,136 synthetic clips outnumber the 268 real clips about 19 to 1. We tested a probe in which every source-and-class cell has equal total weight, with one rule fixed in advance: it must beat the plain mixture on both test sets (paired 95\% CI above zero). The rule was \textbf{not met}: balancing helps on FallOrNot ($+0.016$ [$+0.005$, $+0.028$], $p=0.004$; 0.888) but not on HMDB51 ($+0.002$ [$-0.004$, $+0.008$]; 0.903). The balanced probe is statistically indistinguishable from the best single source on each test set (vs.\ real on FallOrNot $-0.011$, $p=0.52$; vs.\ synthetic on HMDB51 $-0.014$, $p=0.09$), and its largest shortfall (0.029, HMDB51 hard subset) matches the plain mixture's.
-
-\begin{table}[t]\centering\small
-\caption{Shortfall from the best training source on each test (AUROC; 0 = best). Probes: CLIP + VideoMAE. Fine-tuned: mean of 3 seeds. ``hard'': accident negatives only (FallOrNot) or the hard subset (HMDB51). Derived from runs 4--7.}
-\label{tab:regret}
-\begin{tabular}{llccccc}\toprule
- & Trained on & FoN & FoN hard & HMDB & HMDB hard & Max\\\midrule
-\multirow{4}{*}{\rotatebox{90}{Probe}} & Staged & 0.140 & 0.145 & 0.018 & 0.047 & 0.145\\
- & Synthetic & 0.085 & 0.088 & 0 & 0 & 0.088\\
- & Real & 0 & 0 & 0.029 & 0.103 & 0.103\\
- & Syn.\ + real & 0.027 & 0.012 & 0.016 & 0.025 & \textbf{0.027}\\\midrule
-\multirow{3}{*}{\rotatebox{90}{Tuned}} & Synthetic & 0.064 & 0.101 & 0 & 0 & 0.101\\
- & Real & 0 & 0 & 0.040 & 0.127 & 0.127\\
- & Syn.\ + real & 0.008 & 0.019 & 0.006 & 0.032 & \textbf{0.032}\\\bottomrule
-\end{tabular}
-\end{table}
+\paragraph{Source-balanced mixing.} A probe in which every source-and-class cell has equal total weight had to beat the plain mixture on both test sets (rule fixed in advance). It was \textbf{not met}: balancing helps on FallOrNot ($+0.016$ [$+0.005$, $+0.028$], $p=0.004$) but not on HMDB51 ($+0.002$ [$-0.004$, $+0.008$]).
 
 \subsection{Robustness to the annotator}\label{sec:annotator}
-Re-grading FallOrNot with the second annotator's labels (99 videos, 152 clips, 78 falls; training labels unchanged; video-level resampling) lowers absolute AUROC (best probe 0.797 instead of 0.899) but preserves the main findings: the staged-to-real gap; real over staged training ($+0.083$ [$+0.010$, $+0.157$], $p=0.024$; CLIP temporal $+0.100$, $p=0.010$); the learning-curve shape (about 8 real falls match staged training, 15 exceed it); and the synthetic plateau below real data at equal budget. The in-domain advantage of real over synthetic training shrinks to $+0.065$ [$-0.006$, $+0.137$] and is no longer significant ($p=0.079$).
+Re-grading FallOrNot with the second annotator's labels (99 videos, 152 clips, 78 falls; training labels unchanged; video-level resampling) lowers absolute AUROC (best probe 0.797 instead of 0.899) but preserves the staged-to-real gap, real over staged training ($+0.083$ [$+0.010$, $+0.157$], $p=0.024$), the learning-curve shape and the synthetic plateau. The in-domain advantage of real over synthetic training shrinks to $+0.065$ [$-0.006$, $+0.137$] and is no longer significant ($p=0.079$).
+
+%=====================================================================
+\section{Do the real clips need labels? Zero-label adaptation}\label{sec:nolabel}
+Labelling is the expensive part of real data, so we ask how far \emph{unlabelled} real video goes. OOPS!\ annotates the time at which each video turns into an accident. That gives structure for free: the clip before the accident shows ordinary activity and is a real non-fall, while the clip at the accident is a fall or some other accident. We take every embedded OOPS!\ video that is in neither FallOrNot's test sample nor OF-ItW (7,063 accident clips, 3,473 of them with a pre-accident clip) and never read a label for them. The synthetic-trained probe scores the accident clips; the top 20\% become pseudo-falls, the bottom 20\% and all pre-accident clips become pseudo-non-falls, and a fresh probe is trained on these real clips alone and re-scores the pool. We repeat this three times. The fraction, the number of rounds and the probe were fixed in advance.
+
+\paragraph{Rule fixed in advance.} Success required the zero-label probe to beat the synthetic-only probe on both FallOrNot and the OF-ItW test split with a paired 95\% interval above zero (resampled by compilation). \textbf{The rule was met} (\cref{tab:nolabel}): $+0.081$ [$+0.033$, $+0.129$] on FallOrNot and $+0.065$ [$+0.052$, $+0.077$] on OF-ItW (both $p<0.001$). On FallOrNot the zero-label probe is indistinguishable from the probe trained on our 268 hand-labelled clips ($-0.004$ [$-0.039$, $+0.031$], $p=0.83$); on OF-ItW it is slightly below the probe trained on OF-ItW's own labels ($-0.014$ [$-0.024$, $-0.003$], $p=0.009$). It closes 95\% and 82\% of the gap between synthetic and human-labelled real training, and on both test sets it matches a real-only probe trained on 125 labelled falls and 125 labelled non-falls, the largest budget on our learning curve.
+
+\paragraph{Out of domain.} On HMDB51, which was not part of the rule, the zero-label probe scores 0.953, above synthetic-only ($+0.036$ [$+0.016$, $+0.056$], $p=0.001$) and above the human-labelled real probe (0.888). It is the only training recipe in this paper that is best or within 0.015 of the best probe on all three test sets; the ranking flip of \cref{fig:flip} does not apply to it.
+
+\paragraph{What makes it work.} Without the pre-accident clips the gain nearly disappears (0.837 on FallOrNot, 0.875 on OF-ItW), whereas using them as the \emph{only} negatives is as good as the full method (0.896, 0.939): the free negatives are the key ingredient and the bottom-20\% accident clips are unnecessary. Adding the free negatives to synthetic data without pseudo-falls hurts (0.782, 0.843), so real pseudo-falls and real negatives are needed together. Three rounds improve on one by 0.017 and 0.013. When the pool is restricted to compilations absent from both test sets (1,110 accident clips, 16\% of the pool) the gain is smaller but remains significant ($+0.065$, $p=0.015$; $+0.054$, $p<0.001$); the smaller pool and the removal of shared compilations are confounded.
+
+\paragraph{Control and sensitivity (exploratory).} We declared the following analysis exploratory before running it. \emph{Random start:} replacing the synthetic probe's initial scores by random numbers still gives $0.865\pm0.011$ on FallOrNot, $0.931\pm0.001$ on OF-ItW and $0.914\pm0.013$ on HMDB51 (five seeds; \cref{tab:nolabel}). Most of the in-domain gain therefore does not come from fall-specific pseudo-labels but from the structure ``accident moment versus ordinary activity'': 62\% of the accidents in FallOrNot's random sample of OOPS!\ are falls, so recognising the accident moment is already a good fall detector on these test sets. \emph{No synthetic data:} starting from CLIP's zero-shot text prompts gives 0.899, 0.936 and 0.941. \emph{Settings:} 2--5 rounds and 10--30\% pseudo-labelled stay within 0.01 of the fixed setting in domain; among pseudo-falls that happen to carry one of our labels, the share of real falls rises from 0.80 after one round to 0.96 after three ($n\approx46$). \emph{Pool size:} about 350 unlabelled videos already give 0.864 and 0.912, and gains level off beyond roughly 1,800 videos (\cref{fig:nolabel}, left).
+
+\paragraph{Falls versus other accidents.} Does the zero-label probe only detect accidents, or does it tell falls from other accidents? We wrote down how to read this analysis before running it. On FallOrNot's hard subset (accident-moment clips only: 102 falls, 63 other accidents; \cref{fig:nolabel}, right) the zero-label probe scores 0.835, against 0.772 for synthetic training, $0.767\pm0.021$ for the random start, 0.724 for a plain accident detector (all accident clips against all pre-accident clips, no pseudo-labels) and 0.860 for the human-labelled probe. Its advantage over the accident detector is significant ($+0.112$ [$+0.044$, $+0.186$], $p=0.001$), so pseudo-labelling adds fall-specific information beyond accident timing; the random start, by contrast, learns accident detection only. But the advantage over synthetic training is \emph{not} significant ($+0.064$ [$-0.005$, $+0.131$], $p=0.065$), nor is the deficit to human labels ($-0.025$ [$-0.073$, $+0.022$], $p=0.29$): with 165 clips, in-domain discrimination of falls from other accidents without labels is not established. On HMDB51's hard subset (falls against fall-like classes) the zero-label probe (0.920) is significantly above synthetic training ($+0.039$ [$+0.014$, $+0.066$], $p=0.005$), the random start ($+0.031$, $p=0.010$), the accident detector ($+0.036$, $p=0.031$) and the human-labelled probe ($+0.143$ [$+0.101$, $+0.185$]).
+
+\begin{figure*}[t]\centering
+\includegraphics[width=0.92\linewidth]{fig_nolabel.pdf}
+\caption{Zero-label adaptation. \emph{Left:} AUROC against the number of unlabelled accident videos used (mean of three random subsets; the full pool is the fixed setting); dashed lines are synthetic-only training. \emph{Right:} falls versus other accidents on the two hard subsets; random start is mean $\pm$ s.d.\ over five seeds. Runs 15--17.}
+\label{fig:nolabel}
+\end{figure*}
+
+\begin{table*}[t]\centering\small
+\caption{Zero-label adaptation (CLIP + VideoMAE probes), AUROC. No human label is read for any row except the last. ``Hard'': falls vs.\ other accidents (FallOrNot) or vs.\ fall-like classes (HMDB51). Random start: mean $\pm$ s.d.\ over five seeds. Last row: our 268 labelled clips, except OF-ItW, where it is OF-ItW's own training split. Runs 15 and 17; ``--'': not computed. The accident detector is one probe trained on all accident clips against all pre-accident clips.}
+\label{tab:nolabel}
+\begin{tabular}{lccccc}\toprule
+Training & FallOrNot & OF-ItW & HMDB51 & FallOrNot hard & HMDB51 hard\\\midrule
+Synthetic only & 0.814 & 0.872 & 0.917 & 0.772 & 0.880\\
+\textbf{Zero-label (fixed setting)} & \textbf{0.894} & \textbf{0.937} & \textbf{0.953} & 0.835 & \textbf{0.920}\\
+\quad 1 round instead of 3 & 0.877 & 0.924 & 0.945 & -- & --\\
+\quad no pre-accident clips & 0.837 & 0.875 & 0.934 & -- & --\\
+\quad only pre-accident clips as negatives & 0.896 & 0.939 & 0.951 & -- & --\\
+\quad synthetic + free negatives, no pseudo-falls & 0.782 & 0.843 & 0.902 & -- & --\\
+\quad pool without test-set compilations & 0.879 & 0.927 & 0.938 & -- & --\\
+\quad start: CLIP zero-shot prompts, no synthetic data & 0.899 & 0.936 & 0.941 & 0.840 & 0.885\\
+\quad start: random scores (control) & $0.865\pm0.011$ & $0.931\pm0.001$ & $0.914\pm0.013$ & $0.767\pm0.021$ & $0.886\pm0.029$\\
+Accident detector (no pseudo-labels) & 0.849 & 0.926 & 0.882 & 0.724 & 0.884\\\midrule
+Real, human labels (full pool) & 0.899 & 0.951 & 0.888 & 0.860 & 0.777\\\bottomrule
+\end{tabular}
+\end{table*}
+
+%=====================================================================
+\section{With a few labels: anchoring to the synthetic solution}\label{sec:anchor}
+The curves in \cref{fig:budget} leave a gap: with fewer than about 30 real falls a real-only probe is unstable and worse than synthetic training, and pooling the two sources lets thousands of synthetic clips outweigh the real ones (\cref{sec:ofitw}). We therefore test a simple alternative, a form of biased regularisation~\cite{yang2007asvm,kuzborskij2013,li2018l2sp}. Let $w_s, b_s$ be the synthetic-trained probe on features standardised with synthetic statistics. On $k$ real falls and $k$ real non-falls we fit $w=w_s+v$, $b=b_s+c$ by minimising
+\[C\sum_i \alpha_i\,\ell\big(y_i,\;x_i^\top (w_s+v)+b_s+c\big)+\tfrac12\lVert v\rVert^2,\]
+where $\ell$ is the logistic loss and $\alpha_i$ balances the classes. The penalty pulls the probe towards the synthetic solution rather than towards zero. $C$ is chosen from $\{10^{-3},\dots,10\}$ by video-grouped cross-validation on the $2k$ training clips alone.
+
+\paragraph{Rule fixed in advance.} Before running the method on real data we committed this rule to the repository: on both FallOrNot and the OF-ItW test split, (i) at every budget $k\in\{4,8,15,30,60,125\}$ the anchored probe's mean AUROC over ten random draws is at least the better of the real-only mean and the synthetic-only probe, minus 0.005, and (ii) averaged over budgets it is higher than both. \textbf{The rule was met on both test sets} (\cref{tab:anchor}). With four real falls the anchored probe equals the synthetic probe and is far more stable than real-only training (FallOrNot: $0.813\pm0.005$ vs.\ $0.687\pm0.124$); cross-validation then selects larger $C$ as $k$ grows, and by $k=60$ it tracks the real-only probe.
+
+\paragraph{Where it does not help.} The gain is confined to small budgets. With the full real pool the anchored probe equals real-only on FallOrNot (0.899 vs.\ 0.899, $p=0.96$) and is slightly but significantly worse on OF-ItW (0.943 vs.\ 0.951; $-0.008$ [$-0.012$, $-0.003$], $p=0.002$). On HMDB51, which was not part of the rule, it reaches 0.902, between real-only (0.888; $+0.014$, $p=0.055$) and synthetic-only (0.917; $-0.015$, $p=0.14$). We did not run plain pooling at these small budgets.
+
+\begin{table}[t]\centering\small
+\caption{Anchored probe: AUROC, mean $\pm$ s.d.\ over ten draws of $k$ real falls + $k$ real non-falls (CLIP + VideoMAE). Synthetic-only: 0.814 (FallOrNot), 0.873 (OF-ItW). Run 12.}
+\label{tab:anchor}
+\setlength\tabcolsep{3pt}
+\begin{adjustbox}{max width=\linewidth}
+\begin{tabular}{rcccc}\toprule
+ & \multicolumn{2}{c}{FallOrNot} & \multicolumn{2}{c}{OF-ItW test}\\\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+$k$ & Anchored & Real-only & Anchored & Real-only\\\midrule
+4 & \textbf{.813} $\pm$ .005 & .687 $\pm$ .124 & \textbf{.876} $\pm$ .005 & .794 $\pm$ .046\\
+8 & \textbf{.819} $\pm$ .012 & .756 $\pm$ .063 & \textbf{.877} $\pm$ .006 & .825 $\pm$ .024\\
+15 & \textbf{.834} $\pm$ .015 & .791 $\pm$ .022 & \textbf{.891} $\pm$ .012 & .847 $\pm$ .024\\
+30 & \textbf{.853} $\pm$ .014 & .826 $\pm$ .030 & \textbf{.907} $\pm$ .019 & .891 $\pm$ .014\\
+60 & \textbf{.875} $\pm$ .010 & .871 $\pm$ .010 & \textbf{.921} $\pm$ .008 & .908 $\pm$ .016\\
+125 & \textbf{.893} $\pm$ .005 & .892 $\pm$ .005 & .935 $\pm$ .007 & \textbf{.937} $\pm$ .007\\\midrule
+Mean & \textbf{.848} & .804 & \textbf{.901} & .867\\\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
+
+\paragraph{Fine-tuning.} For end-to-end fine-tuning we start from the VideoMAE fine-tuned on synthetic clips and continue on the $2k$ real clips with the loss $\mathrm{CE}+\tfrac{\alpha}{2}\lVert\theta-\theta_s\rVert^2$ (L2-SP~\cite{li2018l2sp}), $\alpha=0.01$; the baseline fine-tunes from the Kinetics checkpoint on the same clips with the same schedule. The rule, committed before any result, was the one above on FallOrNot with $k\in\{8,30,125\}$, three draws and a tolerance of 0.01. \textbf{It was met} (\cref{tab:anchorft}): with 8 real falls, real-only fine-tuning collapses to 0.652 while the anchored model stays at the synthetic model's level. On HMDB51 (one draw per budget, not part of the rule) anchored models reach 0.94--0.96, above real-only fine-tuning (0.82--0.89) but below the unadapted synthetic model (0.967). An ablation whose reading we fixed beforehand then removed the penalty: the same models trained from the same synthetic starting point with ordinary weight decay score 0.826, 0.855 and 0.900 on FallOrNot and 0.959, 0.940 and 0.940 on HMDB51, within 0.002 of the anchored ones. For fine-tuning, therefore, \emph{the gain comes from starting at the synthetic-trained model, and the penalty adds nothing measurable}; the recipe reduces to sequential fine-tuning with a short schedule. For the linear probe the distinction does not arise: its objective is convex, so the penalty is the only link to the synthetic solution.
+
+\begin{table}[t]\centering\small
+\caption{Anchored fine-tuning of VideoMAE: AUROC on FallOrNot, mean $\pm$ s.d.\ over three draws; HMDB51 for the first draw. Synthetic-only model: 0.829 (FallOrNot), 0.967 (HMDB51). Run 13.}
+\label{tab:anchorft}
+\setlength\tabcolsep{3pt}
+\begin{adjustbox}{max width=\linewidth}
+\begin{tabular}{rcccc}\toprule
+ & \multicolumn{2}{c}{FallOrNot} & \multicolumn{2}{c}{HMDB51}\\\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+$k$ & Anchored & Real-only & Anchored & Real-only\\\midrule
+8 & .826 $\pm$ .003 & .652 $\pm$ .042 & .960 & .880\\
+30 & \textbf{.855} $\pm$ .007 & .813 $\pm$ .013 & .941 & .888\\
+125 & \textbf{.898} $\pm$ .010 & .894 $\pm$ .008 & .942 & .815\\\midrule
+Mean & \textbf{.860} & .786 & & \\\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
 
 %=====================================================================
 \section{Discussion}
-\paragraph{Which data should a practitioner collect?} In the domain where real falls are collected, a few dozen of them are worth more than thousands of synthetic falls. But that advantage does not travel: on another real-world source, synthetic data generalised better. Training on both had the smallest worst-case shortfall from the best source (at most 0.03 AUROC across all four tests, for both frozen probes and fine-tuned models), so it is the safer default when the deployment footage is not known in advance.
+\paragraph{Collect real video first; label the hard cases.} Much of the value of real data lay in the video rather than in the labels: unlabelled accident clips with free pre-accident negatives recovered 82--95\% of the benefit of hand labels in domain and generalised better out of domain than hand-labelled real or synthetic data. The controls qualify this. Most of the in-domain gain is the easy part, accident versus ordinary activity, which the accident time gives away; pseudo-labelling adds fall-specific information on top, clearly out of domain and not yet provably in domain. Hand labels are therefore best spent where the free signal is silent: on accidents that are not falls. A plausible reason for the out-of-domain advantage is scale and variety (7,063 unlabelled videos against 268 labelled clips), but we did not test this.
+
+\paragraph{Benchmarks need accident negatives.} A random-start control that never sees a fall-specific signal scores 0.931 on OF-ItW and $0.865$ on FallOrNot, but only 0.767 on FallOrNot's hard subset. A test set whose negatives are ordinary activity, or other moments of fall videos, can thus be largely solved by detecting ``something went wrong''; only non-fall accidents as negatives reveal whether a model has learned what a fall is.
+
+\paragraph{If labels are available.} A few dozen hand-labelled real falls are worth more than thousands of synthetic falls in their own domain, but not on another source; training on both had the smallest worst-case shortfall (at most 0.03 AUROC). With only a handful of labels, anchor to the synthetic solution rather than pool.
 
 \paragraph{One real-world benchmark is not enough.} The ranking of training sources reversed between FallOrNot and HMDB51, and the two benchmarks disagree even about how hard real falls are (staged probes: 0.759 vs.\ 0.899). Claims such as ``synthetic beats staged'' or ``real beats synthetic'' should be tested on more than one in-the-wild source.
-
-\paragraph{False alarms on other accidents.} Most fall benchmarks contain falls and everyday activities. FallOrNot's accident negatives show that separating a fall from a collision or a near-fall is the hardest sub-problem, and should be part of evaluation.
 
 %=====================================================================
 \section{Limitations}
 \begin{itemize}\setlength\itemsep{1pt}
-\item \textbf{Label uncertainty.} Agreement between annotators was moderate ($\kappa=0.50$), and absolute scores depend on the annotator; the fall definition needs sharper written guidance.
-\item \textbf{Scale.} 165 labelled test videos and 268 real training clips; confidence intervals are wide.
-\item \textbf{In-domain real data.} Real training and test clips both come from OOPS!; the real-data advantage on FallOrNot is partly in-domain advantage.
-\item \textbf{Imperfect external test.} HMDB51 falls are partly from films and trimmed to the action; they are real-world video but not necessarily real accidents.
-\item \textbf{Population.} Neither source focuses on older adults at home, the main use case.
-\item \textbf{One staged dataset} (UR Fall), which is saturated in-domain.
-\item \textbf{Model-selected training pool.} The real training clips were pre-selected by a CLIP zero-shot score; the test sample was not.
-\item \textbf{Fixed fine-tuning hyper-parameters} were not tuned; three seeds only.
-\item \textbf{Many unadjusted comparisons.} Only two tests were specified in advance (neither was met); the remaining $p$-values are exploratory.
+\item \textbf{Label uncertainty.} Agreement between annotators was moderate ($\kappa=0.50$); absolute scores depend on the annotator.
+\item \textbf{Scale.} FallOrNot has 165 labelled test videos (63 non-fall accidents), so its intervals are wide; OF-ItW is larger but shares the OOPS!\ source.
+\item \textbf{Sources.} Real training data, the unlabelled pool and two of three test sets are OOPS!\ footage; HMDB51 falls are partly from films; no source focuses on older adults at home; UR Fall is the only staged set.
+\item \textbf{Zero-label adaptation.} A random-start control recovers most of the in-domain gain; on FallOrNot's hard subset the gain over synthetic training is not significant ($p=0.065$), so separating falls from other accidents without labels is established only out of domain. One deterministic run with one setting fixed in advance; frozen-feature probes only; half of the videos have no pre-accident clip; pseudo-labelling is a known technique, and the method needs accident timestamps, which arbitrary video lacks.
+\item \textbf{Anchoring} is a known form of biased regularisation; it gave no gain with the full real pool, and for fine-tuning the penalty did not matter (one test set, three draws, one penalty strength).
+\item \textbf{Model-selected training pool.} The labelled real training clips were pre-selected by a CLIP zero-shot score; the test sample and the unlabelled pool were not.
+\item \textbf{Many unadjusted comparisons.} Five tests were specified in advance (three were met); the remaining $p$-values are exploratory. Fine-tuning hyper-parameters were fixed, not tuned.
 \end{itemize}
 
 \section{Conclusion}
-Staged-trained fall detectors that look perfect in the lab fail on real accidents. On the source where real falls are collected, a few dozen of them outperform thousands of synthetic falls, but on an independent real-world source the ranking flips. Training on synthetic and real data together had the smallest worst-case shortfall, and fall detection should be evaluated on more than one real-world source. We release FallOrNot's labels, timestamps and code.
+Staged-trained fall detectors that look perfect in the lab fail on real accidents, and hand-labelled real falls fix that only in their own domain. Unlabelled accident video, pseudo-labelled from a synthetic-trained probe and combined with the free non-falls that precede every accident, gave a probe that needed no human label, matched hand-labelled training in domain to within 0.014 AUROC and was the best probe out of domain, under a success rule fixed in advance. Controls show that most of the in-domain gain comes from accident timing, that pseudo-labelling adds fall-specific information beyond it, and that telling falls from other accidents without labels is established out of domain but not yet in domain. Fall benchmarks need non-fall accidents as negatives and more than one real-world source. We release FallOrNot's labels, timestamps and code.
 
 \paragraph{Data and ethics.} OOPS!\ videos are public web videos; we release only labels, timestamps and code. UR Fall is licensed CC BY-NC-SA 4.0 for non-commercial research; HMDB51 is CC BY 4.0; OmniFall annotations are released for non-commercial use.
 
+%=====================================================================
+\small
 
 \section*{LLM Usage Statement}
-A large language model assistant (Claude, Anthropic) was used extensively in this work. It wrote the data-processing, feature-extraction, fine-tuning and evaluation code; proposed the experimental design, including the model-independent test sample, the external test set, the two tests specified in advance and the leakage check; produced the figures; searched for and summarised related work; and drafted the text of this paper. A second assistant (ChatGPT, OpenAI) was used to check bibliographic details. The human authors chose the research topic, ran every experiment, labelled the data (no label was produced by a model), recruited the second annotator, decided which experiments to run, and reviewed the results and the manuscript. All numbers in the paper are copied from logged experiment outputs, and all references were checked against their sources. The authors take full responsibility for the content of the paper.
+A large language model assistant (Claude, Anthropic) was used extensively in this work. It wrote the data-processing, feature-extraction, fine-tuning and evaluation code; proposed the experimental design, including the model-independent test sample, the additional test sets, the zero-label adaptation experiment with its controls, the tests specified in advance and the leakage check; produced the figures; searched for and summarised related work; and drafted the text of this paper. A second assistant (ChatGPT, OpenAI) was used to check bibliographic details. The human authors chose the research topic, ran every experiment, labelled the data (no label was produced by a model), recruited the second annotator, decided which experiments to run, and reviewed the results and the manuscript. All numbers in the paper are copied from logged experiment outputs, and all references were checked against their sources. The authors take full responsibility for the content of the paper.
 
-{\small
 \begin{thebibliography}{99}
 
 \bibitem{auvinet_mcfd} E.~Auvinet, C.~Rougier, J.~Meunier, A.~St-Arnaud, and J.~Rousseau. Multiple cameras fall data set. Technical Report 1350, DIRO, Universit\'e de Montr\'eal, 2010.
@@ -221,18 +322,33 @@ A large language model assistant (Claude, Anthropic) was used extensively in thi
 
 \bibitem{kuehne2011hmdb} H.~Kuehne, H.~Jhuang, E.~Garrote, T.~Poggio, and T.~Serre. HMDB: A large video database for human motion recognition. In \emph{ICCV}, pages 2556--2563, 2011.
 
+\bibitem{kuzborskij2013} I.~Kuzborskij and F.~Orabona. Stability and hypothesis transfer learning. In \emph{ICML}, PMLR 28(3):942--950, 2013.
+
 \bibitem{kwolek2014} B.~Kwolek and M.~Kepski. Human fall detection on embedded platform using depth maps and wireless accelerometer. \emph{Computer Methods and Programs in Biomedicine}, 117(3):489--501, 2014.
 
-\bibitem{omnifall} D.~Schneider et~al. OmniFall: From staged through synthetic to wild, a unified multi-domain dataset for robust fall detection. arXiv:2505.19889, 2025 (v3, 2026).
+\bibitem{li2018l2sp} X.~Li, Y.~Grandvalet, and F.~Davoine. Explicit inductive bias for transfer learning with convolutional networks. In \emph{ICML}, PMLR 80:2825--2834, 2018.
+
+\bibitem{madsen2024weakfall} K.~Madsen, Z.~Li, F.~Lauze, and K.~Nasrollahi. Person fall detection using weakly supervised methods. In \emph{WACV Workshops}, pages 143--151, 2024.
+
+\bibitem{omnifall} D.~Schneider, Z.~Marinov, M.~Mistol, Z.~Zhong, A.~Jaus, R.~D\"uger, R.~Baur, M.~S. Sarfraz, and R.~Stiefelhagen. OmniFall: From staged through synthetic to wild, a unified multi-domain dataset for robust fall detection. In \emph{ECCV}, 2026. arXiv:2505.19889.
 
 \bibitem{openclip} G.~Ilharco, M.~Wortsman, R.~Wightman, C.~Gordon, N.~Carlini, R.~Taori, A.~Dave, V.~Shankar, H.~Namkoong, J.~Miller, H.~Hajishirzi, A.~Farhadi, and L.~Schmidt. OpenCLIP. Zenodo, 2021. doi:10.5281/zenodo.5143773.
 
 \bibitem{radford2021clip} A.~Radford et~al. Learning transferable visual models from natural language supervision. In \emph{ICML}, 2021.
 
+\bibitem{sultani2018anomaly} W.~Sultani, C.~Chen, and M.~Shah. Real-world anomaly detection in surveillance videos. In \emph{CVPR}, pages 6479--6488, 2018.
+
 \bibitem{tong2022videomae} Z.~Tong, Y.~Song, J.~Wang, and L.~Wang. VideoMAE: Masked autoencoders are data-efficient learners for self-supervised video pre-training. In \emph{NeurIPS}, 2022.
+
+\bibitem{wu2023weakfall} L.~Wu, C.~Huang, S.~Zhao, J.~Li, J.~Zhao, Z.~Cui, Z.~Yu, Y.~Xu, and M.~Zhang. Robust fall detection in video surveillance based on weakly supervised learning. \emph{Neural Networks}, 163:286--297, 2023.
+
+\bibitem{xiao2023umafd} H.~Xiao, K.~Peng, X.~Huang, A.~Roitberg, H.~Li, Z.~Wang, and R.~Stiefelhagen. Toward privacy-supporting fall detection via deep unsupervised RGB2Depth adaptation. \emph{IEEE Sensors Journal}, 23(23):29143--29155, 2023.
+
+\bibitem{xie2020noisystudent} Q.~Xie, M.-T.~Luong, E.~Hovy, and Q.~V. Le. Self-training with Noisy Student improves ImageNet classification. In \emph{CVPR}, pages 10684--10695, 2020.
+
+\bibitem{yang2007asvm} J.~Yang, R.~Yan, and A.~G. Hauptmann. Cross-domain video concept detection using adaptive SVMs. In \emph{ACM Multimedia}, 2007. doi:10.1145/1291233.1291276.
 
 \bibitem{who_falls} World Health Organization. Falls (fact sheet), 21 October 2026. \url{https://www.who.int/news-room/fact-sheets/detail/falls}, accessed November 2026.
 
 \end{thebibliography}
-}
 \end{document}
