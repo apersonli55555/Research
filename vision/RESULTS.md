@@ -481,3 +481,21 @@ Mean over budgets: anchored 0.860, real-only 0.786, synthetic-only 0.829. Every 
 - **The anchoring result carries over from frozen probes to end-to-end fine-tuning.** With 8 real falls, anchored fine-tuning keeps the synthetic model's level (0.826 vs. 0.829) while real-only fine-tuning collapses (0.652); with 30 it is ahead of both (0.855 vs. 0.813 and 0.829); with 125 it matches real-only (0.898 vs. 0.894, within the spread over draws).
 - **Out of domain (HMDB51, secondary, one draw per budget, no intervals):** anchored models stay at 0.94 to 0.96, far above real-only fine-tuning on the same clips (0.82 to 0.89), but below the unadapted synthetic model (0.967): adapting to OOPS! clips costs about 0.01 to 0.03 on HMDB51.
 - **Caveats:** one test set in the rule (FallOrNot; pixel clips for OF-ItW were not stored); three draws; one starting model (seed 0); the penalty strength 0.01 was fixed, not tuned, and no ablation separates the effect of the synthetic starting point from the effect of the penalty; the tolerance was 0.01 (0.005 for the probe test in run 12). L2-SP is an existing technique (Li et al., 2018).
+
+# Run 14: ablation of run 13 (same synthetic starting model, no penalty)
+
+`adapt_ft.py` at commit `94e53ca` in the `Research` repository (Colab L4). How to read the result was written in `AGENTS.md` before the run. "Init-only" = the same synthetic starting model, clips, steps and learning rate as anchored fine-tuning, but ordinary weight decay (0.05) and no pull towards the synthetic weights. Anchored and real-only columns are the saved run 13 results (same draws). Copied from the Colab text output.
+
+| k | Anchored | Real-only | Init-only (no penalty) | HMDB51 anchored (draw 0) | HMDB51 real-only (draw 0) | HMDB51 init-only (draw 0) |
+|---|---|---|---|---|---|---|
+| 8 | 0.826 ± 0.003 | 0.652 ± 0.042 | 0.826 ± 0.003 | 0.960 | 0.880 | 0.959 |
+| 30 | 0.855 ± 0.007 | 0.813 ± 0.013 | 0.855 ± 0.007 | 0.941 | 0.888 | 0.940 |
+| 125 | 0.898 ± 0.010 | 0.894 ± 0.008 | 0.900 ± 0.010 | 0.942 | 0.815 | 0.940 |
+
+Synthetic-only: FallOrNot 0.829, HMDB51 0.967. Mean over budgets: anchored 0.860, init-only 0.860, real-only 0.786.
+
+## Reading (as fixed in advance)
+- **Init-only is within 0.01 of anchored at every budget** (differences 0.000, 0.000, +0.002 on FallOrNot; at most 0.002 on HMDB51). So, for fine-tuning, **the gain comes from starting at the synthetic-fine-tuned model; the L2-SP penalty at strength 0.01 adds nothing measurable.** The paper must say this and must not credit the penalty.
+- The practical recipe for fine-tuned models is therefore simply sequential fine-tuning: synthetic first, then the few real clips, with a short schedule (60 to 156 steps at learning rate 5e-5).
+- This does not carry over automatically to the probe result of run 12, where the penalty is the only thing that links the probe to the synthetic solution (a convex problem has no "starting point" effect) and its strength was cross-validated.
+- **Caveats:** one penalty strength (0.01) was tried, so a stronger penalty might behave differently; short schedules may be what keeps the no-penalty model close to its start; three draws, one starting model, one in-domain test set.
