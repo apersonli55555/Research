@@ -69,6 +69,8 @@ def main():
     ap.add_argument("--out", default=None)
     ap.add_argument("--hard", action="store_true",
                     help="hard-subset analysis (run 17): falls vs other accidents only; reading fixed in AGENTS.md beforehand")
+    ap.add_argument("--dupes", action="store_true",
+                    help="near-duplicate check (run 20): remove pool clips that look like a test clip and retrain")
     ap.add_argument("--hard2", action="store_true",
                     help="extended hard test (run 18): every human-labelled accident clip, with those videos removed from the pool")
     ap.add_argument("--explore", action="store_true",
@@ -260,6 +262,42 @@ def main():
         text = "\n".join(L)
         open(os.path.join(out, "nolabel_hard.md"), "w").write(text + "\n")
         print(text + f"\n\nwrote {out}/nolabel_hard.md, nolabel_hard.json")
+    if a.dupes:
+        # ---- NEAR-DUPLICATE CHECK (reading fixed in AGENTS.md before running). The same web clip can appear in more
+        # than one compilation, which the compilation-disjoint pool does not catch. Similarity = cosine between
+        # mean CLIP frame embeddings (appearance only). Pool videos with ANY clip above the threshold to ANY test
+        # clip (FallOrNot test, OF-ItW test) are removed, and the fixed zero-label pipeline is run again.
+        unit = lambda M: (lambda v: v / (np.linalg.norm(v, axis=1, keepdims=True) + 1e-8))(np.asarray(M, np.float32).mean(1))
+        P = unit(np.array([frames[k] for k in pool]))
+        Tk = [k for k, _ in te]
+        T = np.concatenate([unit(np.array([frames[k] for k in Tk])), unit(O["frames"][ote])])
+        mx = np.zeros(len(pool), np.float32)
+        for i in range(0, len(P), 2000):
+            mx[i:i + 2000] = (P[i:i + 2000] @ T.T).max(1)
+        pool_names = np.array([k[0] for k in pool]); ev_names = np.array([k[0] for k in ev_keys]); pr_names = np.array([k[0] for k in pre_keys])
+        D = {"similarity_quantiles": {str(q): float(np.quantile(mx, q)) for q in (0.5, 0.9, 0.99, 0.999, 1.0)}, "thresholds": {}}
+        L = ["", "NEAR-DUPLICATE CHECK: pool clips most similar to any test clip (cosine of mean CLIP frame embeddings)",
+             "similarity quantiles over pool clips: " + ", ".join(f"{q}: {v:.3f}" for q, v in D["similarity_quantiles"].items()), "",
+             "| pool after removing videos with similarity above | accident clips left | " + " | ".join(tests) + (" | hmdb51 |" if a.external else " |"),
+             "|---|---|" + "---|" * (len(tests) + (1 if a.external else 0))]
+        for thr in (None, 0.98, 0.95, 0.92, 0.90):
+            bad = set(pool_names[mx > thr]) if thr is not None else set()
+            ke = np.array([n not in bad for n in ev_names]); kp = np.array([n not in bad for n in pr_names])
+            m = self_train(s0[ke], Xev[ke], Xpre[kp])[0]
+            r = {n: float(_auroc(yb, m.decision_function(Xb))) for n, (Xb, yb, _) in tests.items()}
+            pt = {n: paired(yb, m.decision_function(Xb), syn.decision_function(Xb), gb) for n, (Xb, yb, gb) in tests.items()}
+            if a.external:
+                r["hmdb51"] = float(_auroc(ye, cmax(m.decision_function(Xe))))
+            D["thresholds"][str(thr)] = dict(videos_removed=len(bad), accident_clips=int(ke.sum()), auroc=r, vs_synthetic=pt)
+            L.append(f"| {'nothing removed' if thr is None else thr} | {int(ke.sum())} | " + " | ".join(f"{v:.3f}" for v in r.values()) + " |")
+            print(L[-1], flush=True)
+        L.append("")
+        for thr, d in D["thresholds"].items():
+            L.append(f"threshold {thr}: " + "; ".join(f"{n} vs synthetic-only {g(v)}" for n, v in d["vs_synthetic"].items()))
+        json.dump(D, open(os.path.join(out, "nolabel_dupes.json"), "w"), indent=1)
+        text = "\n".join(L)
+        open(os.path.join(out, "nolabel_dupes.md"), "w").write(text + "\n")
+        print(text + f"\n\nwrote {out}/nolabel_dupes.md, nolabel_dupes.json")
     if a.hard2:
         # ---- EXTENDED HARD TEST (rule fixed in AGENTS.md before running). Every accident-moment clip that has a human
         # label (FallOrNot test sample + our labelled training pool) is used as test data, and ALL of those videos are
