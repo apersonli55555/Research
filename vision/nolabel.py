@@ -69,6 +69,8 @@ def main():
     ap.add_argument("--out", default=None)
     ap.add_argument("--hard", action="store_true",
                     help="hard-subset analysis (run 17): falls vs other accidents only; reading fixed in AGENTS.md beforehand")
+    ap.add_argument("--hard2", action="store_true",
+                    help="extended hard test (run 18): every human-labelled accident clip, with those videos removed from the pool")
     ap.add_argument("--explore", action="store_true",
                     help="exploratory sensitivity analysis (run 16); never changes the run-15 setting or verdict")
     a = ap.parse_args()
@@ -258,6 +260,55 @@ def main():
         text = "\n".join(L)
         open(os.path.join(out, "nolabel_hard.md"), "w").write(text + "\n")
         print(text + f"\n\nwrote {out}/nolabel_hard.md, nolabel_hard.json")
+    if a.hard2:
+        # ---- EXTENDED HARD TEST (rule fixed in AGENTS.md before running). Every accident-moment clip that has a human
+        # label (FallOrNot test sample + our labelled training pool) is used as test data, and ALL of those videos are
+        # removed from the unlabelled pool, so the zero-label probe never sees them, not even without their labels.
+        lab_names = {n for n, l in labels.items() if l in ("fall", "not_fall")}
+        keep_ev = np.array([k[0] not in lab_names for k in ev_keys]); keep_pre = np.array([k[0] not in lab_names for k in pre_keys])
+        Xev2, Xpre2 = Xev[keep_ev], Xpre[keep_pre]
+        s02 = s0[keep_ev]
+        zs2 = np.array([float(meta[k[0]]["event_margin"]) for k in ev_keys])[keep_ev]
+        cand = {"synthetic_only": [syn], "zero_label (fixed setting, labelled videos removed from pool)": [self_train(s02, Xev2, Xpre2)[0]],
+                "start from CLIP zero-shot prompts": [self_train(zs2, Xev2, Xpre2)[0]],
+                "start from random scores (5 seeds)": [self_train(np.random.default_rng(sd).random(len(s02)), Xev2, Xpre2)[0] for sd in range(1, 6)],
+                "accident detector (no pseudo-labels)": [probe().fit(np.concatenate([Xev2, Xpre2]), np.r_[np.ones(len(Xev2)), np.zeros(len(Xpre2))])]}
+        hk = [k for k in sorted(frames) if k in videos and k[1] == "event" and k[0] in meta and k[0] in lab_names]
+        Xh = pack(hk); yh = np.array([int(labels[k[0]] == "fall") for k in hk])
+        gh = np.array([compilation(k[0]) for k in hk]); is_test = np.array([k[0] in test_names for k in hk])
+        subsets = {"A: FallOrNot hard (random sample)": is_test, "B: labelled training pool, accident clips (selected by CLIP zero-shot score)": ~is_test,
+                   "C: A + B (primary)": np.ones(len(hk), bool)}
+        sc = {m: [x.decision_function(Xh) for x in ms] for m, ms in cand.items()}
+        H2 = {"pool": dict(accident_clips=int(keep_ev.sum()), pre_clips=int(keep_pre.sum())), "n": {}, "auroc": {}, "tests": {}}
+        ours_name = "zero_label (fixed setting, labelled videos removed from pool)"
+        for name, mk in subsets.items():
+            H2["n"][name] = dict(clips=int(mk.sum()), falls=int(yh[mk].sum()), other_accidents=int((1 - yh[mk]).sum()))
+            H2["auroc"][name] = {m: [float(_auroc(yh[mk], v[mk])) for v in vs] for m, vs in sc.items()}
+            o = sc[ours_name][0][mk]
+            H2["tests"][name] = {"zero-label vs synthetic-only": paired(yh[mk], o, sc["synthetic_only"][0][mk], gh[mk]),
+                                 "zero-label vs random start (seed 1)": paired(yh[mk], o, sc["start from random scores (5 seeds)"][0][mk], gh[mk]),
+                                 "zero-label vs accident detector": paired(yh[mk], o, sc["accident detector (no pseudo-labels)"][0][mk], gh[mk])}
+        # human-labelled reference on A only (it is trained on B's videos)
+        mkA = subsets["A: FallOrNot hard (random sample)"]
+        refA = real_full.decision_function(Xh[mkA])
+        H2["auroc"]["A: FallOrNot hard (random sample)"]["reference: real probe trained on human labels"] = [float(_auroc(yh[mkA], refA))]
+        H2["tests"]["A: FallOrNot hard (random sample)"]["zero-label vs human-labelled real"] = paired(yh[mkA], sc[ours_name][0][mkA], refA, gh[mkA])
+        prim = H2["tests"]["C: A + B (primary)"]["zero-label vs synthetic-only"]
+        H2["verdict"] = bool(prim[1] > 0)
+        json.dump(H2, open(os.path.join(out, "nolabel_hard2.json"), "w"), indent=1)
+        fmt = lambda v: f"{v[0]:.3f}" if len(v) == 1 else f"{np.mean(v):.3f} ± {np.std(v):.3f}"
+        L = ["", "EXTENDED HARD TEST: falls vs other accidents on every human-labelled accident clip",
+             "Rule: on subset C the zero-label probe beats synthetic-only with a paired 95% CI above zero (by compilation)",
+             f"Unlabelled pool after removing every labelled video: {H2['pool']['accident_clips']} accident clips + {H2['pool']['pre_clips']} pre-accident clips", ""]
+        for name in subsets:
+            n = H2["n"][name]
+            L += [f"{name}: {n['clips']} clips, {n['falls']} falls, {n['other_accidents']} other accidents"]
+            L += [f"- {m}: {fmt(v)}" for m, v in H2["auroc"][name].items()]
+            L += [f"- {k}: {g(v)}" for k, v in H2["tests"][name].items()] + [""]
+        L.append(f"EXTENDED HARD TEST RESULT: {'SUCCESS' if H2['verdict'] else 'NOT MET'}")
+        text = "\n".join(L)
+        open(os.path.join(out, "nolabel_hard2.md"), "w").write(text + "\n")
+        print(text + f"\n\nwrote {out}/nolabel_hard2.md, nolabel_hard2.json")
     if a.explore:
         explore(out, s0, Xev, Xpre, ev_keys, meta, labels, tests, (Xe, ye, cmax) if a.external else None)
 
