@@ -539,3 +539,33 @@ Real-only learning curves recomputed in this run (k labelled falls + k non-falls
 - **What makes it work (ablations).** The free pre-accident negatives are the key ingredient: without them the gain almost vanishes (0.837 / 0.875), while using them as the only negatives is as good as the full method (0.896 / 0.939), so the bottom-20% accident clips are unnecessary. Free negatives alone, added to synthetic data without pseudo-falls, hurt (0.782 / 0.843): real pseudo-falls and real free negatives are needed together. Three rounds help over one (+0.017 / +0.013).
 - **Leakage.** With a pool restricted to compilations absent from both test sets (only 1,110 accident clips, 16% of the pool) the gain is smaller but still significant on both (+0.065, +0.054); the smaller pool and the removal of shared compilations are confounded.
 - **Caveats.** One deterministic run with one fixed setting (20%, 3 rounds); frozen-feature probes only, not fine-tuned models; FallOrNot and OF-ItW are both OOPS! footage like the pool, so those two tests are in-domain for the unlabelled data (HMDB51 is not); only 3,473 of 7,063 videos have a pre-accident clip; the pool includes the 268 clips we labelled (their labels are not read); pseudo-labelling is a known technique family, and "no prior work does this for fall detection" rests on a short search and is not yet verified. The learning curve here uses a different random stream from run 12, so its real-only values differ slightly (e.g. k = 8: 0.742 here, 0.756 in run 12).
+
+# Run 16: exploratory sensitivity analysis of run 15 (declared in advance as exploratory)
+
+`nolabel.py --explore` at commit `ec95a2b` (`Research` repository; Colab, no GPU). Not a pass/fail test. One thing varied at a time around the fixed setting (20%, 3 rounds, synthetic start). Copied from the Colab text output. Pseudo-fall precision = share of real falls among the pseudo-falls that happen to carry one of our human labels (labels used only for this measurement).
+
+| What is varied | Setting | FallOrNot | OF-ItW | HMDB51 | Pseudo-fall precision |
+|---|---|---|---|---|---|
+| Rounds (20%) | 1 | 0.877 | 0.924 | 0.945 | 0.80 (n = 50) |
+| | 2 | 0.891 | 0.934 | 0.954 | 0.89 (n = 47) |
+| | **3 (fixed setting)** | **0.894** | **0.937** | **0.953** | 0.96 (n = 46) |
+| | 4 | 0.896 | 0.938 | 0.950 | 0.96 (n = 45) |
+| | 5 | 0.898 | 0.941 | 0.950 | 0.98 (n = 45) |
+| Fraction pseudo-labelled (3 rounds) | 5% | 0.877 | 0.928 | 0.943 | |
+| | 10% | 0.888 | 0.931 | 0.941 | |
+| | 30% | 0.893 | 0.940 | 0.957 | |
+| | 40% | 0.878 | 0.930 | 0.957 | |
+| Pool size (mean of 3 random subsets) | 2% (about 141 videos) | 0.816 | 0.866 | 0.924 | |
+| | 5% (about 353 videos) | 0.864 | 0.912 | 0.945 | |
+| | 10% (about 706 videos) | 0.874 | 0.918 | 0.944 | |
+| | 25% (about 1,765 videos) | 0.890 | 0.930 | 0.949 | |
+| | 50% (about 3,531 videos) | 0.894 | 0.937 | 0.950 | |
+| Starting scorer | CLIP zero-shot text prompts (no synthetic data at all) | 0.899 | 0.936 | 0.941 | |
+| | **Random scores (control, one seed)** | **0.882** | **0.931** | **0.920** | |
+
+## Reading
+- **The control changes the interpretation of run 15.** Starting from RANDOM scores still gives 0.882 / 0.931 / 0.920, i.e. most of the gain over synthetic-only (0.814 / 0.872 / 0.917) on the two OOPS!-based tests. The fall-specific starting point adds only +0.012 (FallOrNot), +0.006 (OF-ItW) and +0.033 (HMDB51) over the random start (single seed, no intervals). As fixed in advance in AGENTS.md: **the paper must say that most of the in-domain gain comes from the accident-versus-ordinary-activity structure (accident clips vs. pre-accident clips), not from fall-specific pseudo-labels.** A plausible reason: most OOPS! accidents are falls (102 of 165 FallOrNot test videos), so "is this the accident moment?" is already a good fall detector on these test sets.
+- **Synthetic data is not needed for this recipe:** starting from CLIP's zero-shot text prompts gives 0.899 / 0.936 / 0.941.
+- **Robust to its settings:** 2 to 5 rounds and 10 to 30% all lie within 0.01 of the fixed setting on the in-domain tests; more rounds raise pseudo-fall precision from 0.80 to 0.98 (small n). The fixed setting stays the headline; 5 rounds and 30% look slightly better in places and must not replace it.
+- **Pool size:** about 350 unlabelled videos already give 0.864 / 0.912; gains level off around 1,800 to 3,500 videos; 141 videos give nothing.
+- **Open question this run cannot answer (run 17):** whether the zero-label probe separates falls from OTHER ACCIDENTS (FallOrNot hard subset) or only accidents from ordinary activity.

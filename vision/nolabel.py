@@ -67,6 +67,8 @@ def main():
     ap.add_argument("--ofitw", required=True)
     ap.add_argument("--external", default="")
     ap.add_argument("--out", default=None)
+    ap.add_argument("--hard", action="store_true",
+                    help="hard-subset analysis (run 17): falls vs other accidents only; reading fixed in AGENTS.md beforehand")
     ap.add_argument("--explore", action="store_true",
                     help="exploratory sensitivity analysis (run 16); never changes the run-15 setting or verdict")
     a = ap.parse_args()
@@ -205,6 +207,57 @@ def main():
     text = "\n".join(L)
     open(os.path.join(out, "nolabel.md"), "w").write(text + "\n")
     print("\n" + text + f"\n\nwrote {out}/nolabel.md, nolabel.json")
+    if a.hard:
+        # ---- falls vs OTHER ACCIDENTS only: accident-moment clips of FallOrNot; HMDB51 hard subset
+        evm = np.array([k[1] == "event" for k, _ in te])
+        hard = {"fallornot_hard": (Xt[evm], yt[evm], gt[evm], None)}
+        if a.external:
+            hm = E["clip_hard"].astype(bool) | (ye == 1)
+            hard["hmdb51_hard"] = (Xe, ye, E["clip_name"], hm)
+        zs = np.array([float(meta[k[0]]["event_margin"]) for k in ev_keys])
+        cand = {"synthetic_only": [syn], "zero_label (ours)": [main_model],
+                "start from CLIP zero-shot prompts (no synthetic data)": [self_train(zs, Xev, Xpre)[0]],
+                "start from random scores (control, 5 seeds)":
+                    [self_train(np.random.default_rng(sd).random(len(ev_keys)), Xev, Xpre)[0] for sd in range(1, 6)],
+                "accident detector: all accident clips vs pre-accident clips, no pseudo-labels":
+                    [probe().fit(np.concatenate([Xev, Xpre]), np.r_[np.ones(len(Xev)), np.zeros(len(Xpre))])],
+                "reference: real probe trained on human labels (full pool)": [real_full]}
+        H = {"auroc": {}, "tests": {}}
+        sc_all = {}
+        for name, (Xb, yb, gb, mask) in hard.items():
+            def score(m):
+                v = m.decision_function(Xb)
+                if mask is not None:
+                    v = cmax(v)[mask]
+                return v
+            yy, gg = (yb[mask], gb[mask]) if mask is not None else (yb, gb)
+            sc_all[name] = {m: [score(x) for x in ms] for m, ms in cand.items()}
+            H["auroc"][name] = {m: [float(_auroc(yy, v)) for v in vs] for m, vs in sc_all[name].items()}
+            o = sc_all[name]["zero_label (ours)"][0]
+            H["tests"][name] = {
+                "ours vs synthetic-only": paired(yy, o, sc_all[name]["synthetic_only"][0], gg),
+                "ours vs random-start control (seed 1)": paired(yy, o, sc_all[name]["start from random scores (control, 5 seeds)"][0], gg),
+                "ours vs accident detector": paired(yy, o, sc_all[name]["accident detector: all accident clips vs pre-accident clips, no pseudo-labels"][0], gg),
+                "ours vs human-labelled real": paired(yy, o, sc_all[name]["reference: real probe trained on human labels (full pool)"][0], gg),
+                "accident detector vs synthetic-only": paired(yy, sc_all[name]["accident detector: all accident clips vs pre-accident clips, no pseudo-labels"][0],
+                                                              sc_all[name]["synthetic_only"][0], gg)}
+        # the same candidates on the full test sets, for the control rows
+        full = {n: {m: [float(_auroc(yb, x.decision_function(Xb))) for x in ms] for m, ms in cand.items()} for n, (Xb, yb, _) in tests.items()}
+        if a.external:
+            full["hmdb51"] = {m: [float(_auroc(ye, cmax(x.decision_function(Xe)))) for x in ms] for m, ms in cand.items()}
+        H["full"] = full
+        json.dump(H, open(os.path.join(out, "nolabel_hard.json"), "w"), indent=1)
+        fmt = lambda v: f"{v[0]:.3f}" if len(v) == 1 else f"{np.mean(v):.3f} ± {np.std(v):.3f}"
+        cols = list(full) + list(H["auroc"])
+        L = ["", "HARD-SUBSET ANALYSIS: falls vs other accidents only (fallornot_hard = accident-moment clips; hmdb51_hard = falls vs fall-like classes)", "",
+             "| Method | " + " | ".join(cols) + " |", "|---|" + "---|" * len(cols)]
+        for m in cand:
+            L.append(f"| {m} | " + " | ".join(fmt((full.get(c) or H["auroc"][c])[m]) for c in cols) + " |")
+        for name in H["tests"]:
+            L += ["", f"{name} (paired, AUROC difference [95% CI], p):"] + [f"- {k}: {g(v)}" for k, v in H["tests"][name].items()]
+        text = "\n".join(L)
+        open(os.path.join(out, "nolabel_hard.md"), "w").write(text + "\n")
+        print(text + f"\n\nwrote {out}/nolabel_hard.md, nolabel_hard.json")
     if a.explore:
         explore(out, s0, Xev, Xpre, ev_keys, meta, labels, tests, (Xe, ye, cmax) if a.external else None)
 
