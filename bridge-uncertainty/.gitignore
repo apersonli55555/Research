@@ -1,0 +1,11 @@
+data/
+results/predictions.pkl
+results/run.log
+__pycache__/
+*.pyc
+.pytest_cache/
+results/rolling*.log
+results/robust.log
+results/*.shard*
+results/*.log
+learning/__pycache__/

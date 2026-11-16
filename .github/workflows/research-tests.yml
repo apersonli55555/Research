@@ -1,0 +1,22 @@
+name: research tests
+on:
+  push:
+    paths: ["bridge-uncertainty/**", "sensor-thermal-cal/**", ".github/workflows/research-tests.yml"]
+  pull_request:
+    paths: ["bridge-uncertainty/**", "sensor-thermal-cal/**"]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        project: [bridge-uncertainty, sensor-thermal-cal]
+    defaults:
+      run:
+        working-directory: ${{ matrix.project }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install numpy scipy pandas scikit-learn matplotlib tabulate pytest pyserial
+      - run: python -m pytest -q

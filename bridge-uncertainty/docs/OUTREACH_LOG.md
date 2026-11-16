@@ -1,0 +1,22 @@
+# Outreach log
+
+| Date | Professor | Address | Their work mentioned | Question asked | Status |
+|---|---|---|---|---|---|
+| 2026-11-09 | Tan Bui-Thanh (ASE / Oden) | tanbui@oden.utexas.edu | Model-constrained DG network, out-of-distribution generalization | Is inside- vs outside-range conformal coverage a sound framing? | Sent; follow-up draft for ~Nov 20 |
+| 2026-11-09 | Jan Fuhg (ASE) | jan.fuhg@utexas.edu | Preprint: ML thermoelastic models with polyconvexity | How do you encode physics the data never exercise (cross-winter prior)? | Sent; follow-up draft for ~Nov 20 |
+| 2026-11-09 | Jeffrey Bennighof (ASE) | bennighof@mail.utexas.edu | AMLS vibration-analysis method | Why could one mode's frequency rise with temperature? | Sent; follow-up draft for ~Nov 20 |
+| 2026-11-09 | Jayant Sirohi (ASE) | jayant.sirohi@mail.utexas.edu | Deformation measurements to estimate loads (supersonic/hypersonic) | Do temperature-driven frequency shifts matter in aerospace monitoring? | Sent; follow-up draft for ~Nov 20 |
+| 2026-11-10 | Kristof Maes (KU Leuven, dataset author) | kristof.maes@kuleuven.be (from the 2022 MSSP paper) | His KW51 data and 2022 paper | Is mode 3's rising trend with temperature physical, and what causes it? | **Draft only, not sent.** Send it yourself from Gmail. |
+
+**Broken links (16 Nov 2026).** The emails sent on 9 Nov link to the old repository, which is now private, so professors who click them will get an error page. The project now lives in the public repository at https://github.com/apersonli55555/research/tree/main/bridge-uncertainty, and the one-page summary is at https://github.com/apersonli55555/research/blob/main/bridge-uncertainty/docs/one_page_summary.pdf. If anyone replies, give them the new link. Keep this repository public and don't rename it while conversations are open.
+
+## If someone replies
+1. Reply within 24 hours. Thank them and offer two or three specific times.
+2. Before the call, re-read `docs/STUDY_GUIDE.md`. Be ready to explain the method, the main result, the cold-side failure and **exactly what you did yourself versus the AI assistant**.
+3. Bring one concrete question and one thing you've done since the email (a lab result, MDS progress, Z24 registration).
+4. Afterwards, send a thank-you within a day, and write notes here.
+
+## Things to say first if a UT professor replies
+The four emails sent on 9 Nov were written before two corrections. Mention both in your first reply:
+1. A physics-free line with a kink matches the physics model, so the gain comes from the two-regime shape, not the physics formula.
+2. The dataset authors' 2022 paper already reports the two-regime relation, attributes the cold stiffening to frozen ballast, and excludes cold data because it biases the slope. Your contribution is the coverage analysis.
