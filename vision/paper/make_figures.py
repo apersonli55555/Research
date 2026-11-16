@@ -112,4 +112,40 @@ fig.legend(handles=[Line2D([], [], marker="D", color=COL["Synthetic + real"], ms
            loc="lower center", ncol=3, fontsize=6.3, bbox_to_anchor=(0.53, -0.02), handletextpad=0.4, columnspacing=1.0)
 fig.tight_layout(rect=(0, 0.07, 1, 1), w_pad=0.8)
 fig.savefig(os.path.join(HERE, "fig_adapt.pdf"))
-print("wrote fig_flip.pdf, fig_budget.pdf, fig_adapt.pdf")
+
+# ---- Figure 4: zero-label adaptation. Left: size of the unlabelled pool (run 16; mean of 3 random subsets; full pool = run 15).
+#      Right: falls vs other accidents on the hard subsets (run 17).
+TEST_COL = {"FallOrNot": COL["Real"], "OF-ItW": COL["Staged"], "HMDB51": COL["Synthetic"]}
+TEST_MARK = {"FallOrNot": "o", "OF-ItW": "s", "HMDB51": "^"}
+pool = {"FallOrNot": (0.814, [.816, .864, .874, .890, .894, .894]), "OF-ItW": (0.872, [.866, .912, .918, .930, .937, .937]),
+        "HMDB51": (0.917, [.924, .945, .944, .949, .950, .953])}
+npool = [141, 353, 706, 1765, 3531, 7063]
+fig, (ax, bx) = plt.subplots(1, 2, figsize=(6.9, 2.3), gridspec_kw={"width_ratios": [1, 1.15]})
+for t, (syn, ys) in pool.items():
+    ax.plot(npool, ys, color=TEST_COL[t], marker=TEST_MARK[t], ms=3.8, lw=1.5, markeredgecolor="white", markeredgewidth=0.4)
+    ax.plot([npool[0], npool[-1]], [syn, syn], color=TEST_COL[t], lw=0.9, ls=(0, (3, 2)))
+    ax.annotate(t, (npool[-1], ys[-1]), xytext=(4, 0), textcoords="offset points", va="center", fontsize=6.5, color=INK)
+ax.set_xscale("log"); ax.set_xlim(110, 30000); ax.set_ylim(0.80, 0.97)
+ax.set_xticks([141, 706, 3531, 7063]); ax.set_xticklabels(["141", "706", "3.5k", "7k"]); ax.minorticks_off()
+ax.set_xlabel("unlabelled accident videos used"); ax.set_ylabel("AUROC")
+ax.set_title("no human labels (dashed: synthetic only)", fontsize=7, color=INK, pad=3)
+methods = [("Accident detector", .724, 0, .884, 0), ("Random start", .767, .021, .886, .029), ("Synthetic only", .772, 0, .880, 0),
+           ("Zero-label", .835, 0, .920, 0), ("Human labels", .860, 0, .777, 0)]
+yy = range(len(methods))[::-1]
+for (name, a_, sa, b_, sb), y in zip(methods, yy):
+    c = COL["Synthetic + real"] if name == "Zero-label" else MUTED
+    bx.plot([a_, b_], [y, y], color=GRID, lw=1.2, zorder=1)
+    bx.errorbar(a_, y, xerr=sa or None, fmt="o", color=c, ms=4.5, elinewidth=0.8, capsize=0, markeredgecolor="white", markeredgewidth=0.5, zorder=3)
+    bx.errorbar(b_, y, xerr=sb or None, fmt="^", color=c, ms=4.5, mfc="white", elinewidth=0.8, capsize=0, markeredgewidth=1, zorder=3)
+bx.set_yticks(list(yy)); bx.set_yticklabels([m[0] for m in methods], fontsize=6.5, color=INK)
+bx.set_xlim(0.69, 0.95); bx.set_xlabel("AUROC, falls vs. other accidents"); bx.xaxis.grid(True, color=GRID, lw=0.5); bx.set_axisbelow(True)
+bx.legend(handles=[Line2D([], [], marker="o", color=MUTED, ls="", ms=4, label="FallOrNot hard"),
+                   Line2D([], [], marker="^", color=MUTED, mfc="white", ls="", ms=4, label="HMDB51 hard")],
+          loc="lower right", fontsize=6.2, handletextpad=0.2, borderaxespad=0.2)
+for a_ in (ax, bx):
+    for sp in ("top", "right"):
+        a_.spines[sp].set_visible(False)
+ax.yaxis.grid(True, color=GRID, lw=0.5); ax.set_axisbelow(True)
+fig.tight_layout(w_pad=1.2)
+fig.savefig(os.path.join(HERE, "fig_nolabel.pdf"))
+print("wrote fig_flip.pdf, fig_budget.pdf, fig_adapt.pdf, fig_nolabel.pdf")

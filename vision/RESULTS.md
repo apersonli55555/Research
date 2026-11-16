@@ -601,3 +601,7 @@ Paired tests, AUROC difference [95% CI], p:
 - **(c) Not met as stated** (zero-label does not beat both synthetic-only and the random start on FallOrNot hard with intervals above zero; both are p ≈ 0.07). On HMDB51 hard it does beat both (p = 0.005, p = 0.010) and beats human-labelled real training by +0.143.
 - **Random-start control over 5 seeds:** 0.865 ± 0.011 on FallOrNot (the single seed in run 16 gave 0.882, at the upper end), 0.767 ± 0.021 on FallOrNot hard (no better than synthetic-only, 0.772). The random start therefore learns accident detection, and the fall-specific starting scorer is what lifts the hard subsets (0.835 / 0.840 with the synthetic or zero-shot start).
 - **Summary:** zero-label = accident-timing structure (most of the easy gain) + a fall-specific starting scorer (the hard-subset gain: significant out of domain, borderline in domain).
+
+# Addendum: values quoted in the paper that come from the full Colab output of runs 10–11
+
+The paper quotes two numbers that appear in the complete `experiment.py` output (pasted by the owner for runs 10 and 11) but were not copied into the run tables above: staged-trained VideoMAE probe on FallOrNot, recall at 5% false positives **0.304** [0.216, 0.510]; zero-shot CLIP on the FallOrNot hard subset, AUROC **0.686** [0.588, 0.782]. Rounded p-values in the paper (0.57, 0.52, 0.09, 0.29) correspond to 0.566, 0.520, 0.091 and 0.290 above; κ = 0.50 is 0.498. "62% of accidents are falls" = 102 falls among the 165 labelled videos of FallOrNot's random sample.
