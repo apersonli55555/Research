@@ -499,3 +499,43 @@ Synthetic-only: FallOrNot 0.829, HMDB51 0.967. Mean over budgets: anchored 0.860
 - The practical recipe for fine-tuned models is therefore simply sequential fine-tuning: synthetic first, then the few real clips, with a short schedule (60 to 156 steps at learning rate 5e-5).
 - This does not carry over automatically to the probe result of run 12, where the penalty is the only thing that links the probe to the synthetic solution (a convex problem has no "starting point" effect) and its strength was cross-validated.
 - **Caveats:** one penalty strength (0.01) was tried, so a stronger penalty might behave differently; short schedules may be what keeps the no-penalty model close to its start; three draws, one starting model, one in-domain test set.
+
+# Run 15: zero-label adaptation from unlabelled accident video (rule fixed in advance: MET)
+
+`nolabel.py` at commit `4d18779` in the `Research` repository (Colab, no GPU). The rule was committed to `AGENTS.md` in the same commit, before any result on real data. Copied from the Colab text output.
+
+**Method (no human label is read).** Unlabelled pool: every embedded OOPS! video except all FallOrNot test videos and all OF-ItW videos: **7,063 accident clips + 3,473 pre-accident clips from 7,063 videos**. Round 0: score the accident clips with the synthetic-trained probe. Each round: top 20% of accident clips = pseudo-falls (1,413); bottom 20% of accident clips + all pre-accident clips = pseudo-non-falls (4,886); train a fresh CLIP + VideoMAE probe on these real clips only; re-score. Three rounds. Deterministic, one run.
+
+AUROC:
+
+| Method | FallOrNot | OF-ItW test | HMDB51 |
+|---|---|---|---|
+| Synthetic-only | 0.814 | 0.872 | 0.917 |
+| **Zero-label (ours)** | **0.894** | **0.937** | **0.953** |
+| Ablation: 1 round | 0.877 | 0.924 | 0.945 |
+| Ablation: no pre-accident clips | 0.837 | 0.875 | 0.934 |
+| Ablation: pre-accident clips as the only negatives | 0.896 | 0.939 | 0.951 |
+| Ablation: synthetic + pre-accident negatives, no pseudo-labels | 0.782 | 0.843 | 0.902 |
+| Robustness: pool without test-set compilations (1,110 accident clips) | 0.879 | 0.927 | 0.938 |
+| Reference: real probe trained on human labels (full pool) | 0.899 | 0.951 | 0.888 |
+
+Paired tests (by compilation on FallOrNot and OF-ItW, by clip on HMDB51):
+
+| Test set | Zero-label vs. synthetic-only | Zero-label vs. human-labelled real probe | Compilation-disjoint pool vs. synthetic-only |
+|---|---|---|---|
+| FallOrNot | +0.081 [+0.033, +0.129], p < 0.001 | −0.004 [−0.039, +0.031], p = 0.832 | +0.065 [+0.014, +0.114], p = 0.015 |
+| OF-ItW | +0.065 [+0.052, +0.077], p < 0.001 | −0.014 [−0.024, −0.003], p = 0.009 | +0.054 [+0.040, +0.068], p < 0.001 |
+| HMDB51 (secondary) | +0.036 [+0.016, +0.056], p = 0.001 | not tested | not tested |
+
+Share of the synthetic-to-labelled-real gap closed without labels: FallOrNot 0.95, OF-ItW 0.82.
+
+Real-only learning curves recomputed in this run (k labelled falls + k non-falls, mean of 10 draws): FallOrNot 4: 0.699, 8: 0.742, 15: 0.770, 30: 0.827, 60: 0.861, 125: 0.894; OF-ItW 4: 0.794, 8: 0.825, 15: 0.847, 30: 0.891, 60: 0.908, 125: 0.937. **Label equivalent: 125 labelled falls (plus 125 non-falls) on both test sets**, the largest budget on the curve.
+
+**ZERO-LABEL RESULT: SUCCESS** (rule met on both test sets).
+
+## Reading
+- **Unlabelled real accident video closes most of the synthetic-to-real gap with zero human labels.** On FallOrNot the zero-label probe (0.894) is statistically indistinguishable from the probe trained on our 268 hand-labelled clips (0.899); on OF-ItW it is slightly but significantly lower than the probe trained on OF-ItW's own labels (0.937 vs. 0.951).
+- **It is the first training recipe in this project that is best or near-best on all three test sets.** On HMDB51 it scores 0.953, above synthetic-only (0.917, p = 0.001) and above the human-labelled real probe (0.888; difference not tested). The earlier "ranking flip" (real wins in domain, synthetic wins out of domain) does not apply to it.
+- **What makes it work (ablations).** The free pre-accident negatives are the key ingredient: without them the gain almost vanishes (0.837 / 0.875), while using them as the only negatives is as good as the full method (0.896 / 0.939), so the bottom-20% accident clips are unnecessary. Free negatives alone, added to synthetic data without pseudo-falls, hurt (0.782 / 0.843): real pseudo-falls and real free negatives are needed together. Three rounds help over one (+0.017 / +0.013).
+- **Leakage.** With a pool restricted to compilations absent from both test sets (only 1,110 accident clips, 16% of the pool) the gain is smaller but still significant on both (+0.065, +0.054); the smaller pool and the removal of shared compilations are confounded.
+- **Caveats.** One deterministic run with one fixed setting (20%, 3 rounds); frozen-feature probes only, not fine-tuned models; FallOrNot and OF-ItW are both OOPS! footage like the pool, so those two tests are in-domain for the unlabelled data (HMDB51 is not); only 3,473 of 7,063 videos have a pre-accident clip; the pool includes the 268 clips we labelled (their labels are not read); pseudo-labelling is a known technique family, and "no prior work does this for fall detection" rests on a short search and is not yet verified. The learning curve here uses a different random stream from run 12, so its real-only values differ slightly (e.g. k = 8: 0.742 here, 0.756 in run 12).
