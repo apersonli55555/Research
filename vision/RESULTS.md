@@ -569,3 +569,35 @@ Real-only learning curves recomputed in this run (k labelled falls + k non-falls
 - **Robust to its settings:** 2 to 5 rounds and 10 to 30% all lie within 0.01 of the fixed setting on the in-domain tests; more rounds raise pseudo-fall precision from 0.80 to 0.98 (small n). The fixed setting stays the headline; 5 rounds and 30% look slightly better in places and must not replace it.
 - **Pool size:** about 350 unlabelled videos already give 0.864 / 0.912; gains level off around 1,800 to 3,500 videos; 141 videos give nothing.
 - **Open question this run cannot answer (run 17):** whether the zero-label probe separates falls from OTHER ACCIDENTS (FallOrNot hard subset) or only accidents from ordinary activity.
+
+# Run 17: hard-subset analysis of the zero-label probe (reading fixed in advance)
+
+`nolabel.py --hard` at commit `152c81a` (`Research` repository; Colab, no GPU). How to read the outcome was written in `AGENTS.md` before the run. FallOrNot hard = accident-moment clips only (102 falls vs. 63 other accidents); HMDB51 hard = falls vs. fall-like classes (320 clips). Copied from the Colab text output. Random start: mean ± s.d. over 5 seeds. "Accident detector" = one probe trained on all unlabelled accident clips (positive) vs. all pre-accident clips (negative), no pseudo-labels.
+
+| Method | FallOrNot | OF-ItW | HMDB51 | FallOrNot hard | HMDB51 hard |
+|---|---|---|---|---|---|
+| Synthetic-only | 0.814 | 0.872 | 0.917 | 0.772 | 0.880 |
+| **Zero-label (ours)** | 0.894 | 0.937 | 0.953 | 0.835 | 0.920 |
+| Start from CLIP zero-shot prompts (no synthetic data) | 0.899 | 0.936 | 0.941 | 0.840 | 0.885 |
+| Start from random scores (control, 5 seeds) | 0.865 ± 0.011 | 0.931 ± 0.001 | 0.914 ± 0.013 | 0.767 ± 0.021 | 0.886 ± 0.029 |
+| Accident detector (no pseudo-labels) | 0.849 | 0.926 | 0.882 | 0.724 | 0.884 |
+| Real probe trained on our human labels (268 clips) | 0.899 | 0.931* | 0.888 | 0.860 | 0.777 |
+
+\* This script scores our 268-clip probe on OF-ItW without removing the 20 clips that belong to OF-ItW test videos (run 11 removes them and reports 0.927); use run 11's number in the paper.
+
+Paired tests, AUROC difference [95% CI], p:
+
+| Comparison | FallOrNot hard | HMDB51 hard |
+|---|---|---|
+| Zero-label vs. synthetic-only | +0.064 [−0.005, +0.131], p = 0.065 | +0.039 [+0.014, +0.066], p = 0.005 |
+| Zero-label vs. random-start control (seed 1) | +0.043 [−0.003, +0.092], p = 0.068 | +0.031 [+0.008, +0.057], p = 0.010 |
+| Zero-label vs. accident detector | +0.112 [+0.044, +0.186], p = 0.001 | +0.036 [+0.003, +0.070], p = 0.031 |
+| Zero-label vs. human-labelled real | −0.025 [−0.073, +0.022], p = 0.290 | +0.143 [+0.101, +0.185], p < 0.001 |
+| Accident detector vs. synthetic-only | −0.048 [−0.150, +0.042], p = 0.319 | +0.003 [−0.034, +0.039], p = 0.859 |
+
+## Reading (following the rules fixed in advance)
+- **(a) On FallOrNot hard the zero-label probe is NOT significantly above synthetic-only** (+0.064, interval [−0.005, +0.131], p = 0.065). As fixed in advance, the paper must say that in-domain discrimination of falls from other accidents by the zero-label probe is not established, and that the significant full-test gain is mainly accident-vs-ordinary-activity. Labels are not shown to be dispensable for the hard cases (human-labelled real: 0.860; difference −0.025, n.s.; n = 165, so the test is weak in both directions).
+- **(b) Pseudo-labelling adds something beyond accident timing.** The plain accident detector is clearly worse than the zero-label probe on FallOrNot (0.849 vs. 0.894), HMDB51 (0.882 vs. 0.953) and both hard subsets (+0.112, p = 0.001; +0.036, p = 0.031), and on the hard subsets it is no better than synthetic-only. So the accident-timing signal alone is not the method.
+- **(c) Not met as stated** (zero-label does not beat both synthetic-only and the random start on FallOrNot hard with intervals above zero; both are p ≈ 0.07). On HMDB51 hard it does beat both (p = 0.005, p = 0.010) and beats human-labelled real training by +0.143.
+- **Random-start control over 5 seeds:** 0.865 ± 0.011 on FallOrNot (the single seed in run 16 gave 0.882, at the upper end), 0.767 ± 0.021 on FallOrNot hard (no better than synthetic-only, 0.772). The random start therefore learns accident detection, and the fall-specific starting scorer is what lifts the hard subsets (0.835 / 0.840 with the synthetic or zero-shot start).
+- **Summary:** zero-label = accident-timing structure (most of the easy gain) + a fall-specific starting scorer (the hard-subset gain: significant out of domain, borderline in domain).
