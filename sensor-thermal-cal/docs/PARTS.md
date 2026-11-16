@@ -1,6 +1,6 @@
 # Parts list with links
 
-Links were found by web search on 10 November 2026. Prices, stock and seller quality were **not** checked, and listings change. Read each listing before buying, especially the points under "Check".
+Links were found by web search on 10 November 2026 (thermometer options updated 16 November, after the first choice went out of stock). Prices, stock and seller quality were **not** checked, and listings change. Read each listing before buying, especially the points under "Check".
 
 | # | Item | Link | Check on the listing |
 |---|---|---|---|
@@ -11,7 +11,9 @@ Links were found by web search on 10 November 2026. Prices, stock and seller qua
 | 3b | Alternative: ELEGOO 120 wires only, **plus** any small (400-point or mini) breadboard | https://www.amazon.com/Elegoo-EL-CP-004-Multicolored-Breadboard-arduino/dp/B01EV70C78 | The breadboard is needed: see notes. |
 | 4 | Long USB cable: ANLINK 10 ft flat USB-A to USB-C | https://www.amazon.com/ANLINK-Charging-Replacement-Security-Cord-White/dp/B0GNLCJDHL | That it carries **data**, not charging only. That your laptop has a USB-A port (otherwise get USB-C to USB-C). |
 | 5 | Silica gel: Dry & Dry or similar, 50 × 5 g packets | https://www.amazon.com/Desiccant-Packets-Moisture-Absorber-Dehumidifiers/dp/B01NBQEYTJ | Nothing special. |
-| 6 | Separate thermometer with wired probe (fridge/freezer type) | https://www.amazon.com/Urageuxy-Refrigerator-Thermometer-Waterproof-Function/dp/B0D3LNLKFG | That its range goes below freezer temperature and above 50 °C. |
+| 6 | Separate thermometer with wired probe: Thermometer World fridge/freezer thermometer (probe −50 to +70 °C, min/max memory) | https://www.amazon.com/Digital-Thermometer-Temperature-Feature-Freezer/dp/B074TF8YMQ | Only the probe goes in the cold; the display (rated −20 to +50 °C) stays outside. |
+| 6b | Alternative: LCD meter with wired probe (listed −50 to +70 °C) | https://www.amazon.com/Digital-Temperature-Meter-Fridge-Monitoring/dp/B0H9GLW87S | Min/max memory not confirmed (not essential). |
+| 6c | Alternative: AMIR fridge thermometer with external probe | https://www.amazon.com/AMIR-Thermometer-External-Aquarium-Refrigerator/dp/B0F2FDGHR3 | Range not confirmed: check it reaches below −18 °C and above 50 °C. |
 | 7 | Small foam box or insulated lunch bag, zip bags, tape | from home | The box should close with the cable passing out. |
 
 ## Notes
