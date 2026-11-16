@@ -6,7 +6,7 @@
 <title>CastLab</title>
 <meta name="description" content="CastLab: fishing tools and reproducible fishing research in one place — map, weather, BaitRadar inventory, GearMatch, LureLab statistics, the CastCheck shoreline digital twin and a rod mechanics simulator.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Instrument+Sans:wght@400..700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Instrument+Sans:wght@400..700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0f2a3d">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
@@ -18,25 +18,65 @@
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 <!-- ============ AUTH ============ -->
-<div id="authView" class="auth-wrap" hidden>
-  <div class="auth-grid">
-    <div class="auth-pitch">
-      <div class="brand">
-        <svg width="40" height="40" viewBox="0 0 34 34" aria-hidden="true"><rect width="34" height="34" rx="10" fill="rgba(255,255,255,.12)"/><path d="M7 24c5-1 9-6 11-13M18 11l9 15" stroke="var(--on-deep)" stroke-width="2.2" fill="none" stroke-linecap="round"/><circle cx="27" cy="26" r="2.600" fill="var(--hot)"/></svg>
-        <div><b>CastLab</b></div>
-      </div>
-      <h1>Know when, where and what to fish.</h1>
-      <ul class="pitch">
-        <li><b>Every hour, rated</b><span>A score for each hour of today and tomorrow at your spot, with the reason.</span></li>
-        <li><b>What is swimming there</b><span>Sport fish and baitfish other people have reported near any lake or river.</span></li>
-        <li><b>The shoreline in 3D</b><span>Real elevation data with a water level you can raise and lower.</span></li>
-        <li><b>Your own numbers</b><span>Catch odds from your logged trips, with honest uncertainty.</span></li>
-      </ul>
+<div id="authView" class="story" hidden>
+  <canvas class="story3d" aria-hidden="true"></canvas>
+  <header class="story-top">
+    <a class="story-brand" href="#top" aria-label="CastLab, back to top">
+      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><rect width="34" height="34" rx="10" fill="var(--ink)"/><path d="M7 24c5-1 9-6 11-13M18 11l9 15" stroke="var(--bg)" stroke-width="2.2" fill="none" stroke-linecap="round"/><circle cx="27" cy="26" r="2.6" fill="var(--hot)"/></svg>
+      <span>CastLab</span>
+    </a>
+    <nav class="story-nav" aria-label="Chapters">
+      <a href="#ch1">Hours</a><a href="#ch2">Fish</a><a href="#ch3">Lures</a><a href="#ch4">Start</a>
+    </nav>
+    <a class="btn hot sm" href="#ch4">Try it free</a>
+  </header>
+
+  <section class="chapter" id="ch0" data-ch="0">
+    <div class="ch-text">
+      <p class="kicker">Fishing tools and field science</p>
+      <h1 class="ch-title">Know when<br>to cast.</h1>
+      <p class="ch-lead">Pick any lake or river. CastLab rates every hour of the week, shows which fish people report there, and tells you what to tie on.</p>
+      <a class="btn hot big" href="#ch4">Start fishing smarter</a>
+      <p class="scroll-cue" aria-hidden="true">Scroll</p>
+    </div>
+  </section>
+
+  <section class="chapter" id="ch1" data-ch="1">
+    <div class="ch-text">
+      <span class="ch-num">1.</span>
+      <h2 class="ch-title">Every hour,<br>rated.</h2>
+      <p class="ch-lead">A score from 0 to 100 for each hour, built from sunrise and sunset, cloud, pressure, wind, the moon, the water temperature and three weather models.</p>
+      <ul class="ch-facts"><li><b>7</b> days ahead</li><li><b>3</b> weather models</li><li><b>1</b> best hour, picked for you</li></ul>
+    </div>
+  </section>
+
+  <section class="chapter" id="ch2" data-ch="2">
+    <div class="ch-text">
+      <span class="ch-num">2.</span>
+      <h2 class="ch-title">Know what's<br>swimming.</h2>
+      <p class="ch-lead">Sport fish and the minnows they chase, from thousands of real reports near your spot, with photos and dates.</p>
+    </div>
+  </section>
+
+  <section class="chapter" id="ch3" data-ch="3">
+    <div class="ch-text">
+      <span class="ch-num">3.</span>
+      <h2 class="ch-title">Tie on the<br>right lure.</h2>
+      <p class="ch-lead">Lure colours and sizes matched to the local baitfish, checked against your own tackle box and the trips you log.</p>
+      <p class="ch-pattern" id="storyPattern" aria-live="polite">Shad pattern</p>
+    </div>
+  </section>
+
+  <section class="chapter final" id="ch4" data-ch="4">
+    <div class="ch-text">
+      <span class="ch-num">4.</span>
+      <h2 class="ch-title">Cast.</h2>
+      <p class="ch-lead">Free, no ads, and nothing you log leaves your device.</p>
       <button class="btn hot big" type="button" id="guestBtn">Explore with example data, no sign-up</button>
       <p class="pitch-note">Opens a guest profile with one real lake (Lake Harriet, Minneapolis) and a clearly labelled simulated trip dataset.</p>
     </div>
     <div class="auth card">
-      <h2 style="margin-bottom:12px">Your account</h2>
+      <h3 style="margin-bottom:12px">Your account</h3>
       <div class="tabs" role="tablist"><button class="active" data-auth="login">Sign in</button><button data-auth="register">Create account</button></div>
       <form id="authForm" autocomplete="on">
         <label id="dnWrap" hidden>Display name<input type="text" id="authDisplay" autocomplete="name"></label>
@@ -45,9 +85,9 @@
         <button class="btn primary" style="width:100%" type="submit" id="authSubmit">Sign in</button>
         <p id="authErr" class="small status-fail" style="margin-top:8px"></p>
       </form>
-      <p class="small muted" style="margin:0">Accounts are local profiles stored in this browser. There is no CastLab server: nothing you log leaves this device unless you export it.</p>
+      <p class="small muted" style="margin:0">Accounts are local profiles stored in this browser. There is no CastLab server.</p>
     </div>
-  </div>
+  </section>
 </div>
 
 <!-- ============ APP ============ -->
@@ -547,7 +587,7 @@
 <script src="js/gearsim.js"></script>
 <script src="js/field.js"></script>
 <script src="js/motion.js"></script>
-<script type="module" src="js/landing3d.js"></script>
+<script type="module" src="js/story3d.js"></script>
 <script type="module" src="js/castcheck.js"></script>
 </body>
 </html>

@@ -91,3 +91,11 @@
   window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; if (ib) ib.hidden = false; });
   if (ib) ib.onclick = async () => { if (!deferred) return; deferred.prompt(); await deferred.userChoice; deferred = null; ib.hidden = true; };
 })();
+
+/* Landing story: reveal each chapter's text as it scrolls into view (falls back to visible). */
+(function () {
+  const chs = document.querySelectorAll('.story .chapter'); if (!chs.length) return;
+  if (!('IntersectionObserver' in window)) { chs.forEach(c => c.classList.add('inview')); return; }
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) e.target.classList.add('inview'); }), { threshold: 0.25 });
+  chs.forEach(c => io.observe(c)); setTimeout(() => chs.forEach(c => { if (c.getBoundingClientRect().top < innerHeight) c.classList.add('inview'); }), 50);
+})();
