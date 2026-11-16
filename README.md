@@ -1,16 +1,17 @@
 # How Much Is a Real Fall Worth?
 
-Research code and paper on video fall detection: which training data (staged lab falls, synthetic videos, or real accident videos) prepares a detector for real falls, tested on two real-world sources.
+Research code and paper on video fall detection: which training data (staged lab falls, synthetic videos, hand-labelled real accident videos, or unlabelled real accident videos) prepares a detector for real falls, tested on three test sets from two real-world sources.
 
 **Paper:** [`vision/paper/paper.pdf`](vision/paper/paper.pdf) (LaTeX source in `vision/paper/`)
 
 ## Main findings
 
-- Detectors trained on staged lab falls score 1.00 AUROC in the lab but about 0.76 on FallOrNot, our test set of real accident videos (drawn from OOPS!, including non-fall accidents as false-alarm negatives).
-- On FallOrNot, about 30 real training falls outperform 2,136 synthetic ones.
-- On an independent source (HMDB51) the ranking flips: synthetic training is best.
-- Training on synthetic and real data together never falls more than 0.03 AUROC below the best source on any test.
-- A fine-tuning test specified in advance was not met, and a second annotator agreed only moderately (Cohen's kappa 0.50); both are reported in the paper.
+- **Real accident video is useful without labels.** A probe trained on 7,063 unlabelled accident clips, using pseudo-labels plus the free "before the accident" clips as non-falls, reaches 0.894 / 0.937 / 0.953 AUROC on FallOrNot / OmniFall OF-ItW / HMDB51 (synthetic-only training: 0.814 / 0.872 / 0.917), under a success rule fixed before the run. It reads no human label.
+- **Controls show what that gain is.** Most of the in-domain gain is "accident versus ordinary activity"; pseudo-labelling adds fall-specific information beyond it. Telling falls from *other accidents* without labels is significant out of domain (p = 0.005) but not in domain (p = 0.065).
+- Detectors trained on staged lab falls score 1.00 AUROC in the lab but about 0.76 on FallOrNot, our test set of real accident videos drawn from OOPS!, with non-fall accidents as false-alarm negatives.
+- Among labelled sources the ranking flips between test sets: hand-labelled real falls win on FallOrNot, synthetic falls win on HMDB51.
+- With only a handful of labelled real falls, a probe anchored to the synthetic solution is never meaningfully worse than the better single source (rule fixed in advance, met).
+- Tests fixed in advance that were not met, and a second annotator who agreed only moderately (Cohen's kappa 0.50), are reported in the paper.
 
 ## Repository layout
 
