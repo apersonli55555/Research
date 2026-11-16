@@ -49,6 +49,8 @@ Real falls are different: they are sudden, partly occluded, filmed from arbitrar
 
 \paragraph{Simulated vs.\ real falls.} For wearable accelerometers, algorithms tuned on simulated falls lose accuracy on real-world falls~\cite{bagala2012}, and the FARSEEING repository collects body-worn sensor signals from real falls~\cite{klenk2016}. We study the analogous question for video.
 
+\paragraph{Learning with weak or no labels.} Weakly supervised fall detection trains from video-level labels with multiple-instance learning~\cite{wu2023weakfall,madsen2024weakfall}; a human still labels every video. Self-training with pseudo-labels~\cite{xie2020noisystudent} is a standard way to use unlabelled data. Our zero-label experiment (\cref{sec:nolabel}) combines the two ideas in a setting we have not seen studied for falls: the teacher is trained on synthetic video, the unlabelled data are accident videos, and the only supervision taken from them is the accident time that OOPS!\ already provides, which yields real non-falls at no labelling cost.
+
 \paragraph{In-the-wild video.} OOPS!~\cite{epstein2020oops} contains about 20k web videos of unintentional actions with annotated transition times. \textbf{OmniFall}~\cite{omnifall}, the closest work, unifies eight staged datasets, adds 12k synthetic videos (OF-Syn) and an in-the-wild test set of 818 fall-containing OOPS!\ videos (OF-ItW), shows a large staged-to-wild drop, finds synthetic training better than staged, and reports an upper-bound model trained with in-the-wild data. We do not claim to be first to show the staged-to-wild gap. Our work differs in (i) negatives drawn from all accidents by a model-independent sample, (ii) the question of how much real data is needed and whether it beats synthetic data at equal budget, and (iii) testing every conclusion on a second, independent real-world source.
 
 \paragraph{Encoders.} We use CLIP~\cite{radford2021clip} through OpenCLIP~\cite{openclip} with DataComp weights~\cite{gadre2023datacomp}, and VideoMAE~\cite{tong2022videomae} fine-tuned on Kinetics-400~\cite{kay2017kinetics}.
@@ -315,10 +317,13 @@ Staged-trained fall detectors that look perfect in the lab fail on real accident
 \bibitem{kuzborskij2013} I.~Kuzborskij and F.~Orabona. Stability and hypothesis transfer learning. In \emph{ICML}, PMLR 28(3):942--950, 2013.
 \bibitem{kwolek2014} B.~Kwolek and M.~Kepski. Human fall detection on embedded platform using depth maps and wireless accelerometer. \emph{Computer Methods and Programs in Biomedicine}, 117(3):489--501, 2014.
 \bibitem{li2018l2sp} X.~Li, Y.~Grandvalet, and F.~Davoine. Explicit inductive bias for transfer learning with convolutional networks. In \emph{ICML}, PMLR 80:2825--2834, 2018.
+\bibitem{madsen2024weakfall} K.~Madsen, Z.~Li, F.~Lauze, and K.~Nasrollahi. Person fall detection using weakly supervised methods. In \emph{WACV Workshops}, pages 143--151, 2024.
 \bibitem{omnifall} D.~Schneider et~al. OmniFall: From staged through synthetic to wild, a unified multi-domain dataset for robust fall detection. arXiv:2505.19889, 2025 (v3, 2026).
 \bibitem{openclip} G.~Ilharco, M.~Wortsman, R.~Wightman, C.~Gordon, N.~Carlini, R.~Taori, A.~Dave, V.~Shankar, H.~Namkoong, J.~Miller, H.~Hajishirzi, A.~Farhadi, and L.~Schmidt. OpenCLIP. Zenodo, 2021. doi:10.5281/zenodo.5143773.
 \bibitem{radford2021clip} A.~Radford et~al. Learning transferable visual models from natural language supervision. In \emph{ICML}, 2021.
 \bibitem{tong2022videomae} Z.~Tong, Y.~Song, J.~Wang, and L.~Wang. VideoMAE: Masked autoencoders are data-efficient learners for self-supervised video pre-training. In \emph{NeurIPS}, 2022.
+\bibitem{wu2023weakfall} L.~Wu, C.~Huang, S.~Zhao, J.~Li, J.~Zhao, Z.~Cui, Z.~Yu, Y.~Xu, and M.~Zhang. Robust fall detection in video surveillance based on weakly supervised learning. \emph{Neural Networks}, 163:286--297, 2023.
+\bibitem{xie2020noisystudent} Q.~Xie, M.-T.~Luong, E.~Hovy, and Q.~V. Le. Self-training with Noisy Student improves ImageNet classification. In \emph{CVPR}, pages 10684--10695, 2020.
 \bibitem{yang2007asvm} J.~Yang, R.~Yan, and A.~G. Hauptmann. Cross-domain video concept detection using adaptive SVMs. In \emph{ACM Multimedia}, 2007. doi:10.1145/1291233.1291276.
 \bibitem{who_falls} World Health Organization. Falls (fact sheet), 21 October 2026. \url{https://www.who.int/news-room/fact-sheets/detail/falls}, accessed November 2026.
 \end{thebibliography}

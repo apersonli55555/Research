@@ -40,8 +40,9 @@ BUDGETS = (4, 8, 15, 30, 60, 125)
 DRAWS = 10
 
 
-def self_train(score0, Xev, Xpre, rounds=ROUNDS, q=Q, use_pre=True, use_low=True):
-    """Returns the final probe (trained on pseudo-labelled real clips only) and per-round sizes."""
+def self_train(score0, Xev, Xpre, rounds=ROUNDS, q=Q, use_pre=True, use_low=True, keep=None):
+    """Returns the final probe (trained on pseudo-labelled real clips only) and per-round sizes.
+    keep: optional list that receives (probe, indices of the pseudo-falls) for every round."""
     s, model, log = score0, None, []
     n = max(2, int(round(q * len(Xev))))
     for _ in range(rounds):
@@ -53,6 +54,8 @@ def self_train(score0, Xev, Xpre, rounds=ROUNDS, q=Q, use_pre=True, use_low=True
         neg = np.concatenate(neg)
         model = probe().fit(np.concatenate([pos, neg]), np.r_[np.ones(len(pos)), np.zeros(len(neg))])
         s = model.decision_function(Xev)
+        if keep is not None:
+            keep.append((model, order[:n]))
         log.append(dict(pseudo_falls=int(len(pos)), pseudo_non_falls=int(len(neg))))
     return model, log
 
@@ -64,6 +67,8 @@ def main():
     ap.add_argument("--ofitw", required=True)
     ap.add_argument("--external", default="")
     ap.add_argument("--out", default=None)
+    ap.add_argument("--explore", action="store_true",
+                    help="exploratory sensitivity analysis (run 16); never changes the run-15 setting or verdict")
     a = ap.parse_args()
     out = a.out or os.path.join(a.oops, "results_nolabel")
     os.makedirs(out, exist_ok=True)
@@ -89,6 +94,7 @@ def main():
     pool = sorted(k for k in frames if k in videos and k[0] in meta and k[0] not in blocked)
     ev_keys = [k for k in pool if k[1] == "event"]; pre_keys = [k for k in pool if k[1] == "pre"]
     Xev, Xpre = pack(ev_keys), pack(pre_keys)
+    explore.pre_names = np.array([k[0] for k in pre_keys])
     disjoint_ev = np.array([compilation(k[0]) not in test_comps for k in ev_keys])
     disjoint_pre = np.array([compilation(k[0]) not in test_comps for k in pre_keys])
     print(f"unlabelled pool: {len(ev_keys)} accident clips + {len(pre_keys)} pre-accident clips from "
@@ -199,6 +205,53 @@ def main():
     text = "\n".join(L)
     open(os.path.join(out, "nolabel.md"), "w").write(text + "\n")
     print("\n" + text + f"\n\nwrote {out}/nolabel.md, nolabel.json")
+    if a.explore:
+        explore(out, s0, Xev, Xpre, ev_keys, meta, labels, tests, (Xe, ye, cmax) if a.external else None)
+
+
+def explore(out, s0, Xev, Xpre, ev_keys, meta, labels, tests, ext):
+    """EXPLORATORY (run 16): how sensitive is the zero-label result to its fixed choices?
+    Nothing here is a pass/fail test, and the run-15 setting (20%, 3 rounds, synthetic start) stays the headline."""
+    def ev(model):
+        r = {n: float(_auroc(yb, model.decision_function(Xb))) for n, (Xb, yb, _) in tests.items()}
+        if ext:
+            r["hmdb51"] = float(_auroc(ext[1], ext[2](model.decision_function(ext[0]))))
+        return r
+    rows = []
+    add = lambda group, setting, r: (rows.append(dict(group=group, setting=setting, **r)), print(f"  {group} | {setting} | {r}", flush=True))
+    # human labels are used below ONLY to measure how clean the pseudo-labels are
+    lab = np.array([{"fall": 1, "not_fall": 0}.get(labels.get(k[0]), -1) for k in ev_keys])
+    kept = []
+    self_train(s0, Xev, Xpre, rounds=5, keep=kept)
+    for i, (m, top) in enumerate(kept, 1):
+        known = lab[top][lab[top] >= 0]
+        r = ev(m); r["pseudo_fall_precision"] = float(known.mean()) if len(known) else None; r["pseudo_falls_with_human_label"] = int(len(known))
+        add("rounds (20%)", str(i), r)
+    for q in (0.05, 0.1, 0.3, 0.4):
+        add("fraction pseudo-labelled (3 rounds)", f"{int(q * 100)}%", ev(self_train(s0, Xev, Xpre, q=q)[0]))
+    rng = np.random.default_rng(0)
+    names = np.array([k[0] for k in ev_keys])
+    for frac in (0.02, 0.05, 0.1, 0.25, 0.5):
+        acc = []
+        for _ in range(3):
+            pick = rng.random(len(ev_keys)) < frac
+            # pre-accident clips of the picked videos only: Xpre rows are aligned by video name
+            acc.append(ev(self_train(s0[pick], Xev[pick], Xpre[np.isin(explore.pre_names, names[pick])])[0]))
+        add("pool size (3 random subsets)", f"{int(frac * 100)}% (about {int(frac * len(ev_keys))} videos)",
+            {k: float(np.mean([x[k] for x in acc])) for k in acc[0]})
+    zs = np.array([float(meta[k[0]]["event_margin"]) for k in ev_keys])
+    add("starting scorer", "CLIP zero-shot text prompts instead of the synthetic probe (no synthetic data at all)", ev(self_train(zs, Xev, Xpre)[0]))
+    add("starting scorer", "random scores (control)", ev(self_train(np.random.default_rng(1).random(len(ev_keys)), Xev, Xpre)[0]))
+    json.dump(rows, open(os.path.join(out, "nolabel_explore.json"), "w"), indent=1)
+    cols = [c for c in ("fallornot", "ofitw", "hmdb51") if c in rows[0]]
+    L = ["", "EXPLORATORY SENSITIVITY ANALYSIS (not a pass/fail test; the fixed setting is 20%, 3 rounds, synthetic start)", "",
+         "| What is varied | Setting | " + " | ".join(cols) + " | pseudo-fall precision (on clips that happen to have a human label) |", "|---|---|" + "---|" * (len(cols) + 1)]
+    for r in rows:
+        pr = f"{r['pseudo_fall_precision']:.2f} (n = {r['pseudo_falls_with_human_label']})" if r.get("pseudo_fall_precision") is not None else ""
+        L.append(f"| {r['group']} | {r['setting']} | " + " | ".join(f"{r[c]:.3f}" for c in cols) + f" | {pr} |")
+    text = "\n".join(L)
+    open(os.path.join(out, "nolabel_explore.md"), "w").write(text + "\n")
+    print(text + f"\n\nwrote {out}/nolabel_explore.md, nolabel_explore.json")
 
 
 if __name__ == "__main__":
