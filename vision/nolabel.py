@@ -69,6 +69,8 @@ def main():
     ap.add_argument("--out", default=None)
     ap.add_argument("--hard", action="store_true",
                     help="hard-subset analysis (run 17): falls vs other accidents only; reading fixed in AGENTS.md beforehand")
+    ap.add_argument("--post", default="",
+                    help="post_prep.py output dir: consequence-guided zero-label adaptation (run 21; rule in AGENTS.md)")
     ap.add_argument("--dupes", action="store_true",
                     help="near-duplicate check (run 20): remove pool clips that look like a test clip and retrain")
     ap.add_argument("--hard2", action="store_true",
@@ -262,6 +264,9 @@ def main():
         text = "\n".join(L)
         open(os.path.join(out, "nolabel_hard.md"), "w").write(text + "\n")
         print(text + f"\n\nwrote {out}/nolabel_hard.md, nolabel_hard.json")
+    if a.post:
+        consequence(a, out, frames, videos, labels, meta, test_names, ev_keys, pre_keys, Xev, Xpre, s0, syn, pack, tests,
+                    (Xe, ye, cmax, E) if a.external else None)
     if a.dupes:
         # ---- NEAR-DUPLICATE CHECK (reading fixed in AGENTS.md before running). The same web clip can appear in more
         # than one compilation, which the compilation-disjoint pool does not catch. Similarity = cosine between
@@ -349,6 +354,94 @@ def main():
         print(text + f"\n\nwrote {out}/nolabel_hard2.md, nolabel_hard2.json")
     if a.explore:
         explore(out, s0, Xev, Xpre, ev_keys, meta, labels, tests, (Xe, ye, cmax) if a.external else None)
+
+
+def consequence(a, out, frames, videos, labels, meta, test_names, ev_keys, pre_keys, Xev, Xpre, s0, syn, pack, tests, ext):
+    """RUN 21 (rule fixed in AGENTS.md before any result). The clip AFTER each accident is scored by CLIP for
+    "person on the ground" vs. "person upright". In every self-training round the accident clips are ranked by the
+    mean of (rank of the probe score, rank of that consequence score); videos without an after-clip get a neutral
+    consequence rank of 0.5. Everything else is the fixed run-15 setting. The pool excludes every video with a human
+    label, as in run 18, so the labelled accident clips can be used as the hard test set."""
+    from scipy.stats import rankdata
+    T = np.load(os.path.join(a.post, "text.npz"))
+    G, U = T["ground"].astype(np.float32), T["upright"].astype(np.float32)
+    cons = {}
+    for f in sorted(os.listdir(a.post)):
+        if f.startswith("shard_") and f.endswith(".npz"):
+            z = np.load(os.path.join(a.post, f))
+            for n, fr, hp in zip(z["name"], z["frames"], z["has_post"]):
+                if hp:
+                    e = fr.astype(np.float32)
+                    lg, lu = 100 * e @ G.T, 100 * e @ U.T
+                    lse = lambda x: x.max(1) + np.log(np.exp(x - x.max(1, keepdims=True)).sum(1))
+                    cons[str(n)] = float((lse(lg) - lse(lu)).mean())
+    lab_names = {n for n, l in labels.items() if l in ("fall", "not_fall")}
+    ke = np.array([k[0] not in lab_names for k in ev_keys]); kp = np.array([k[0] not in lab_names for k in pre_keys])
+    names = [k[0] for k, keep in zip(ev_keys, ke) if keep]
+    X1, P1, s1 = Xev[ke], Xpre[kp], s0[ke]
+    c = np.array([cons.get(n, np.nan) for n in names]); have = ~np.isnan(c)
+    rc = np.full(len(c), 0.5); rc[have] = rankdata(c[have]) / have.sum()
+
+    def guided(rounds=ROUNDS, q=Q, start=None):
+        sc = s1 if start is None else start
+        n = max(2, int(round(q * len(X1)))); model = None
+        for _ in range(rounds):
+            mix = (rankdata(sc) / len(sc) + rc) / 2
+            order = np.argsort(-mix)
+            pos, neg = X1[order[:n]], np.concatenate([X1[order[-n:]], P1])
+            model = probe().fit(np.concatenate([pos, neg]), np.r_[np.ones(len(pos)), np.zeros(len(neg))])
+            sc = model.decision_function(X1)
+        return model
+
+    cand = {"synthetic_only": syn, "zero_label (run-15 setting, same pool)": self_train(s1, X1, P1)[0],
+            "consequence-guided zero-label (ours)": guided(),
+            "consequence only, then standard rounds (secondary)": self_train(np.where(have, c, np.nanmedian(c)), X1, P1)[0]}
+    # labelled accident clips = the hard test (none of these videos is in the pool)
+    hk = [k for k in sorted(frames) if k in videos and k[1] == "event" and k[0] in meta and k[0] in lab_names]
+    Xh = pack(hk); yh = np.array([int(labels[k[0]] == "fall") for k in hk]); gh = np.array([compilation(k[0]) for k in hk])
+    is_test = np.array([k[0] in test_names for k in hk])
+    subsets = {"A: FallOrNot hard": is_test, "B: labelled training pool, accident clips": ~is_test, "C: A + B (primary)": np.ones(len(hk), bool)}
+    R = {"pool": dict(accident_clips=int(ke.sum()), with_after_clip=int(have.sum()), pre_clips=int(kp.sum())), "hard": {}, "full": {}, "tests": {}}
+    # diagnostic only: the consequence score alone as a fall detector on labelled accident clips
+    ch = np.array([cons.get(k[0], np.nan) for k in hk]); okc = ~np.isnan(ch)
+    R["consequence_score_alone_on_C"] = dict(clips_with_after_clip=int(okc.sum()), auroc=float(_auroc(yh[okc], ch[okc])) if okc.sum() and len(set(yh[okc])) == 2 else None)
+    ours, base = "consequence-guided zero-label (ours)", "zero_label (run-15 setting, same pool)"
+    for name, mk in subsets.items():
+        R["hard"][name] = {m: float(_auroc(yh[mk], x.decision_function(Xh[mk]))) for m, x in cand.items()}
+        R["tests"][name] = {f"ours vs {o}": paired(yh[mk], cand[ours].decision_function(Xh[mk]), cand[o].decision_function(Xh[mk]), gh[mk])
+                            for o in ("synthetic_only", base)}
+    for name, (Xb, yb, gb) in tests.items():
+        R["full"][name] = {m: float(_auroc(yb, x.decision_function(Xb))) for m, x in cand.items()}
+        R["tests"][name] = {f"ours vs {base}": paired(yb, cand[ours].decision_function(Xb), cand[base].decision_function(Xb), gb)}
+    if ext:
+        Xe, ye, cmax, E = ext
+        hm = E["clip_hard"].astype(bool) | (ye == 1)
+        R["full"]["hmdb51"] = {m: float(_auroc(ye, cmax(x.decision_function(Xe)))) for m, x in cand.items()}
+        R["full"]["hmdb51_hard"] = {m: float(_auroc(ye[hm], cmax(x.decision_function(Xe))[hm])) for m, x in cand.items()}
+    t_c = R["tests"]["C: A + B (primary)"][f"ours vs {base}"]
+    keep_ok = all(R["full"][n][ours] >= R["full"][n][base] - 0.01 for n in ("fallornot", "ofitw"))
+    R["verdict"] = dict(beats_zero_label_on_C=bool(t_c[1] > 0), not_worse_on_full_tests=bool(keep_ok), success=bool(t_c[1] > 0 and keep_ok))
+    json.dump(R, open(os.path.join(out, "nolabel_post.json"), "w"), indent=1)
+    g = lambda v: f"{v[0]:+.3f} [{v[1]:+.3f}, {v[2]:+.3f}], p = {v[3]:.3f}"
+    L = ["", "CONSEQUENCE-GUIDED ZERO-LABEL ADAPTATION (after-accident clip: 'person on the ground?')",
+         "Rule: (i) on C, ours beats the run-15 zero-label probe (same pool) with a paired 95% CI above zero (by compilation); "
+         "(ii) on full FallOrNot and OF-ItW, ours is at most 0.01 below it",
+         f"Pool (every labelled video removed): {R['pool']['accident_clips']} accident clips, {R['pool']['with_after_clip']} with an after-clip, "
+         f"{R['pool']['pre_clips']} pre-accident clips",
+         f"Diagnostic: consequence score alone on C (falls vs other accidents, {R['consequence_score_alone_on_C']['clips_with_after_clip']} clips "
+         f"with an after-clip): AUROC {R['consequence_score_alone_on_C']['auroc']}", ""]
+    cols = list(R["hard"]) + list(R["full"])
+    L += ["| Method | " + " | ".join(cols) + " |", "|---|" + "---|" * len(cols)]
+    for m in cand:
+        L.append(f"| {m} | " + " | ".join(f"{(R['hard'].get(c_) or R['full'][c_])[m]:.3f}" for c_ in cols) + " |")
+    L.append("")
+    for name, d in R["tests"].items():
+        L.append(f"{name}: " + "; ".join(f"{k} {g(v)}" for k, v in d.items()))
+    L += ["", f"CONSEQUENCE RESULT: {'SUCCESS' if R['verdict']['success'] else 'NOT MET'} "
+              f"(beats zero-label on C: {R['verdict']['beats_zero_label_on_C']}; not worse on full tests: {R['verdict']['not_worse_on_full_tests']})"]
+    text = "\n".join(L)
+    open(os.path.join(out, "nolabel_post.md"), "w").write(text + "\n")
+    print(text + f"\n\nwrote {out}/nolabel_post.md, nolabel_post.json")
 
 
 def explore(out, s0, Xev, Xpre, ev_keys, meta, labels, tests, ext):
