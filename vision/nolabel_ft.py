@@ -243,9 +243,110 @@ def report(a):
     print("\n" + text + f"\n\nwrote {a.work}/nolabel_ft.md, nolabel_ft.json")
 
 
+def ofitw(a):
+    """RUN 22 (rule fixed in AGENTS.md before any result): score every fine-tuned model on OmniFall's OF-ItW test
+    split. Clips: the same definition as ofitw_prep.py. Videos behind our labelled training clips are excluded,
+    so the hand-labelled model is not tested on its own training videos."""
+    import torch
+    from adapt_ft import run
+    from ofitw_prep import plan
+    from oops_mine import URL, ResumableStream
+    from common import CLIP_SECONDS
+    dev = "cuda" if torch.cuda.is_available() else "cpu"
+    ours = {it["name"] for it in ClipStore(a.work, "oops").items}
+    P = {n: v for n, v in plan().items() if v["split"] == "test" and n not in ours}
+    store = ClipStore(a.work, "ofitw")
+    todo = {n for n, v in P.items() if any((n, f"{c:.3f}") not in store.keys for c, _, _ in v["clips"])}
+    print(f"OF-ItW test: {len(P)} videos ({sum(len(v['clips']) for v in P.values())} clips) after removing our labelled videos; "
+          f"{len(todo)} still to extract", flush=True)
+    if todo:
+        stream = ResumableStream(URL)
+        outer = tarfile.open(fileobj=io.BufferedReader(stream, 1 << 20), mode="r|gz")
+        n = 0
+        try:
+            for m in outer:
+                if not m.name.endswith("video.tar.gz"):
+                    continue
+                vids = tarfile.open(fileobj=outer.extractfile(m), mode="r|gz")
+                for vm in vids:
+                    name = os.path.basename(vm.name)[:-4]
+                    if name not in todo:
+                        continue
+                    data = vids.extractfile(vm).read()
+                    for c, lab, cls in P[name]["clips"]:
+                        if (name, f"{c:.3f}") in store.keys:
+                            continue
+                        try:
+                            store.add(name, f"{c:.3f}", sample_clip(data, max(0.0, c - CLIP_SECONDS / 2), c + CLIP_SECONDS / 2),
+                                      label=int(lab), split="test")
+                        except Exception as e:
+                            print("skip", name, c, type(e).__name__, e)
+                    todo.discard(name); n += 1
+                    if n % 50 == 0:
+                        print(f"  {n} videos, {len(store.items)} clips stored", flush=True)
+                    if not todo or (a.limit and n >= a.limit):
+                        break
+                break
+        finally:
+            stream.close()
+    items = store.items[:a.limit * 3] if a.limit else store.items
+    y = np.array([it["label"] for it in items]); grp = np.array([compilation(it["name"]) for it in items])
+    frames = None
+    sc = {}
+    for kind in ("synthetic", "real", "synthetic_real", "zerolabel"):
+        for sd in SEEDS:
+            tag = kind + seed_suffix(sd)
+            path = os.path.join(a.work, f"scores_ofitw_{tag}.npz")
+            if os.path.exists(path) and not a.force:
+                z = np.load(path); sc[tag] = dict(zip(z["key"].tolist(), z["score"].tolist())); continue
+            if not os.path.exists(os.path.join(a.work, "model_" + tag, "config.json")):
+                continue
+            if frames is None:
+                frames = [store.frames(it) for it in items]
+            model, mean, std = load_model(dev, os.path.join(a.work, "model_" + tag))
+            v = run(model.eval(), mean, std, frames, dev)
+            keys = [f"{it['name']}|{it['seg']}" for it in items]
+            np.savez(path, key=np.array(keys), score=v)
+            sc[tag] = dict(zip(keys, v.tolist())); print("scored", tag, flush=True)
+            del model
+            if dev == "cuda":
+                torch.cuda.empty_cache()
+    keys = [f"{it['name']}|{it['seg']}" for it in items]
+    au = {}
+    for kind in ("synthetic", "real", "synthetic_real", "zerolabel"):
+        v = [float(_auroc(y, np.array([sc[kind + seed_suffix(sd)][k] for k in keys]))) for sd in SEEDS if kind + seed_suffix(sd) in sc]
+        if v:
+            au[kind] = v
+    tests = {}
+    for other in ("synthetic", "real"):
+        tests[other] = [paired(y, np.array([sc["zerolabel" + seed_suffix(sd)][k] for k in keys]),
+                               np.array([sc[other + seed_suffix(sd)][k] for k in keys]), grp)
+                        for sd in SEEDS if "zerolabel" + seed_suffix(sd) in sc and other + seed_suffix(sd) in sc]
+    met = None
+    if len(au.get("zerolabel", [])) == len(SEEDS) and len(au.get("synthetic", [])) == len(SEEDS):
+        met = bool(np.mean(au["zerolabel"]) > np.mean(au["synthetic"]) and sum(t[1] > 0 for t in tests["synthetic"]) >= 2)
+    json.dump(dict(n_clips=len(items), n_falls=int(y.sum()), auroc=au, tests=tests, met=met),
+              open(os.path.join(a.work, "nolabel_ft_ofitw.json"), "w"), indent=1)
+    names = {"synthetic": "synthetic", "real": "real, human labels", "synthetic_real": "synthetic + real", "zerolabel": "zero-label (no human label)"}
+    g = lambda v: f"{v[0]:+.3f} [{v[1]:+.3f}, {v[2]:+.3f}], p = {v[3]:.3f}"
+    L = ["", "ZERO-LABEL FINE-TUNING ON OF-ItW (third test set)",
+         "Rule: mean AUROC over seeds 0-2 above the synthetic fine-tuned mean, and paired 95% CI (by compilation) of zero-label minus "
+         "synthetic (same seed) above zero for at least two seeds",
+         f"OF-ItW test clips (videos behind our labelled clips removed): {len(items)}, {int(y.sum())} falls", "",
+         "| Fine-tuned on | AUROC mean ± s.d. (seeds) | per seed |", "|---|---|---|"]
+    for kind, v in au.items():
+        L.append(f"| {names[kind]} | {np.mean(v):.3f} ± {np.std(v):.3f} ({len(v)}) | " + ", ".join(f"{x:.3f}" for x in v) + " |")
+    for other, t in tests.items():
+        L.append(f"- zero-label vs {names[other]}, per seed: " + "; ".join(g(x) for x in t))
+    L += ["", f"OF-ItW FINE-TUNING RESULT: {'incomplete' if met is None else 'SUCCESS' if met else 'NOT MET'}"]
+    text = "\n".join(L)
+    open(os.path.join(a.work, "nolabel_ft_ofitw.md"), "w").write(text + "\n")
+    print(text + f"\n\nwrote {a.work}/nolabel_ft_ofitw.md, nolabel_ft_ofitw.json")
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("stage", choices=["select", "prepare", "train", "score", "report"])
+    ap.add_argument("stage", choices=["select", "prepare", "train", "score", "report", "ofitw"])
     ap.add_argument("--work", required=True)
     ap.add_argument("--oops", default=""); ap.add_argument("--synthetic", default=""); ap.add_argument("--ofitw", default="")
     ap.add_argument("--hmdb", default=""); ap.add_argument("--hmdb-cache", default="/content/hmdb")
@@ -255,7 +356,7 @@ def main():
     ap.add_argument("--limit", type=int, default=0, help="testing only")
     ap.add_argument("--force", action="store_true")
     a = ap.parse_args()
-    {"select": select, "prepare": prepare, "train": train, "score": score, "report": report}[a.stage](a)
+    {"select": select, "prepare": prepare, "train": train, "score": score, "report": report, "ofitw": ofitw}[a.stage](a)
 
 
 if __name__ == "__main__":
