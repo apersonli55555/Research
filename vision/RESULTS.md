@@ -605,3 +605,34 @@ Paired tests, AUROC difference [95% CI], p:
 # Addendum: values quoted in the paper that come from the full Colab output of runs 10–11
 
 The paper quotes two numbers that appear in the complete `experiment.py` output (pasted by the owner for runs 10 and 11) but were not copied into the run tables above: staged-trained VideoMAE probe on FallOrNot, recall at 5% false positives **0.304** [0.216, 0.510]; zero-shot CLIP on the FallOrNot hard subset, AUROC **0.686** [0.588, 0.782]. Rounded p-values in the paper (0.57, 0.52, 0.09, 0.29) correspond to 0.566, 0.520, 0.091 and 0.290 above; κ = 0.50 is 0.498. "62% of accidents are falls" = 102 falls among the 165 labelled videos of FallOrNot's random sample.
+
+# Run 20: near-duplicate leakage check for the zero-label probe (reading fixed in advance)
+
+`nolabel.py --dupes` at commit `62c2bb7` (`Research` repository; Colab, no GPU). How to read it was written in `AGENTS.md` before the run. Runs 18 and 19 (extended hard test, zero-label fine-tuning) were declared earlier and have not been reported yet; the numbering follows the order of declaration. Copied from the Colab text output.
+
+**Method.** The same web clip can appear in several OOPS! compilations, which the compilation-disjoint pool of run 15 does not catch. For every unlabelled pool clip, similarity = highest cosine between its mean CLIP frame embedding and that of any FallOrNot-test or OF-ItW-test clip. Pool videos with any clip above a threshold are removed and the fixed zero-label pipeline (20%, 3 rounds, synthetic start) is rerun.
+
+Similarity of pool clips to their closest test clip, quantiles: median 0.828, 90% 0.904, 99% 0.992, 99.9% 0.997, max 0.998. (Mean CLIP embeddings of unrelated clips are already highly similar, so only the top of this distribution indicates possible duplicates: about 1% of pool clips exceed 0.99.)
+
+| Removed: pool videos with similarity above | Accident clips left | FallOrNot | OF-ItW | HMDB51 |
+|---|---|---|---|---|
+| nothing removed (run 15) | 7,063 | 0.894 | 0.937 | 0.953 |
+| 0.98 | 6,841 (222 removed) | 0.893 | 0.937 | 0.956 |
+| 0.95 | 6,709 (354 removed) | 0.892 | 0.936 | 0.954 |
+| 0.92 | 6,524 (539 removed) | 0.892 | 0.937 | 0.954 |
+| 0.90 | 6,112 (951 removed) | 0.888 | 0.938 | 0.955 |
+
+Zero-label vs. synthetic-only (0.814 / 0.872), paired, by compilation:
+
+| Threshold | FallOrNot | OF-ItW |
+|---|---|---|
+| none | +0.081 [+0.033, +0.129], p < 0.001 | +0.065 [+0.052, +0.077], p < 0.001 |
+| 0.98 | +0.079 [+0.030, +0.128], p < 0.001 | +0.065 [+0.052, +0.077], p < 0.001 |
+| 0.95 | +0.078 [+0.030, +0.125], p < 0.001 | +0.064 [+0.051, +0.077], p < 0.001 |
+| 0.92 | +0.078 [+0.031, +0.128], p < 0.001 | +0.065 [+0.052, +0.078], p < 0.001 |
+| 0.90 | +0.074 [+0.027, +0.121], p < 0.001 | +0.065 [+0.052, +0.078], p < 0.001 |
+
+## Reading (as fixed in advance)
+- **The gain persists.** At the pre-specified 0.95 threshold the zero-label probe is still significantly above synthetic-only on both in-domain tests (+0.078 and +0.064, both p < 0.001); removing up to 951 of the most test-like videos changes in-domain AUROC by at most 0.006 and HMDB51 not at all. Near-duplicate leakage does not explain the in-domain result.
+- Possible near-duplicates do exist (about 1% of pool clips have a test clip with similarity above 0.99), so the check was worth running.
+- **Caveats:** similarity uses CLIP appearance only (mean of frame embeddings), so re-encoded or cropped copies with different appearance could be missed; one deterministic run per threshold. This check addresses the unlabelled pool only; the labelled real training pool was checked at the compilation level in run 10.
