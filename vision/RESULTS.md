@@ -636,3 +636,37 @@ Zero-label vs. synthetic-only (0.814 / 0.872), paired, by compilation:
 - **The gain persists.** At the pre-specified 0.95 threshold the zero-label probe is still significantly above synthetic-only on both in-domain tests (+0.078 and +0.064, both p < 0.001); removing up to 951 of the most test-like videos changes in-domain AUROC by at most 0.006 and HMDB51 not at all. Near-duplicate leakage does not explain the in-domain result.
 - Possible near-duplicates do exist (about 1% of pool clips have a test clip with similarity above 0.99), so the check was worth running.
 - **Caveats:** similarity uses CLIP appearance only (mean of frame embeddings), so re-encoded or cropped copies with different appearance could be missed; one deterministic run per threshold. This check addresses the unlabelled pool only; the labelled real training pool was checked at the compilation level in run 10.
+
+# Run 18: extended hard test, falls vs. other accidents without labels (rule fixed in advance: MET)
+
+`nolabel.py --hard2` at commit `e10ddec` (`Research` repository; Colab). Rule committed to `AGENTS.md` before the run (commit of 16 Nov 2026). Copied from the Colab text output.
+
+**Setup.** Every human-labelled accident-moment clip is used as test data; ALL of those videos are removed from the unlabelled pool first (6,900 accident + 3,396 pre-accident clips remain), and the fixed zero-label pipeline (20%, 3 rounds, synthetic start) is retrained. A = FallOrNot hard (random sample, 165 clips: 102 falls, 63 other accidents); B = accident clips of our labelled training pool (selected by a CLIP zero-shot score, so not a random sample; 180 clips: 131 falls, 49 other accidents); C = A + B (primary; 345 clips: 233 falls, 112 other accidents). Random start: mean ± s.d. over 5 seeds.
+
+AUROC, falls vs. other accidents:
+
+| Method | A | B | C (primary) |
+|---|---|---|---|
+| Synthetic-only | 0.772 | 0.707 | 0.746 |
+| **Zero-label (labelled videos removed from pool)** | **0.840** | **0.754** | **0.804** |
+| Start from CLIP zero-shot prompts | 0.842 | 0.740 | 0.800 |
+| Start from random scores (5 seeds) | 0.768 ± 0.013 | 0.685 ± 0.029 | 0.732 ± 0.019 |
+| Accident detector (no pseudo-labels) | 0.729 | 0.678 | 0.707 |
+| Human-labelled real probe | 0.860 | – | – |
+
+Paired tests, AUROC difference [95% CI], p (by compilation):
+
+| Comparison | A | B | C (primary) |
+|---|---|---|---|
+| Zero-label vs. synthetic-only | +0.069 [+0.002, +0.134], p = 0.046 | +0.047 [−0.018, +0.110], p = 0.145 | **+0.058 [+0.015, +0.103], p = 0.013** |
+| Zero-label vs. random start (seed 1) | +0.066 [+0.017, +0.117], p = 0.010 | +0.026 [−0.028, +0.080], p = 0.359 | +0.049 [+0.013, +0.087], p = 0.005 |
+| Zero-label vs. accident detector | +0.111 [+0.044, +0.185], p = 0.001 | +0.076 [−0.004, +0.154], p = 0.062 | +0.098 [+0.052, +0.144], p < 0.001 |
+| Zero-label vs. human-labelled real | −0.020 [−0.068, +0.028], p = 0.419 | – | – |
+
+**EXTENDED HARD TEST RESULT: SUCCESS** (rule met on C).
+
+## Reading
+- **Without any human label, the zero-label probe separates falls from other accidents better than synthetic training, in domain** (C: +0.058, p = 0.013), and better than both controls that carry no fall-specific signal (random start +0.049, p = 0.005; accident detector +0.098, p < 0.001). This replaces run 17's borderline result (A: +0.064, p = 0.065), which used a pool that still contained the labelled videos (unread).
+- On A alone the gain is now just significant (+0.069, p = 0.046, a secondary comparison); on B alone it is not (+0.047, p = 0.145). B is model-selected and its other accidents were chosen to look like falls to CLIP, so it is the harder subset; the primary claim rests on C.
+- The deficit to the human-labelled probe on A is not significant (−0.020, p = 0.419), with 165 clips.
+- **Caveats:** one deterministic run; C mixes a random sample (A) with a model-selected one (B); the human-labelled reference cannot be evaluated on B or C because it is trained on B.

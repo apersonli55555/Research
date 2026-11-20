@@ -37,5 +37,5 @@ Open [`fall_cvpr.ipynb`](fall_cvpr.ipynb) in Google Colab: *File → Open notebo
 ## Known gaps before a submission
 - Only one staged dataset (UR Fall); Le2i's original page is offline.
 - A second annotator agreed only moderately with the first (Cohen's kappa 0.50) on 100 test videos; our labels agree with OmniFall's on 27 of 28 shared videos.
-- Without labels, telling falls from other accidents is significant on HMDB51's hard subset but not on FallOrNot's (p = 0.065, 165 clips). The extended hard test (`nolabel.py --hard2`) and zero-label fine-tuning (`nolabel_ft.py`) have their rules fixed but have not been run yet.
+- Without labels, the gain on falls vs. other accidents in domain is modest (+0.058, p = 0.013, run 18) and not significant on the model-selected training-pool clips alone. Zero-label fine-tuning (`nolabel_ft.py`, run 19) and consequence-guided adaptation (`post_prep.py` + `nolabel.py --post`, run 21) have their rules fixed and are running.
 - The zero-label method relies on accident timestamps, which OOPS! provides and arbitrary video does not.
