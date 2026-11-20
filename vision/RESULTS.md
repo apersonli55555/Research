@@ -670,3 +670,63 @@ Paired tests, AUROC difference [95% CI], p (by compilation):
 - On A alone the gain is now just significant (+0.069, p = 0.046, a secondary comparison); on B alone it is not (+0.047, p = 0.145). B is model-selected and its other accidents were chosen to look like falls to CLIP, so it is the harder subset; the primary claim rests on C.
 - The deficit to the human-labelled probe on A is not significant (−0.020, p = 0.419), with 165 clips.
 - **Caveats:** one deterministic run; C mixes a random sample (A) with a model-selected one (B); the human-labelled reference cannot be evaluated on B or C because it is trained on B.
+
+# Run 19: zero-label fine-tuning of VideoMAE (rule fixed in advance: MET)
+
+`nolabel_ft.py` (select, prepare, train, score, report); the models were trained during the owner's run of the cell at commit `5ce5db5` and reported again at commit `e10ddec` (`Research` repository; Colab L4). Rule committed to `AGENTS.md` before any result. Copied from the Colab text output.
+
+**Setup.** No human label is read for training. `select` repeats the fixed run-15 pipeline and takes the 1,000 highest-scoring accident clips (pseudo-falls) and 1,000 pre-accident clips chosen by name hash (free non-falls); 1,863 distinct videos. VideoMAE-B is fine-tuned end to end from the Kinetics checkpoint with the run-6 recipe, seeds 0, 1, 2. Compared with the synthetic and human-labelled real fine-tuned models of runs 6–7 (same seeds).
+
+AUROC, mean ± s.d. over 3 seeds (population s.d.; run 7 reports the same means with sample s.d.):
+
+| Fine-tuned on | FallOrNot | FallOrNot hard | HMDB51 | HMDB51 hard |
+|---|---|---|---|---|
+| **Zero-label (pseudo-falls + free negatives, no human label)** | **0.910 ± 0.004** | 0.852 ± 0.006 | 0.959 ± 0.003 | 0.893 ± 0.017 |
+| Synthetic (runs 6–7) | 0.838 ± 0.014 | 0.762 ± 0.020 | 0.960 ± 0.005 | 0.922 ± 0.012 |
+| Real, human labels (runs 6–7) | 0.902 ± 0.010 | 0.863 ± 0.015 | 0.920 ± 0.021 | 0.795 ± 0.055 |
+
+Paired differences per seed (seed 0; seed 1; seed 2), AUROC difference [95% CI], p (by compilation on FallOrNot, by clip on HMDB51):
+
+| Comparison | Test | Seed 0 | Seed 1 | Seed 2 |
+|---|---|---|---|---|
+| Zero-label vs. synthetic | FallOrNot | +0.081 [+0.045, +0.118], p < 0.001 | +0.047 [+0.010, +0.083], p = 0.020 | +0.086 [+0.045, +0.128], p < 0.001 |
+| | FallOrNot hard | +0.110 [+0.050, +0.169], p = 0.001 | +0.054 [−0.010, +0.114], p = 0.111 | +0.107 [+0.048, +0.167], p < 0.001 |
+| | HMDB51 | −0.004, p = 0.79 | −0.001, p = 0.98 | −0.000, p = 0.98 |
+| | HMDB51 hard | −0.028 [−0.064, +0.006], p = 0.130 | −0.010, p = 0.60 | −0.047 [−0.085, −0.010], p = 0.008 |
+| Zero-label vs. real (human labels) | FallOrNot | +0.004, p = 0.82 | +0.017, p = 0.39 | +0.003, p = 0.87 |
+| | FallOrNot hard | −0.021, p = 0.42 | +0.001, p = 0.99 | −0.013, p = 0.67 |
+| | HMDB51 | +0.061 [+0.039, +0.086], p < 0.001 | +0.050 [+0.024, +0.078], p < 0.001 | +0.005, p = 0.51 |
+| | HMDB51 hard | +0.149 [+0.105, +0.196], p < 0.001 | +0.149 [+0.103, +0.196], p < 0.001 | −0.003, p = 0.82 |
+
+**ZERO-LABEL FINE-TUNING RESULT: SUCCESS** (mean above synthetic, and CI above zero for all three seeds on FallOrNot).
+
+## Reading
+- **The zero-label result holds for end-to-end fine-tuned video models.** With no human label, fine-tuned VideoMAE reaches 0.910 on FallOrNot, above synthetic fine-tuning (0.838; significant for every seed) and level with fine-tuning on our hand labels (0.902; no seed differs significantly). On FallOrNot's hard subset it is far above synthetic (0.852 vs. 0.762; significant for 2 of 3 seeds) and level with hand labels (0.863; n.s.).
+- **Out of domain it keeps the synthetic model's level overall** (HMDB51 0.959 vs. 0.960) and is far above hand-labelled real fine-tuning for two seeds. On HMDB51's hard subset it is somewhat below synthetic fine-tuning (0.893 vs. 0.922; significant for one seed).
+- **This is the first training recipe in the project that is best or level with the best on all four fine-tuned columns except HMDB51 hard**, where it is 0.029 below synthetic but 0.098 above hand-labelled real.
+- **Caveats:** three seeds; one fixed selection of 2,000 clips (no ablation of 1,000 per class); the unlabelled pool includes the videos behind our 268 labelled training clips (labels not read); FallOrNot is OOPS! footage like the pool.
+
+# Run 21: consequence-guided zero-label adaptation (rule fixed in advance: NOT MET)
+
+`post_prep.py` + `nolabel.py --post` at commit `e10ddec` (`Research` repository; Colab L4). Rule committed to `AGENTS.md` before any result. Copied from the Colab text output.
+
+**Setup.** `post_prep.py` embedded the clip [t+1, t+3] s after the accident for all 8,266 processed OOPS! videos (about 26 minutes at 5.4 videos/s). Consequence score = CLIP "person on the ground" minus "person upright" (prompts fixed in `post_prep.py`). Pool = run-18 pool (every human-labelled video removed): 6,900 accident clips, 5,891 with an after-clip, 3,396 pre-accident clips. In every self-training round accident clips are ranked by the mean of (rank of probe score, rank of consequence score), neutral 0.5 without an after-clip.
+
+Diagnostic (labels used only to measure): the consequence score alone separates falls from other accidents on C with AUROC 0.681 (301 clips with an after-clip).
+
+| Method | A: FallOrNot hard | B: training-pool accident clips | C (primary) | FallOrNot | OF-ItW | HMDB51 | HMDB51 hard |
+|---|---|---|---|---|---|---|---|
+| Synthetic-only | 0.772 | 0.707 | 0.746 | 0.814 | 0.872 | 0.917 | 0.880 |
+| Zero-label (run-15 setting, same pool) | 0.840 | 0.754 | 0.804 | 0.897 | 0.937 | 0.952 | 0.915 |
+| **Consequence-guided zero-label** | 0.861 | 0.745 | 0.812 | 0.897 | 0.930 | 0.921 | 0.846 |
+| Consequence only, then standard rounds (secondary) | 0.861 | 0.761 | 0.819 | 0.905 | 0.941 | 0.922 | 0.849 |
+
+Paired tests (by compilation): consequence-guided vs. zero-label: A +0.021 [−0.017, +0.060], p = 0.266; B −0.009, p = 0.730; **C +0.008 [−0.020, +0.036], p = 0.604**; FallOrNot +0.000, p = 0.922; OF-ItW −0.007 [−0.014, −0.000], p = 0.047. Consequence-guided vs. synthetic-only: A +0.090, p = 0.010; C +0.066, p = 0.004.
+
+**CONSEQUENCE RESULT: NOT MET** (condition (i) failed: no significant gain over plain zero-label on C; condition (ii) held: at most 0.007 below on the full tests).
+
+## Reading
+- **The after-accident signal does not improve the zero-label method in domain** (+0.008 on C, p = 0.60), although on its own it carries some information about falls (AUROC 0.681 on C).
+- **It hurts out of domain:** HMDB51 0.921 vs. 0.952 and HMDB51 hard 0.846 vs. 0.915 (not tested for significance; HMDB51 was not part of the rule). A plausible reason: it ties the pseudo-falls to OOPS!-specific after-states (people on the ground in fail videos), but this was not tested.
+- The consequence-only start looks slightly better in domain (C 0.819) but has the same out-of-domain drop; it was a secondary variant and must not replace the rule's method.
+- Report in the paper as a negative result; it supports keeping the simpler method.

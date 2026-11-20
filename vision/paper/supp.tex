@@ -1,0 +1,82 @@
+% Every number in this paper is copied from vision/RESULTS.md (run numbers given in comments).
+% Compiles with pdflatex on its own (no venue style file). For submission, move the body
+% into the venue's official template (e.g. on Overleaf) and anonymise as required.
+\documentclass[10pt,twocolumn,letterpaper]{article}
+\usepackage[margin=0.75in,columnsep=0.3in]{geometry}
+\usepackage{times}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{adjustbox}
+\usepackage{amsmath}
+\usepackage{multirow}
+\usepackage{rotating}
+\usepackage[hidelinks]{hyperref}
+\usepackage[capitalise,noabbrev]{cleveref}
+\usepackage{xcolor}
+\usepackage{caption}
+\captionsetup{font=small,labelfont=bf}
+\setlength{\tabcolsep}{4pt}
+
+\title{\Large\bf How Much Is a Real Fall Worth? Supplementary Material}
+\author{Anonymous submission}
+\date{}
+
+\begin{document}
+\maketitle
+This supplement gives the full few-label results summarised in Section~7 of the main paper. All numbers are copied from \texttt{vision/RESULTS.md} (runs 12--14).
+
+\section{Few-label adaptation: anchoring to the synthetic solution}\label{sec:anchor}
+The curves in the equal-budget figure of the main paper leave a gap: with fewer than about 30 real falls a real-only probe is unstable and worse than synthetic training, and pooling the two sources lets thousands of synthetic clips outweigh the real ones (main paper, Section~5.3). We therefore test a simple alternative, a form of biased regularisation~\cite{yang2007asvm,kuzborskij2013,li2018l2sp}. Let $w_s, b_s$ be the synthetic-trained probe on features standardised with synthetic statistics. On $k$ real falls and $k$ real non-falls we fit $w=w_s+v$, $b=b_s+c$ by minimising
+\[C\sum_i \alpha_i\,\ell\big(y_i,\;x_i^\top (w_s+v)+b_s+c\big)+\tfrac12\lVert v\rVert^2,\]
+where $\ell$ is the logistic loss and $\alpha_i$ balances the classes. The penalty pulls the probe towards the synthetic solution rather than towards zero. $C$ is chosen from $\{10^{-3},\dots,10\}$ by video-grouped cross-validation on the $2k$ training clips alone.
+
+\paragraph{Rule fixed in advance.} Before running the method on real data we committed this rule to the repository: on both FallOrNot and the OF-ItW test split, (i) at every budget $k\in\{4,8,15,30,60,125\}$ the anchored probe's mean AUROC over ten random draws is at least the better of the real-only mean and the synthetic-only probe, minus 0.005, and (ii) averaged over budgets it is higher than both. \textbf{The rule was met on both test sets} (\cref{tab:anchor}). With four real falls the anchored probe equals the synthetic probe and is far more stable than real-only training (FallOrNot: $0.813\pm0.005$ vs.\ $0.687\pm0.124$); cross-validation then selects larger $C$ as $k$ grows, and by $k=60$ it tracks the real-only probe.
+
+\paragraph{Where it does not help.} The gain is confined to small budgets. With the full real pool the anchored probe equals real-only on FallOrNot (0.899 vs.\ 0.899, $p=0.96$) and is slightly but significantly worse on OF-ItW (0.943 vs.\ 0.951; $-0.008$ [$-0.012$, $-0.003$], $p=0.002$). On HMDB51, which was not part of the rule, it reaches 0.902, between real-only (0.888; $+0.014$, $p=0.055$) and synthetic-only (0.917; $-0.015$, $p=0.14$). We did not run plain pooling at these small budgets.
+
+\begin{table}[t]\centering\small
+\caption{Anchored probe: AUROC, mean $\pm$ s.d.\ over ten draws of $k$ real falls + $k$ real non-falls (CLIP + VideoMAE). Synthetic-only: 0.814 (FallOrNot), 0.873 (OF-ItW). Run 12.}
+\label{tab:anchor}
+\setlength\tabcolsep{3pt}
+\begin{adjustbox}{max width=\linewidth}
+\begin{tabular}{rcccc}\toprule
+ & \multicolumn{2}{c}{FallOrNot} & \multicolumn{2}{c}{OF-ItW test}\\\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+$k$ & Anchored & Real-only & Anchored & Real-only\\\midrule
+4 & \textbf{.813} $\pm$ .005 & .687 $\pm$ .124 & \textbf{.876} $\pm$ .005 & .794 $\pm$ .046\\
+8 & \textbf{.819} $\pm$ .012 & .756 $\pm$ .063 & \textbf{.877} $\pm$ .006 & .825 $\pm$ .024\\
+15 & \textbf{.834} $\pm$ .015 & .791 $\pm$ .022 & \textbf{.891} $\pm$ .012 & .847 $\pm$ .024\\
+30 & \textbf{.853} $\pm$ .014 & .826 $\pm$ .030 & \textbf{.907} $\pm$ .019 & .891 $\pm$ .014\\
+60 & \textbf{.875} $\pm$ .010 & .871 $\pm$ .010 & \textbf{.921} $\pm$ .008 & .908 $\pm$ .016\\
+125 & \textbf{.893} $\pm$ .005 & .892 $\pm$ .005 & .935 $\pm$ .007 & \textbf{.937} $\pm$ .007\\\midrule
+Mean & \textbf{.848} & .804 & \textbf{.901} & .867\\\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
+
+\paragraph{Fine-tuning.} For end-to-end fine-tuning we start from the VideoMAE fine-tuned on synthetic clips and continue on the $2k$ real clips with the loss $\mathrm{CE}+\tfrac{\alpha}{2}\lVert\theta-\theta_s\rVert^2$ (L2-SP~\cite{li2018l2sp}), $\alpha=0.01$; the baseline fine-tunes from the Kinetics checkpoint on the same clips with the same schedule. The rule, committed before any result, was the one above on FallOrNot with $k\in\{8,30,125\}$, three draws and a tolerance of 0.01. \textbf{It was met} (\cref{tab:anchorft}): with 8 real falls, real-only fine-tuning collapses to 0.652 while the anchored model stays at the synthetic model's level. On HMDB51 (one draw per budget, not part of the rule) anchored models reach 0.94--0.96, above real-only fine-tuning (0.82--0.89) but below the unadapted synthetic model (0.967). An ablation whose reading we fixed beforehand then removed the penalty: the same models trained from the same synthetic starting point with ordinary weight decay score 0.826, 0.855 and 0.900 on FallOrNot and 0.959, 0.940 and 0.940 on HMDB51, within 0.002 of the anchored ones. For fine-tuning, therefore, \emph{the gain comes from starting at the synthetic-trained model, and the penalty adds nothing measurable}; the recipe reduces to sequential fine-tuning with a short schedule. For the linear probe the distinction does not arise: its objective is convex, so the penalty is the only link to the synthetic solution.
+
+\begin{table}[t]\centering\small
+\caption{Anchored fine-tuning of VideoMAE: AUROC on FallOrNot, mean $\pm$ s.d.\ over three draws; HMDB51 for the first draw. Synthetic-only model: 0.829 (FallOrNot), 0.967 (HMDB51). Run 13.}
+\label{tab:anchorft}
+\setlength\tabcolsep{3pt}
+\begin{adjustbox}{max width=\linewidth}
+\begin{tabular}{rcccc}\toprule
+ & \multicolumn{2}{c}{FallOrNot} & \multicolumn{2}{c}{HMDB51}\\\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+$k$ & Anchored & Real-only & Anchored & Real-only\\\midrule
+8 & .826 $\pm$ .003 & .652 $\pm$ .042 & .960 & .880\\
+30 & \textbf{.855} $\pm$ .007 & .813 $\pm$ .013 & .941 & .888\\
+125 & \textbf{.898} $\pm$ .010 & .894 $\pm$ .008 & .942 & .815\\\midrule
+Mean & \textbf{.860} & .786 & & \\\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
+
+
+{\small
+\begin{thebibliography}{9}
+\bibitem{kuzborskij2013} I.~Kuzborskij and F.~Orabona. Stability and hypothesis transfer learning. In \emph{ICML}, PMLR 28(3):942--950, 2013.
+\bibitem{li2018l2sp} X.~Li, Y.~Grandvalet, and F.~Davoine. Explicit inductive bias for transfer learning with convolutional networks. In \emph{ICML}, PMLR 80:2825--2834, 2018.
+\bibitem{yang2007asvm} J.~Yang, R.~Yan, and A.~G. Hauptmann. Cross-domain video concept detection using adaptive SVMs. In \emph{ACM Multimedia}, 2007. doi:10.1145/1291233.1291276.
+\end{thebibliography}
+}
+\end{document}

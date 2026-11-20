@@ -8,6 +8,8 @@ Research code and paper on video fall detection: which training data (staged lab
 
 - **Real accident video is useful without labels.** A probe trained on 7,063 unlabelled accident clips, using pseudo-labels plus the free "before the accident" clips as non-falls, reaches 0.894 / 0.937 / 0.953 AUROC on FallOrNot / OmniFall OF-ItW / HMDB51 (synthetic-only training: 0.814 / 0.872 / 0.917), under a success rule fixed before the run. It reads no human label.
 - **Controls show what that gain is.** Most of the in-domain gain is "accident versus ordinary activity"; pseudo-labelling adds fall-specific information beyond it. It also separates falls from *other accidents* better than synthetic training, without any label: modestly in domain (+0.058 AUROC on 345 hand-labelled accident clips, p = 0.013, rule fixed in advance) and clearly out of domain (p = 0.005).
+- **It also works for fully fine-tuned video models.** VideoMAE fine-tuned on the same zero-label data reaches 0.910 AUROC on FallOrNot (synthetic: 0.838; our hand labels: 0.902), under a rule fixed in advance.
+- A new idea that also labels each accident by what follows it ("is a person on the ground?") did **not** help, and is reported as a negative result.
 - Detectors trained on staged lab falls score 1.00 AUROC in the lab but about 0.76 on FallOrNot, our test set of real accident videos drawn from OOPS!, with non-fall accidents as false-alarm negatives.
 - Among labelled sources the ranking flips between test sets: hand-labelled real falls win on FallOrNot, synthetic falls win on HMDB51.
 - With only a handful of labelled real falls, a probe anchored to the synthetic solution is never meaningfully worse than the better single source (rule fixed in advance, met).
