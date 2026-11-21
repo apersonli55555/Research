@@ -754,3 +754,29 @@ Zero-label vs. real (hand labels), per seed: +0.001 [−0.007, +0.008], p = 0.86
 - Fine-tuned models score much higher on OF-ItW than frozen probes (best probe 0.951, trained on OF-ItW's own labels, run 11); the two are not directly compared here.
 - **Combined with run 19:** fine-tuned on zero-label data, VideoMAE is best or level with the best on FallOrNot (0.910), OF-ItW (0.967) and HMDB51 (0.959), and level with hand labels on FallOrNot's hard subset; its one shortfall is HMDB51's hard subset (0.893 vs. synthetic 0.922).
 - **Caveats:** three seeds; OF-ItW is OOPS! footage like the unlabelled pool (its videos were excluded from the pool); OF-ItW negatives are other moments of fall videos, not other accidents.
+
+# Run 23: timestamp-free self-training (rule fixed in advance: NOT MET)
+
+`window_prep.py` + `nolabel.py --windows` at commit `0f7b315` (`Research` repository; Colab L4). Rule committed to `AGENTS.md` before any result (commit `c8200fa`). Copied from the Colab text output.
+
+**Setup.** Every 2 s window (1 s stride, at most 30) of all 7,063 pool videos: 60,512 windows (about 3.4 hours at 0.58 videos/s; the stream reconnected four times). The annotated accident time is never read: each round, each video's highest-scoring window is its event clip and the window starting 3 s earlier its non-fall; otherwise the fixed run-15 setting (synthetic start, 20%, 3 rounds).
+
+| Method | FallOrNot | OF-ItW | HMDB51 |
+|---|---|---|---|
+| Synthetic-only | 0.814 | 0.872 | 0.917 |
+| Self-training WITH annotated accident times (run 15, same videos) | 0.894 | 0.937 | 0.953 |
+| **Timestamp-free self-training** | 0.836 | 0.912 | 0.948 |
+
+Paired tests (by compilation): timestamp-free vs. synthetic-only: FallOrNot +0.022 [−0.022, +0.065], p = 0.337; OF-ItW +0.040 [+0.029, +0.051], p < 0.001. Timestamp-free vs. with timestamps: FallOrNot −0.058 [−0.093, −0.026], p < 0.001; OF-ItW −0.025 [−0.032, −0.017], p < 0.001.
+
+Falls vs. other accidents (345 labelled accident clips, labelled videos removed from the pool): synthetic-only 0.746, timestamp-free 0.768; +0.022 [−0.015, +0.061], p = 0.271.
+
+Diagnostic: the chosen event window lies within 1 s of the (unused) annotated time for 0.49 of videos after round 1 and 0.52 at the end, against 0.30 for a random window.
+
+**TIMESTAMP-FREE RESULT: NOT MET** (significant on OF-ItW, not on FallOrNot).
+
+## Reading
+- **The annotated accident time matters.** Without it, the gain over synthetic training shrinks from +0.081 to +0.022 (n.s.) on FallOrNot and from +0.065 to +0.040 (still significant) on OF-ItW; with timestamps is significantly better on both. On HMDB51 the timestamp-free probe (0.948) stays close to the timestamped one (0.953).
+- The detector finds the accident moment only about half the time (0.52 vs. 0.30 by chance), so many "free non-falls" are taken from the wrong place.
+- This quantifies the method's main limitation: it needs human-annotated accident timestamps. The paper must keep "needs timestamps" as a limitation and report this run as a follow-up test that was not met.
+- **Caveats:** one setting (3 s offset, argmax window), one run; a better localiser was not tried and must not be tuned on these test results.
