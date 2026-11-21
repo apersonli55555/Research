@@ -72,6 +72,26 @@ Mean & \textbf{.860} & .786 & & \\\bottomrule
 \end{table}
 
 
+\section{Tests specified in advance: initial and follow-up}
+Each success rule below was committed to the project repository before its own run. Only the first was designed before any related result; every later one was designed after seeing earlier results, which motivated it. Run numbers refer to \texttt{vision/RESULTS.md}.
+
+\begin{table}[h]\centering\small
+\begin{adjustbox}{max width=\linewidth}
+\begin{tabular}{rlllc}\toprule
+Run & Test & Kind & Designed after & Met\\\midrule
+6 & Fine-tuning beats the best frozen probe on two test sets & initial & -- & no\\
+10 & Source-balanced mixing beats plain mixing & follow-up & runs 4--5 (mixing results) & no\\
+12 & Anchored probe at small budgets & follow-up & runs 4, 11 (mixing hurts on OF-ItW) & yes\\
+13 & Anchored fine-tuning & follow-up & run 12 & yes\\
+15 & Self-training from accident timing beats synthetic & follow-up & runs 4--14 & yes\\
+18 & Falls vs.\ other accidents, 345 clips & follow-up & run 17 (borderline, $p=0.065$) & yes\\
+19 & Self-trained fine-tuning, FallOrNot & follow-up & run 15 & yes\\
+21 & Consequence-guided labelling & follow-up & runs 17--18 & no\\
+22 & Self-trained fine-tuning, OF-ItW & follow-up & run 19 & yes\\\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
+
 {\small
 \begin{thebibliography}{9}
 \bibitem{kuzborskij2013} I.~Kuzborskij and F.~Orabona. Stability and hypothesis transfer learning. In \emph{ICML}, PMLR 28(3):942--950, 2013.

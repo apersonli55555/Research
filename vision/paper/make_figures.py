@@ -127,13 +127,13 @@ for t, (syn, ys) in pool.items():
     ax.annotate(t, (npool[-1], ys[-1]), xytext=(4, 0), textcoords="offset points", va="center", fontsize=6.5, color=INK)
 ax.set_xscale("log"); ax.set_xlim(110, 30000); ax.set_ylim(0.80, 0.97)
 ax.set_xticks([141, 706, 3531, 7063]); ax.set_xticklabels(["141", "706", "3.5k", "7k"]); ax.minorticks_off()
-ax.set_xlabel("unlabelled accident videos used"); ax.set_ylabel("AUROC")
-ax.set_title("no human labels (dashed: synthetic only)", fontsize=7, color=INK, pad=3)
+ax.set_xlabel("accident videos used (no fall annotations)"); ax.set_ylabel("AUROC")
+ax.set_title("no real-video fall annotations (dashed: synthetic only)", fontsize=7, color=INK, pad=3)
 methods = [("Accident detector", .724, 0, .884, 0), ("Random start", .767, .021, .886, .029), ("Synthetic only", .772, 0, .880, 0),
-           ("Zero-label", .835, 0, .920, 0), ("Human labels", .860, 0, .777, 0)]
+           ("Self-trained", .835, 0, .920, 0), ("Hand labels", .860, 0, .777, 0)]
 yy = range(len(methods))[::-1]
 for (name, a_, sa, b_, sb), y in zip(methods, yy):
-    c = COL["Synthetic + real"] if name == "Zero-label" else MUTED
+    c = COL["Synthetic + real"] if name == "Self-trained" else MUTED
     bx.plot([a_, b_], [y, y], color=GRID, lw=1.2, zorder=1)
     bx.errorbar(a_, y, xerr=sa or None, fmt="o", color=c, ms=4.5, elinewidth=0.8, capsize=0, markeredgecolor="white", markeredgewidth=0.5, zorder=3)
     bx.errorbar(b_, y, xerr=sb or None, fmt="^", color=c, ms=4.5, mfc="white", elinewidth=0.8, capsize=0, markeredgewidth=1, zorder=3)

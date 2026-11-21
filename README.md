@@ -1,19 +1,17 @@
 # How Much Is a Real Fall Worth?
 
-Research code and paper on video fall detection: which training data (staged lab falls, synthetic videos, hand-labelled real accident videos, or unlabelled real accident videos) prepares a detector for real falls, tested on three test sets from two real-world sources.
+Research code and paper on video fall detection: which training data (staged lab falls, synthetic videos, hand-labelled real accident videos, or real accident videos without fall annotations) prepares a detector for real falls, tested on three test sets from two real-world sources.
 
-**Paper:** [`vision/paper/paper.pdf`](vision/paper/paper.pdf) (LaTeX source in `vision/paper/`)
+**Paper:** [`vision/paper/paper.pdf`](vision/paper/paper.pdf) (LaTeX source in `vision/paper/`; supplement in `vision/paper/supp.pdf`)
 
 ## Main findings
 
-- **Real accident video is useful without labels.** A probe trained on 7,063 unlabelled accident clips, using pseudo-labels plus the free "before the accident" clips as non-falls, reaches 0.894 / 0.937 / 0.953 AUROC on FallOrNot / OmniFall OF-ItW / HMDB51 (synthetic-only training: 0.814 / 0.872 / 0.917), under a success rule fixed before the run. It reads no human label.
-- **Controls show what that gain is.** Most of the in-domain gain is "accident versus ordinary activity"; pseudo-labelling adds fall-specific information beyond it. It also separates falls from *other accidents* better than synthetic training, without any label: modestly in domain (+0.058 AUROC on 345 hand-labelled accident clips, p = 0.013, rule fixed in advance) and clearly out of domain (p = 0.005).
-- **It also works for fully fine-tuned video models.** VideoMAE fine-tuned on the same zero-label data reaches 0.910 AUROC on FallOrNot and 0.967 on OF-ItW (synthetic: 0.838 / 0.936; our hand labels: 0.902 / 0.957), under rules fixed in advance.
-- A new idea that also labels each accident by what follows it ("is a person on the ground?") did **not** help, and is reported as a negative result.
-- Detectors trained on staged lab falls score 1.00 AUROC in the lab but about 0.76 on FallOrNot, our test set of real accident videos drawn from OOPS!, with non-fall accidents as false-alarm negatives.
-- Among labelled sources the ranking flips between test sets: hand-labelled real falls win on FallOrNot, synthetic falls win on HMDB51.
-- With only a handful of labelled real falls, a probe anchored to the synthetic solution is never meaningfully worse than the better single source (rule fixed in advance, met).
-- Tests fixed in advance that were not met, and a second annotator who agreed only moderately (Cohen's kappa 0.50), are reported in the paper.
+- **Much of the benefit of real accident video does not need fall annotations.** Combining a synthetic-trained teacher, pseudo-labels and the "before the accident" clip that OOPS!'s human-annotated accident times provide, a probe trained without additional real-video fall annotations reaches 0.894 / 0.937 / 0.953 AUROC on FallOrNot / OmniFall OF-ItW / HMDB51 (synthetic-only training: 0.814 / 0.872 / 0.917), under a success rule fixed before the run. None of the three ingredients is new; the contribution is combining them for fall detection and measuring what each part contributes.
+- **Controls show what that gain is.** Most of the in-domain gain is "accident versus ordinary activity", which the accident time gives away; fall-specific information adds a smaller gain on falls versus other accidents (+0.058 AUROC on 345 hand-labelled accident clips, p = 0.013, rule fixed in advance).
+- **Fine-tuned video models.** VideoMAE fine-tuned the same way has the highest observed mean AUROC on FallOrNot (0.910) and OF-ItW (0.967), but trails synthetic training on HMDB51's hard subset (0.893 vs. 0.922).
+- **Caveats:** FallOrNot and OF-ItW both come from OOPS!; the largest falls-vs-accidents test mixes a random and a model-selected sample; "not significantly different" from hand labels does not mean equivalent.
+- Staged-trained detectors score 1.00 AUROC in the lab but about 0.76 on FallOrNot; among labelled sources, the ranking flips between test sets.
+- Every test fixed in advance is reported, including the three that were not met (among them a consequence-based labelling idea).
 
 ## Repository layout
 
