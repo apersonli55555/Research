@@ -780,3 +780,65 @@ Diagnostic: the chosen event window lies within 1 s of the (unused) annotated ti
 - The detector finds the accident moment only about half the time (0.52 vs. 0.30 by chance), so many "free non-falls" are taken from the wrong place.
 - This quantifies the method's main limitation: it needs human-annotated accident timestamps. The paper must keep "needs timestamps" as a limitation and report this run as a follow-up test that was not met.
 - **Caveats:** one setting (3 s offset, argmax window), one run; a better localiser was not tried and must not be tuned on these test results.
+
+# Run 24: zero-shot vision-language baselines (comparison; prompt and scoring fixed in advance)
+
+`vlm_baseline.py` at commit `7aad716` (`Research` repository; Colab L4; transformers upgraded with `pip -U` in the same cell). Prompt, input frames and score fixed in `AGENTS.md` before any result. Copied from the Colab text output.
+
+**Setup.** Prompt: "These are 8 frames, in time order, from a 2-second video clip. Does a person fall down in this clip? Answer with Yes or No." Input: frames 1, 3, …, 15 of the same stored 224 × 224 clips the fine-tuned models were scored on. Score: logit("Yes") − logit("No") for the first answer token. FallOrNot test (255 clips, 102 falls) and hard subset (165, 102), OF-ItW test without our labelled videos (1,613, 614), HMDB51 (1,100, 100; max over 2,740 windows) and hard subset (320, 100). Fine-tuned columns: mean ± s.d. over 3 seeds (runs 6, 7, 19, 22).
+
+| Test set | Qwen3-VL-4B-Instruct (zero-shot) | InternVL3.5-8B-HF (zero-shot) | Fine-tuned synthetic | Fine-tuned hand labels | Fine-tuned self-trained (ours) |
+|---|---|---|---|---|---|
+| FallOrNot | 0.920 | **0.936** | 0.838 ± 0.014 | 0.902 ± 0.010 | 0.910 ± 0.004 |
+| FallOrNot hard | 0.902 | **0.930** | 0.762 ± 0.020 | 0.863 ± 0.015 | 0.852 ± 0.006 |
+| OF-ItW | 0.946 | 0.964 | 0.936 ± 0.005 | 0.957 ± 0.005 | **0.967 ± 0.003** |
+| HMDB51 | 0.953 | 0.950 | **0.960 ± 0.005** | 0.920 ± 0.021 | 0.959 ± 0.003 |
+| HMDB51 hard | 0.873 | 0.848 | **0.922 ± 0.012** | 0.795 ± 0.055 | 0.893 ± 0.017 |
+
+Cost on one L4: Qwen3-VL-4B 0.22 s per clip (0.88 s on the first, smaller set, which includes warm-up), peak GPU memory 9.2 GB; InternVL3.5-8B 0.99–1.01 s per clip, 18.1 GB.
+
+Paired differences VLM minus fine-tuned self-trained model, per seed (0; 1; 2), by compilation on OOPS!-based sets, by clip on HMDB51:
+
+| Test set | Qwen3-VL-4B | InternVL3.5-8B |
+|---|---|---|
+| FallOrNot | +0.010 (p = 0.56); +0.015 (p = 0.44); +0.006 (p = 0.76) | +0.026 (p = 0.14); +0.031 (p = 0.12); +0.022 (p = 0.20) |
+| FallOrNot hard | +0.047 (p = 0.069); +0.059 [+0.002, +0.119] (p = 0.042); +0.044 (p = 0.14) | **+0.075 [+0.024, +0.135] (p = 0.005); +0.087 [+0.032, +0.148] (p < 0.001); +0.072 [+0.021, +0.131] (p = 0.002)** |
+| OF-ItW | **−0.017 (p = 0.003); −0.020 (p < 0.001); −0.024 (p < 0.001)** | +0.001 (p = 0.90); −0.003 (p = 0.57); −0.007 (p = 0.16) |
+| HMDB51 | −0.010 (p = 0.32); −0.005 (p = 0.60); −0.001 (p = 0.85) | −0.013 (p = 0.19); −0.009 (p = 0.42); −0.005 (p = 0.53) |
+| HMDB51 hard | −0.037 (p = 0.036); −0.027 (p = 0.16); +0.003 (p = 0.88) | **−0.062 (p < 0.001); −0.051 (p = 0.002)**; −0.021 (p = 0.20) |
+
+Against the other fine-tuned models (selected): both VLMs beat fine-tuned synthetic on FallOrNot and its hard subset for every seed (p ≤ 0.010); InternVL beats fine-tuned hand labels on FallOrNot hard for 2 of 3 seeds (p = 0.007, 0.030; third p = 0.055); both VLMs are below fine-tuned synthetic on HMDB51 hard (InternVL for every seed, p ≤ 0.003).
+
+## Reading (as fixed in advance: wherever a VLM is higher than our model, say so prominently)
+- **A zero-shot 8B vision-language model, with no fall training at all, is the strongest detector on FallOrNot (0.936) and especially on falls vs. other accidents (0.930), significantly above our self-trained fine-tuned model on the hard subset for every seed.** Qwen3-VL-4B is also higher in point estimate on both (0.920, 0.902), significant on the hard subset for one seed. The abstract and introduction must state this.
+- Our self-trained model is better on OF-ItW than Qwen3-VL-4B (significant for every seed) and level with InternVL; on HMDB51's hard subset it is better than InternVL (significant for 2 of 3 seeds); synthetic fine-tuning is best there.
+- The VLMs cost 9–18 GB of GPU memory and 0.2–1 s per 2 s clip on an L4; our models' inference cost was not measured.
+- **Implication:** the falls-vs-other-accidents problem that our method only partly solves is largely solved by a generic VLM zero-shot. A natural follow-up is to use the VLM as the teacher in place of the synthetic probe (not yet run).
+- **Caveats:** one prompt each, fixed in advance; 8 frames at 224 px; the VLMs' training data are unknown and may include OOPS!-like web video.
+
+# Run 25: both annotators on the same clips (no new labels)
+
+`nolabel.py --annotators labels_friend.csv --ft-work …` at commit `7aad716`. Copied from the Colab text output. 98 FallOrNot test videos labelled fall / not fall by both annotators; 151 clips; falls: annotator 1 65, annotator 2 77; 20 event clips disagree (consensus subset = the other 131 clips).
+
+| Model | Annotator 1 (ours) | Annotator 2 (independent) | Consensus |
+|---|---|---|---|
+| Synthetic-only probe | 0.802 | 0.728 | 0.811 |
+| Hand-labelled real probe | 0.891 | 0.795 | 0.895 |
+| Self-trained probe (ours) | 0.890 | **0.839** | **0.906** |
+| Fine-tuned synthetic, seeds 0/1/2 | 0.833 / 0.849 / 0.808 | 0.754 / 0.794 / 0.738 | 0.837 / 0.869 / 0.814 |
+| Fine-tuned hand labels, seeds 0/1/2 | 0.901 / 0.888 / 0.902 | 0.811 / 0.804 / 0.805 | 0.904 / 0.892 / 0.906 |
+| Fine-tuned self-trained, seeds 0/1/2 | 0.914 / 0.907 / 0.921 | 0.812 / 0.816 / 0.830 | 0.916 / 0.909 / 0.928 |
+
+Paired tests (by compilation):
+
+| Comparison | Annotator 1 | Annotator 2 | Consensus |
+|---|---|---|---|
+| Self-trained probe vs. synthetic probe | +0.088 [+0.023, +0.153], p = 0.009 | +0.111 [+0.045, +0.172], p < 0.001 | +0.095 [+0.028, +0.161], p = 0.002 |
+| Self-trained probe vs. hand-labelled probe | −0.002, p = 0.910 | +0.044 [−0.009, +0.096], p = 0.104 | +0.011, p = 0.596 |
+| Self-trained FT vs. synthetic FT (seeds 0/1/2) | p = 0.002 / 0.037 / < 0.001 (all > 0) | p = 0.019 / 0.423 / < 0.001 | p = 0.004 / 0.156 / 0.001 |
+| Self-trained FT vs. hand-labelled FT (seeds 0/1/2) | +0.013 / +0.019 / +0.019, all n.s. | +0.001 / +0.011 / +0.024, all n.s. | +0.012 / +0.017 / +0.022, all n.s. |
+
+## Reading
+- **The main comparisons hold under the independent annotator's labels:** the self-trained probe beats the synthetic probe under both annotators and the consensus (p ≤ 0.009); fine-tuned self-training beats fine-tuned synthetic for 3 of 3 seeds under annotator 1 and 2 of 3 under annotator 2.
+- Against hand-labelled training nothing is significant under either annotator. Under annotator 2, whose labels the hand-labelled models were not trained on, the self-trained probe is 0.044 higher (p = 0.10); the hand-labelled models may benefit from sharing annotator 1's labelling style, which this subset cannot settle.
+- **Caveats:** 98 videos; the hand-labelled models were trained on annotator 1's labels of other videos.
