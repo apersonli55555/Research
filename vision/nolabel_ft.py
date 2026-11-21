@@ -255,7 +255,23 @@ def ofitw(a):
     dev = "cuda" if torch.cuda.is_available() else "cpu"
     ours = {it["name"] for it in ClipStore(a.work, "oops").items}
     P = {n: v for n, v in plan().items() if v["split"] == "test" and n not in ours}
-    store = ClipStore(a.work, "ofitw")
+    # Google Drive can refuse to read a large file that is still being uploaded (OSError 95), so the store
+    # lives on local disk; Drive only keeps a backup copy.
+    import shutil
+    os.makedirs(a.local, exist_ok=True)
+    for ext in (".jsonl", ".bin"):
+        src, dst = os.path.join(a.work, "ofitw" + ext), os.path.join(a.local, "ofitw" + ext)
+        if os.path.exists(src) and not os.path.exists(dst):
+            for attempt in range(6):
+                try:
+                    shutil.copyfile(src, dst + ".part"); os.replace(dst + ".part", dst); break
+                except OSError as e:
+                    print(f"Drive not ready ({e}); retrying in 30 s", flush=True); time.sleep(30)
+    if os.path.exists(os.path.join(a.local, "ofitw.jsonl")) != os.path.exists(os.path.join(a.local, "ofitw.bin")):
+        for ext in (".jsonl", ".bin"):                       # half a copy: start the local store again
+            if os.path.exists(os.path.join(a.local, "ofitw" + ext)):
+                os.remove(os.path.join(a.local, "ofitw" + ext))
+    store = ClipStore(a.local, "ofitw")
     todo = {n for n, v in P.items() if any((n, f"{c:.3f}") not in store.keys for c, _, _ in v["clips"])}
     print(f"OF-ItW test: {len(P)} videos ({sum(len(v['clips']) for v in P.values())} clips) after removing our labelled videos; "
           f"{len(todo)} still to extract", flush=True)
@@ -289,6 +305,11 @@ def ofitw(a):
                 break
         finally:
             stream.close()
+    for ext in (".jsonl", ".bin"):                           # best-effort backup to Drive
+        try:
+            shutil.copyfile(os.path.join(a.local, "ofitw" + ext), os.path.join(a.work, "ofitw" + ext))
+        except OSError as e:
+            print("backup to Drive failed (not needed for the results):", e)
     items = store.items[:a.limit * 3] if a.limit else store.items
     y = np.array([it["label"] for it in items]); grp = np.array([compilation(it["name"]) for it in items])
     frames = None
@@ -355,6 +376,8 @@ def main():
     ap.add_argument("--steps", type=int, default=0, help="testing only")
     ap.add_argument("--limit", type=int, default=0, help="testing only")
     ap.add_argument("--force", action="store_true")
+    ap.add_argument("--local", default="/content/ofitw_store" if os.path.isdir("/content") else "ofitw_store",
+                    help="local disk folder for the OF-ItW clip store (ofitw stage)")
     a = ap.parse_args()
     {"select": select, "prepare": prepare, "train": train, "score": score, "report": report, "ofitw": ofitw}[a.stage](a)
 
