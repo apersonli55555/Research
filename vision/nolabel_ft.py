@@ -243,16 +243,12 @@ def report(a):
     print("\n" + text + f"\n\nwrote {a.work}/nolabel_ft.md, nolabel_ft.json")
 
 
-def ofitw(a):
-    """RUN 22 (rule fixed in AGENTS.md before any result): score every fine-tuned model on OmniFall's OF-ItW test
-    split. Clips: the same definition as ofitw_prep.py. Videos behind our labelled training clips are excluded,
-    so the hand-labelled model is not tested on its own training videos."""
-    import torch
-    from adapt_ft import run
+def ofitw_store(a):
+    """OF-ItW test clips as a local ClipStore (copied from Drive, or extracted from the archive); videos behind
+    our labelled training clips are excluded. Shared by run 22 and the VLM baseline."""
     from ofitw_prep import plan
     from oops_mine import URL, ResumableStream
     from common import CLIP_SECONDS
-    dev = "cuda" if torch.cuda.is_available() else "cpu"
     ours = {it["name"] for it in ClipStore(a.work, "oops").items}
     P = {n: v for n, v in plan().items() if v["split"] == "test" and n not in ours}
     # Google Drive can refuse to read a large file that is still being uploaded (OSError 95), so the store
@@ -310,6 +306,17 @@ def ofitw(a):
             shutil.copyfile(os.path.join(a.local, "ofitw" + ext), os.path.join(a.work, "ofitw" + ext))
         except OSError as e:
             print("backup to Drive failed (not needed for the results):", e)
+    return store
+
+
+def ofitw(a):
+    """RUN 22 (rule fixed in AGENTS.md before any result): score every fine-tuned model on OmniFall's OF-ItW test
+    split. Clips: the same definition as ofitw_prep.py. Videos behind our labelled training clips are excluded,
+    so the hand-labelled model is not tested on its own training videos."""
+    import torch
+    from adapt_ft import run
+    dev = "cuda" if torch.cuda.is_available() else "cpu"
+    store = ofitw_store(a)
     items = store.items[:a.limit * 3] if a.limit else store.items
     y = np.array([it["label"] for it in items]); grp = np.array([compilation(it["name"]) for it in items])
     frames = None

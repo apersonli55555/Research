@@ -69,6 +69,9 @@ def main():
     ap.add_argument("--out", default=None)
     ap.add_argument("--hard", action="store_true",
                     help="hard-subset analysis (run 17): falls vs other accidents only; reading fixed in AGENTS.md beforehand")
+    ap.add_argument("--annotators", default="",
+                    help="second annotator's labels CSV: grade the main models with both annotators on the same clips (run 25)")
+    ap.add_argument("--ft-work", default="", help="finetune.py work dir, to include the fine-tuned models in --annotators")
     ap.add_argument("--windows", default="",
                     help="window_prep.py output dir: timestamp-free zero-label adaptation (run 23; rule in AGENTS.md)")
     ap.add_argument("--post", default="",
@@ -266,6 +269,9 @@ def main():
         text = "\n".join(L)
         open(os.path.join(out, "nolabel_hard.md"), "w").write(text + "\n")
         print(text + f"\n\nwrote {out}/nolabel_hard.md, nolabel_hard.json")
+    if a.annotators:
+        annotators(a, out, frames, videos, labels, test_names, pack, {"synthetic-only probe": syn, "hand-labelled real probe": real_full,
+                                                                        "self-trained probe (ours)": main_model})
     if a.windows:
         timestamp_free(a, out, frames, videos, labels, meta, test_names, ev_keys, pre_keys, Xev, Xpre, s0, syn, pack, tests,
                        (Xe, ye, cmax) if a.external else None)
@@ -359,6 +365,55 @@ def main():
         print(text + f"\n\nwrote {out}/nolabel_hard2.md, nolabel_hard2.json")
     if a.explore:
         explore(out, s0, Xev, Xpre, ev_keys, meta, labels, tests, (Xe, ye, cmax) if a.external else None)
+
+
+def annotators(a, out, frames, videos, labels, test_names, pack, probes):
+    """RUN 25 (no new labels). Grade the main models on exactly the same clips with each annotator's labels:
+    FallOrNot test videos that BOTH annotators labelled fall / not fall. Event clip = that annotator's label;
+    pre-accident clip = non-fall for both. Also the consensus subset (event clips where they agree)."""
+    second = {}
+    with open(a.annotators) as fh:
+        for r in csv.DictReader(fh):
+            second[r["name"]] = r["label"]
+    second = {k: v for k, v in second.items() if v}
+    both = sorted(n for n in test_names if labels.get(n) in ("fall", "not_fall") and second.get(n) in ("fall", "not_fall"))
+    keys = [k for k in sorted(frames) if k in videos and k[0] in set(both)]
+    X = pack(keys); g = np.array([compilation(k[0]) for k in keys])
+    y1 = np.array([int(k[1] == "event" and labels[k[0]] == "fall") for k in keys])
+    y2 = np.array([int(k[1] == "event" and second[k[0]] == "fall") for k in keys])
+    agree = np.array([k[1] != "event" or labels[k[0]] == second[k[0]] for k in keys])
+    sc = {m: p.decision_function(X) for m, p in probes.items()}
+    if a.ft_work:
+        for kind in ("synthetic", "real", "zerolabel"):
+            for sd in (0, 1, 2):
+                path = os.path.join(a.ft_work, f"scores_{kind}{'' if sd == 0 else f'_s{sd}'}.npz")
+                if os.path.exists(path):
+                    z = np.load(path); d = dict(zip(zip(z["fon_name"].tolist(), z["fon_seg"].tolist()), z["fon_score"].tolist()))
+                    if all(k in d for k in keys):
+                        sc[f"fine-tuned {kind} (seed {sd})"] = np.array([d[k] for k in keys])
+    gradings = {"annotator 1 (ours)": (y1, np.ones(len(keys), bool)), "annotator 2 (independent)": (y2, np.ones(len(keys), bool)),
+                "consensus (clips where both agree)": (y1, agree)}
+    R = {"videos": len(both), "clips": len(keys), "event_disagreements": int((~agree).sum()),
+         "falls": {"annotator 1": int(y1.sum()), "annotator 2": int(y2.sum())}, "auroc": {}, "tests": {}}
+    pairs = [("self-trained probe (ours)", "synthetic-only probe"), ("self-trained probe (ours)", "hand-labelled real probe")]
+    pairs += [(f"fine-tuned zerolabel (seed {sd})", f"fine-tuned {o} (seed {sd})") for o in ("synthetic", "real") for sd in (0, 1, 2)]
+    for gname, (y, m) in gradings.items():
+        R["auroc"][gname] = {k: float(_auroc(y[m], v[m])) for k, v in sc.items()}
+        R["tests"][gname] = {f"{x} vs {o}": paired(y[m], sc[x][m], sc[o][m], g[m]) for x, o in pairs if x in sc and o in sc}
+    json.dump(R, open(os.path.join(out, "nolabel_annotators.json"), "w"), indent=1)
+    gf = lambda t: f"{t[0]:+.3f} [{t[1]:+.3f}, {t[2]:+.3f}], p = {t[3]:.3f}"
+    cols = list(gradings)
+    L = ["", "TWO ANNOTATORS, SAME CLIPS (no new labels)",
+         f"{R['videos']} FallOrNot test videos labelled fall / not fall by both annotators; {R['clips']} clips; "
+         f"falls: annotator 1 {R['falls']['annotator 1']}, annotator 2 {R['falls']['annotator 2']}; event clips they disagree on: {R['event_disagreements']}", "",
+         "| Model | " + " | ".join(cols) + " |", "|---|" + "---|" * len(cols)]
+    for k in sc:
+        L.append(f"| {k} | " + " | ".join(f"{R['auroc'][c][k]:.3f}" for c in cols) + " |")
+    for gname, d in R["tests"].items():
+        L += ["", f"{gname}:"] + [f"- {k}: {gf(v)}" for k, v in d.items()]
+    text = "\n".join(L)
+    open(os.path.join(out, "nolabel_annotators.md"), "w").write(text + "\n")
+    print(text + f"\n\nwrote {out}/nolabel_annotators.md, nolabel_annotators.json")
 
 
 PRE_OFFSET = 3.0     # timestamp-free: the "before" window starts 3 s before the chosen event window
