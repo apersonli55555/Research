@@ -372,9 +372,37 @@ def ofitw(a):
     print(text + f"\n\nwrote {a.work}/nolabel_ft_ofitw.md, nolabel_ft_ofitw.json")
 
 
+def kinetics(a):
+    """Run 26: score every fine-tuned model on the Kinetics-700 windows (kinetics_prep.py); clip score = max over windows."""
+    import torch
+    from adapt_ft import run
+    dev = "cuda" if torch.cuda.is_available() else "cpu"
+    st = ClipStore(a.kinetics_store, "windows")
+    items = st.items[: a.limit or None]
+    frames = None
+    for kind in ("synthetic", "real", "synthetic_real", "zerolabel"):
+        for sd in SEEDS:
+            tag = kind + seed_suffix(sd)
+            out = os.path.join(a.work, f"scores_kinetics_{tag}.npz")
+            if (os.path.exists(out) and not a.force) or not os.path.exists(os.path.join(a.work, "model_" + tag, "config.json")):
+                continue
+            if frames is None:
+                frames = [st.frames(it) for it in items]
+            model, mean, std = load_model(dev, os.path.join(a.work, "model_" + tag))
+            v = run(model.eval(), mean, std, frames, dev)
+            best = {}
+            for it, x in zip(items, v):
+                best[it["name"]] = max(best.get(it["name"], -np.inf), float(x))
+            np.savez(out, name=np.array(list(best)), score=np.array(list(best.values()), np.float32))
+            print("scored on Kinetics:", tag, flush=True)
+            del model
+            if dev == "cuda":
+                torch.cuda.empty_cache()
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("stage", choices=["select", "prepare", "train", "score", "report", "ofitw"])
+    ap.add_argument("stage", choices=["select", "prepare", "train", "score", "report", "ofitw", "kinetics"])
     ap.add_argument("--work", required=True)
     ap.add_argument("--oops", default=""); ap.add_argument("--synthetic", default=""); ap.add_argument("--ofitw", default="")
     ap.add_argument("--hmdb", default=""); ap.add_argument("--hmdb-cache", default="/content/hmdb")
@@ -383,10 +411,11 @@ def main():
     ap.add_argument("--steps", type=int, default=0, help="testing only")
     ap.add_argument("--limit", type=int, default=0, help="testing only")
     ap.add_argument("--force", action="store_true")
+    ap.add_argument("--kinetics-store", default="/content/kinetics_store")
     ap.add_argument("--local", default="/content/ofitw_store" if os.path.isdir("/content") else "ofitw_store",
                     help="local disk folder for the OF-ItW clip store (ofitw stage)")
     a = ap.parse_args()
-    {"select": select, "prepare": prepare, "train": train, "score": score, "report": report, "ofitw": ofitw}[a.stage](a)
+    {"select": select, "prepare": prepare, "train": train, "score": score, "report": report, "ofitw": ofitw, "kinetics": kinetics}[a.stage](a)
 
 
 if __name__ == "__main__":

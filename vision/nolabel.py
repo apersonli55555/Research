@@ -69,6 +69,10 @@ def main():
     ap.add_argument("--out", default=None)
     ap.add_argument("--hard", action="store_true",
                     help="hard-subset analysis (run 17): falls vs other accidents only; reading fixed in AGENTS.md beforehand")
+    ap.add_argument("--teacher", default="", help="vlm_teacher.py JSON: VLM-taught self-training + shortcut audit (runs 26-27)")
+    ap.add_argument("--vlm-dir", default="", help="finetune work dir holding vlm_<model>_*.json (the teacher's own test scores)")
+    ap.add_argument("--teacher-model", default="InternVL3_5-8B-HF")
+    ap.add_argument("--kinetics", default="", help="kinetics.npz (run 26)")
     ap.add_argument("--annotators", default="",
                     help="second annotator's labels CSV: grade the main models with both annotators on the same clips (run 25)")
     ap.add_argument("--ft-work", default="", help="finetune.py work dir, to include the fine-tuned models in --annotators")
@@ -269,6 +273,9 @@ def main():
         text = "\n".join(L)
         open(os.path.join(out, "nolabel_hard.md"), "w").write(text + "\n")
         print(text + f"\n\nwrote {out}/nolabel_hard.md, nolabel_hard.json")
+    if a.teacher:
+        teacher_audit(a, out, frames, videos, labels, meta, test_names, ev_keys, pre_keys, Xev, Xpre, s0, syn, real_full, pack,
+                      (Xe, ye, cmax, E) if a.external else None)
     if a.annotators:
         annotators(a, out, frames, videos, labels, test_names, pack, {"synthetic-only probe": syn, "hand-labelled real probe": real_full,
                                                                         "self-trained probe (ours)": main_model})
@@ -365,6 +372,115 @@ def main():
         print(text + f"\n\nwrote {out}/nolabel_hard2.md, nolabel_hard2.json")
     if a.explore:
         explore(out, s0, Xev, Xpre, ev_keys, meta, labels, tests, (Xe, ye, cmax) if a.external else None)
+
+
+def teacher_audit(a, out, frames, videos, labels, meta, test_names, ev_keys, pre_keys, Xev, Xpre, s0, syn, real_full, pack, ext):
+    """RUNS 26-27 (rules fixed in AGENTS.md before any result).
+    Run 27: the fixed self-training, but the round-0 scores come from a zero-shot VLM (vlm_teacher.py) instead of the
+    synthetic probe; pool = run-18 pool (no labelled video), so every labelled accident clip (C) is test data.
+    Run 26 (audit): every detector, including ones that never see fall information, on every test set and its hard
+    subset, including Kinetics-700 (independent of OOPS!)."""
+    from scipy.stats import rankdata
+    T = json.load(open(a.teacher))
+    lab_names = {n for n, l in labels.items() if l in ("fall", "not_fall")}
+    ke = np.array([k[0] not in lab_names for k in ev_keys]); kp = np.array([k[0] not in lab_names for k in pre_keys])
+    names = [k[0] for k, keep in zip(ev_keys, ke) if keep]
+    X1, P1, s1 = Xev[ke], Xpre[kp], s0[ke]
+    tv = np.array([T.get(n, np.nan) for n in names]); have = ~np.isnan(tv)
+    tstart = np.where(have, tv, np.nanmedian(tv))
+    models = {"synthetic-only probe": [syn],
+              "self-trained, synthetic teacher (run-18 pool)": [self_train(s1, X1, P1)[0]],
+              "self-trained, VLM teacher (ours, run 27)": [self_train(tstart, X1, P1)[0]],
+              "VLM-teacher round 0 only (1 round)": [self_train(tstart, X1, P1, rounds=1)[0]],
+              "accident detector (no fall information)": [probe().fit(np.concatenate([X1, P1]), np.r_[np.ones(len(X1)), np.zeros(len(P1))])],
+              "random start (no fall information, 5 seeds)": [self_train(np.random.default_rng(sd).random(len(X1)), X1, P1)[0] for sd in range(1, 6)],
+              "hand-labelled real probe": [real_full]}
+    # ---- test sets: (X, y, groups, keys for the teacher's own scores, how to aggregate)
+    O = np.load(a.ofitw); ote = O["split"] == "test"
+    te = [k for k in sorted(frames) if k in videos and k[0] in test_names and labels.get(k[0]) in ("fall", "not_fall")]
+    hk = [k for k in sorted(frames) if k in videos and k[1] == "event" and k[0] in meta and k[0] in lab_names]
+    sets = {}
+    yt = np.array([int(k[1] == "event" and labels[k[0]] == "fall") for k in te])
+    sets["FallOrNot"] = (pack(te), yt, np.array([compilation(k[0]) for k in te]), [f"{k[0]}|{k[1]}" for k in te], None)
+    ev = [k for k in te if k[1] == "event"]
+    sets["FallOrNot hard"] = (pack(ev), np.array([int(labels[k[0]] == "fall") for k in ev]), np.array([compilation(k[0]) for k in ev]),
+                              [f"{k[0]}|{k[1]}" for k in ev], None)
+    sets["C: all labelled accident clips"] = (pack(hk), np.array([int(labels[k[0]] == "fall") for k in hk]),
+                                              np.array([compilation(k[0]) for k in hk]), [f"{k[0]}|{k[1]}" for k in hk], None)
+    sets["OF-ItW"] = (featurize(O["frames"][ote], KIND, O["video"][ote]), O["label"][ote], np.array([compilation(n) for n in O["name"][ote]]),
+                      [f"{n}|{float(c):.2f}" for n, c in zip(O["name"][ote], O["centre"][ote])], None)
+    def windowed(path):
+        Z = np.load(path); Xw = featurize(Z["frames"], KIND, Z["video"]); wc = Z["win_clip"]; yz = Z["clip_label"]
+        hard = Z["clip_hard"].astype(bool) | (yz == 1)
+        agg = lambda w: (lambda o: (np.maximum.at(o, wc, w), o)[1])(np.full(len(yz), -np.inf))
+        return Xw, yz, Z["clip_name"], hard, agg
+    for nm, path in (("HMDB51", a.external), ("Kinetics-700", a.kinetics)):
+        if path:
+            Xw, yz, cn, hard, agg = windowed(path)
+            sets[nm] = (Xw, yz, cn, list(cn), (agg, None))
+            sets[nm + " hard"] = (Xw, yz, cn, list(cn), (agg, hard))
+    # ---- the teacher's own scores on the same clips (vlm_baseline.py output), where available
+    tsc = {}
+    if a.vlm_dir:
+        for f in ("fallornot", "trainpool", "ofitw", "hmdb_windows", "kinetics_windows"):
+            pth = os.path.join(a.vlm_dir, f"vlm_{a.teacher_model}_{f}.json")
+            if os.path.exists(pth):
+                for k, v in json.load(open(pth)).items():
+                    if f.endswith("windows"):
+                        n = k.split("|")[0]; tsc[n] = max(tsc.get(n, -np.inf), v)
+                    elif f == "ofitw":
+                        n, c = k.rsplit("|", 1); tsc[f"{n}|{float(c):.2f}"] = v
+                    else:
+                        tsc[k] = v
+    R = {"pool": dict(accident_clips=int(ke.sum()), with_teacher_score=int(have.sum())), "auroc": {}, "tests": {}, "teacher": {}}
+    ours, base = "self-trained, VLM teacher (ours, run 27)", "self-trained, synthetic teacher (run-18 pool)"
+    for sn, (X, y, g, keys, agg) in sets.items():
+        def scores(m):
+            v = m.decision_function(X)
+            if agg is None:
+                return v, np.ones(len(y), bool)
+            f, hard = agg; v = f(v)
+            return v, (hard if hard is not None else np.ones(len(y), bool))
+        R["auroc"][sn] = {}
+        cache = {}
+        for name, ms in models.items():
+            if name == "hand-labelled real probe" and sn.startswith("C"):
+                continue                                   # trained on part of C
+            vals = []
+            for m in ms:
+                v, mk = scores(m); vals.append(float(_auroc(y[mk], v[mk]))); cache.setdefault(name, (v, mk))
+            R["auroc"][sn][name] = vals
+        v_o, mk = cache[ours]; v_b, _ = cache[base]
+        R["tests"][sn] = {"VLM-taught vs synthetic-taught": paired(y[mk], v_o[mk], v_b[mk], g[mk])}
+        tk = [i for i in np.where(mk)[0] if keys[i] in tsc]
+        if len(tk) >= 20 and len(set(y[tk])) == 2:
+            tv_ = np.array([tsc[keys[i]] for i in tk])
+            R["teacher"][sn] = dict(n=len(tk), teacher=float(_auroc(y[tk], tv_)), taught=float(_auroc(y[tk], v_o[tk])),
+                                    taught_minus_teacher=paired(y[tk], v_o[tk], tv_, g[tk]))
+    c = "C: all labelled accident clips"
+    r1 = bool(R["tests"][c]["VLM-taught vs synthetic-taught"][1] > 0)
+    r2 = {sn: bool(R["teacher"][sn]["taught"] >= R["teacher"][sn]["teacher"] - 0.02) for sn in ("FallOrNot", "OF-ItW", c) if sn in R["teacher"]}
+    R["verdict"] = dict(beats_synthetic_teacher_on_C=r1, within_0_02_of_teacher=r2,
+                        success=bool(r1 and len(r2) == 3 and all(r2.values())))
+    json.dump(R, open(os.path.join(out, "nolabel_teacher.json"), "w"), indent=1)
+    g_ = lambda t: f"{t[0]:+.3f} [{t[1]:+.3f}, {t[2]:+.3f}], p = {t[3]:.3f}"
+    fm = lambda v: f"{v[0]:.3f}" if len(v) == 1 else f"{np.mean(v):.3f} ± {np.std(v):.3f}"
+    cols = list(sets)
+    L = ["", "SHORTCUT AUDIT AND VLM-TAUGHT SELF-TRAINING (runs 26-27)",
+         f"Pool (no labelled video): {R['pool']['accident_clips']} accident clips, {R['pool']['with_teacher_score']} with a teacher score", "",
+         "| Detector | " + " | ".join(cols) + " |", "|---|" + "---|" * len(cols)]
+    for name in models:
+        L.append(f"| {name} | " + " | ".join(fm(R['auroc'][c_][name]) if name in R['auroc'][c_] else "–" for c_ in cols) + " |")
+    L += ["", "VLM-taught vs synthetic-taught (same pool), paired:"] + [f"- {sn}: {g_(d['VLM-taught vs synthetic-taught'])}" for sn, d in R["tests"].items()]
+    L += ["", f"Teacher ({a.teacher_model}) vs VLM-taught probe on the same clips:"] + [
+        f"- {sn} (n = {d['n']}): teacher {d['teacher']:.3f}, taught {d['taught']:.3f}; taught minus teacher {g_(d['taught_minus_teacher'])}"
+        for sn, d in R["teacher"].items()]
+    L += ["", "Rule (run 27): (i) on C the VLM-taught probe beats the synthetic-taught probe, paired 95% CI above zero; "
+              "(ii) on FallOrNot, OF-ItW and C it is at most 0.02 AUROC below its teacher",
+          f"VLM-TEACHER RESULT: {'SUCCESS' if R['verdict']['success'] else 'NOT MET'} (i: {r1}; ii: {r2})"]
+    text = "\n".join(L)
+    open(os.path.join(out, "nolabel_teacher.md"), "w").write(text + "\n")
+    print(text + f"\n\nwrote {out}/nolabel_teacher.md, nolabel_teacher.json")
 
 
 def annotators(a, out, frames, videos, labels, test_names, pack, probes):
