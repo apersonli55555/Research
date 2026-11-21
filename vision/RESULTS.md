@@ -730,3 +730,27 @@ Paired tests (by compilation): consequence-guided vs. zero-label: A +0.021 [−0
 - **It hurts out of domain:** HMDB51 0.921 vs. 0.952 and HMDB51 hard 0.846 vs. 0.915 (not tested for significance; HMDB51 was not part of the rule). A plausible reason: it ties the pseudo-falls to OOPS!-specific after-states (people on the ground in fail videos), but this was not tested.
 - The consequence-only start looks slightly better in domain (C 0.819) but has the same out-of-domain drop; it was a secondary variant and must not replace the rule's method.
 - Report in the paper as a negative result; it supports keeping the simpler method.
+
+# Run 22: fine-tuned models on OF-ItW, the third test set (rule fixed in advance: MET)
+
+`nolabel_ft.py ofitw` at commit `974ef02` (`Research` repository; Colab L4). Rule committed to `AGENTS.md` before any result (commit `1c019d2`; a first attempt failed with a Google Drive read error before any score was computed, and the fix only moved the clip store to local disk). Copied from the Colab text output.
+
+**Setup.** OF-ItW test split, clips as in `ofitw_prep.py`, excluding the 20 videos behind our labelled training clips: 552 videos, 1,613 clips, 614 falls. Every fine-tuned VideoMAE-B model already on Drive (runs 6–7 and 19, seeds 0–2) is scored. Paired tests resample by compilation.
+
+| Fine-tuned on | AUROC mean ± s.d. (population, 3 seeds) | Seeds 0 / 1 / 2 |
+|---|---|---|
+| Synthetic | 0.936 ± 0.005 | 0.941 / 0.939 / 0.928 |
+| Real, our hand labels (268 clips) | 0.957 ± 0.005 | 0.963 / 0.951 / 0.959 |
+| Synthetic + real | 0.964 ± 0.001 | 0.964 / 0.963 / 0.966 |
+| **Zero-label (no human label)** | **0.967 ± 0.003** | 0.963 / 0.967 / 0.971 |
+
+Zero-label vs. synthetic, per seed: +0.023 [+0.014, +0.031], p < 0.001; +0.027 [+0.018, +0.037], p < 0.001; +0.042 [+0.032, +0.052], p < 0.001.
+Zero-label vs. real (hand labels), per seed: +0.001 [−0.007, +0.008], p = 0.862; +0.016 [+0.005, +0.027], p = 0.004; +0.012 [+0.002, +0.020], p = 0.014.
+
+**OF-ItW FINE-TUNING RESULT: SUCCESS.**
+
+## Reading
+- **On the third test set, labelled by an independent team, the zero-label fine-tuned model is the best of the four**: above synthetic for every seed, and above fine-tuning on our hand labels for two of three seeds (level for the third). Synthetic + real (0.964) is within 0.003; it was not tested against zero-label.
+- Fine-tuned models score much higher on OF-ItW than frozen probes (best probe 0.951, trained on OF-ItW's own labels, run 11); the two are not directly compared here.
+- **Combined with run 19:** fine-tuned on zero-label data, VideoMAE is best or level with the best on FallOrNot (0.910), OF-ItW (0.967) and HMDB51 (0.959), and level with hand labels on FallOrNot's hard subset; its one shortfall is HMDB51's hard subset (0.893 vs. synthetic 0.922).
+- **Caveats:** three seeds; OF-ItW is OOPS! footage like the unlabelled pool (its videos were excluded from the pool); OF-ItW negatives are other moments of fall videos, not other accidents.
