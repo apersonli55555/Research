@@ -69,6 +69,8 @@ def main():
     ap.add_argument("--out", default=None)
     ap.add_argument("--hard", action="store_true",
                     help="hard-subset analysis (run 17): falls vs other accidents only; reading fixed in AGENTS.md beforehand")
+    ap.add_argument("--windows", default="",
+                    help="window_prep.py output dir: timestamp-free zero-label adaptation (run 23; rule in AGENTS.md)")
     ap.add_argument("--post", default="",
                     help="post_prep.py output dir: consequence-guided zero-label adaptation (run 21; rule in AGENTS.md)")
     ap.add_argument("--dupes", action="store_true",
@@ -264,6 +266,9 @@ def main():
         text = "\n".join(L)
         open(os.path.join(out, "nolabel_hard.md"), "w").write(text + "\n")
         print(text + f"\n\nwrote {out}/nolabel_hard.md, nolabel_hard.json")
+    if a.windows:
+        timestamp_free(a, out, frames, videos, labels, meta, test_names, ev_keys, pre_keys, Xev, Xpre, s0, syn, pack, tests,
+                       (Xe, ye, cmax) if a.external else None)
     if a.post:
         consequence(a, out, frames, videos, labels, meta, test_names, ev_keys, pre_keys, Xev, Xpre, s0, syn, pack, tests,
                     (Xe, ye, cmax, E) if a.external else None)
@@ -354,6 +359,108 @@ def main():
         print(text + f"\n\nwrote {out}/nolabel_hard2.md, nolabel_hard2.json")
     if a.explore:
         explore(out, s0, Xev, Xpre, ev_keys, meta, labels, tests, (Xe, ye, cmax) if a.external else None)
+
+
+PRE_OFFSET = 3.0     # timestamp-free: the "before" window starts 3 s before the chosen event window
+
+
+def timestamp_free(a, out, frames, videos, labels, meta, test_names, ev_keys, pre_keys, Xev, Xpre, s0, syn, pack, tests, ext):
+    """RUN 23 (rule fixed in AGENTS.md before any result). Same as the fixed run-15 setting, but the annotated
+    accident time is never read: every 2 s window (1 s stride) of every pool video is scored, the highest-scoring
+    window of each video is its event clip, and the window starting 3 s earlier is its free non-fall. Each round
+    re-picks the event window with the current probe."""
+    W = {"name": [], "start": [], "frames": [], "video": []}
+    for f in sorted(os.listdir(a.windows)):
+        if f.startswith("shard_") and f.endswith(".npz"):
+            z = np.load(os.path.join(a.windows, f))
+            for k in W:
+                W[k].append(z[k])
+    W = {k: np.concatenate(v) for k, v in W.items()}
+    pool_names = {k[0] for k in ev_keys}
+    keep = np.isin(W["name"], list(pool_names))
+    wn, ws = W["name"][keep], W["start"][keep]
+    Xw = np.concatenate([featurize(W["frames"][keep][i:i + 5000].astype(np.float32), KIND, W["video"][keep][i:i + 5000].astype(np.float32))
+                         for i in range(0, int(keep.sum()), 5000)])
+    del W
+    vids = sorted(set(wn.tolist()))
+    idx = {v: [] for v in vids}
+    for i, n in enumerate(wn):
+        idx[n].append(i)
+    idx = {v: np.array(sorted(ix, key=lambda i: ws[i])) for v, ix in idx.items()}
+    true_t = {v: float(meta[v]["t"]) for v in vids}
+    labelled = {n for n, l in labels.items() if l in ("fall", "not_fall")}
+
+    def pick(score, vlist):
+        ev, pre, hit = [], [], []
+        for v in vlist:
+            ix = idx[v]; e = ix[np.argmax(score[ix])]
+            ev.append(e)
+            p = ix[np.abs(ws[ix] - (ws[e] - PRE_OFFSET)) < 1e-3]
+            if len(p):
+                pre.append(p[0])
+            hit.append(abs(ws[e] + 1.0 - true_t[v]) <= 1.0)      # diagnostic only: centre within 1 s of the annotation
+        return np.array(ev, int), np.array(pre, int), float(np.mean(hit)) if hit else float("nan")
+
+    def train(vlist, rounds=ROUNDS, q=Q):
+        sc = syn.decision_function(Xw); model, log = None, []
+        for r in range(rounds):
+            ev, pre, hit = pick(sc, vlist)
+            n = max(2, int(round(q * len(ev))))
+            order = np.argsort(-sc[ev])
+            pos = Xw[ev[order[:n]]]; neg = np.concatenate([Xw[ev[order[-n:]]], Xw[pre]])
+            model = probe().fit(np.concatenate([pos, neg]), np.r_[np.ones(len(pos)), np.zeros(len(neg))])
+            log.append(dict(round=r + 1, event_window_within_1s_of_annotation=hit, pseudo_falls=int(len(pos)), pseudo_non_falls=int(len(neg))))
+            sc = model.decision_function(Xw)
+        log.append(dict(after_training=True, event_window_within_1s_of_annotation=pick(sc, vlist)[2]))
+        return model, log
+
+    chance = float(np.mean([np.mean(np.abs(ws[idx[v]] + 1.0 - true_t[v]) <= 1.0) for v in vids]))
+    tf_model, tf_log = train(vids)
+    same = np.array([k[0] in idx for k in ev_keys]); same_pre = np.array([k[0] in idx for k in pre_keys])
+    ts_model = self_train(s0[same], Xev[same], Xpre[same_pre])[0]
+    cand = {"synthetic_only": syn, "zero-label WITH annotated accident times (run-15 method, same videos)": ts_model,
+            "timestamp-free zero-label (ours)": tf_model}
+    R = {"videos": len(vids), "windows": int(len(wn)), "chance_within_1s": chance, "log": tf_log, "auroc": {}, "tests": {}}
+    ours = "timestamp-free zero-label (ours)"
+    for name, (Xb, yb, gb) in tests.items():
+        R["auroc"][name] = {m: float(_auroc(yb, x.decision_function(Xb))) for m, x in cand.items()}
+        R["tests"][name] = {f"ours vs {o}": paired(yb, cand[ours].decision_function(Xb), cand[o].decision_function(Xb), gb)
+                            for o in ("synthetic_only", "zero-label WITH annotated accident times (run-15 method, same videos)")}
+    if ext:
+        Xe, ye, cmax = ext
+        R["auroc"]["hmdb51"] = {m: float(_auroc(ye, cmax(x.decision_function(Xe)))) for m, x in cand.items()}
+    # falls vs other accidents: retrain without any labelled video, test on every labelled accident clip (as run 18)
+    hk = [k for k in sorted(frames) if k in videos and k[1] == "event" and k[0] in meta and k[0] in labelled]
+    Xh = pack(hk); yh = np.array([int(labels[k[0]] == "fall") for k in hk]); gh = np.array([compilation(k[0]) for k in hk])
+    tf_hard = train([v for v in vids if v not in labelled])[0]
+    R["hard_C"] = {"clips": len(hk), "synthetic_only": float(_auroc(yh, syn.decision_function(Xh))),
+                   "timestamp-free (labelled videos removed)": float(_auroc(yh, tf_hard.decision_function(Xh))),
+                   "test": paired(yh, tf_hard.decision_function(Xh), syn.decision_function(Xh), gh)}
+    met = {n: bool(R["tests"][n]["ours vs synthetic_only"][1] > 0) for n in ("fallornot", "ofitw")}
+    R["verdict"] = dict(met, success=bool(all(met.values())))
+    json.dump(R, open(os.path.join(out, "nolabel_windows.json"), "w"), indent=1)
+    g = lambda v: f"{v[0]:+.3f} [{v[1]:+.3f}, {v[2]:+.3f}], p = {v[3]:.3f}"
+    cols = list(R["auroc"])
+    L = ["", "TIMESTAMP-FREE ZERO-LABEL ADAPTATION (the annotated accident time is never read)",
+         "Rule: on both FallOrNot and OF-ItW, the timestamp-free probe beats synthetic-only with a paired 95% CI above zero (by compilation)",
+         f"Pool: {R['videos']} videos, {R['windows']} windows (2 s, 1 s stride); free non-fall = window starting {PRE_OFFSET:.0f} s before the chosen event window",
+         "Chosen event window within 1 s of the (unused) annotation: " + ", ".join(
+             f"round {x['round']}: {x['event_window_within_1s_of_annotation']:.2f}" if "round" in x else f"final: {x['event_window_within_1s_of_annotation']:.2f}"
+             for x in tf_log) + f" (random window: {chance:.2f})", "",
+         "| Method | " + " | ".join(cols) + " |", "|---|" + "---|" * len(cols)]
+    for m in cand:
+        L.append(f"| {m} | " + " | ".join(f"{R['auroc'][c_][m]:.3f}" for c_ in cols) + " |")
+    L.append("")
+    for name, d in R["tests"].items():
+        L.append(f"{name}: " + "; ".join(f"{k} {g(v)}" for k, v in d.items()))
+    h = R["hard_C"]
+    L += ["", f"Falls vs other accidents ({h['clips']} labelled accident clips; labelled videos removed from the pool): "
+              f"synthetic-only {h['synthetic_only']:.3f}, timestamp-free {h['timestamp-free (labelled videos removed)']:.3f}; "
+              f"difference {g(h['test'])}",
+          "", f"TIMESTAMP-FREE RESULT: {'SUCCESS' if R['verdict']['success'] else 'NOT MET'}"]
+    text = "\n".join(L)
+    open(os.path.join(out, "nolabel_windows.md"), "w").write(text + "\n")
+    print(text + f"\n\nwrote {out}/nolabel_windows.md, nolabel_windows.json")
 
 
 def consequence(a, out, frames, videos, labels, meta, test_names, ev_keys, pre_keys, Xev, Xpre, s0, syn, pack, tests, ext):
