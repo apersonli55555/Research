@@ -908,3 +908,15 @@ Taught probe minus its teacher, same clips: FallOrNot −0.033 [−0.074, +0.006
 | InternVL3.5-8B (run 24) | 1.0 | 18.1 GB |
 
 The fine-tuned self-trained VideoMAE is about 43 times faster than InternVL3.5-8B and uses about 30 times less memory; the probe is about 16 times faster.
+
+## Run 26 addendum: fine-tuned models on Kinetics-700
+Printed by `vlm_baseline.py` (InternVL3.5-8B, cached scores) at commit `a4698c2`; fine-tuned scores from `nolabel_ft.py kinetics`. AUROC, mean ± s.d. (population) over 3 seeds; paired by clip.
+
+| Test set | InternVL3.5-8B zero-shot | FT synthetic | FT hand labels | FT self-trained (ours) |
+|---|---|---|---|---|
+| Kinetics (1,610 clips, 147 falls) | 0.805 | 0.786 ± 0.003 | 0.757 ± 0.022 | **0.805 ± 0.009** |
+| Kinetics hard (929 clips) | 0.704 | 0.729 ± 0.003 | 0.674 ± 0.021 | **0.734 ± 0.014** |
+
+InternVL minus FT self-trained, per seed: Kinetics −0.011 (p = 0.49), +0.002 (p = 0.85), +0.010 (p = 0.52); Kinetics hard −0.050 [−0.090, −0.012] (p = 0.008), −0.023 (p = 0.21), −0.019 (p = 0.30). InternVL minus FT hand labels on Kinetics hard: +0.004, +0.056 (p = 0.001), +0.031 (p = 0.093).
+
+Reading: on the independent Kinetics test the fine-tuned self-trained VideoMAE (0.6 GB, 0.023 s per clip) is level with InternVL3.5-8B overall (0.805 vs. 0.805) and has the highest observed mean on falls vs. look-alike motions (0.734; significantly above InternVL for one of three seeds); fine-tuning on our hand labels is the weakest there (0.674).
