@@ -258,8 +258,8 @@ def analyze(a):
     P = json.load(open(os.path.join(a.out, "plan.json")))
     rng = np.random.default_rng(0)
     R, L = {}, ["", "VOCABULARY-INTERFERENCE PILOT (OVD run 1)",
-                "GO if, for at least one model: (a) mAP50(k=1) - mAP50(all 80 classes) >= 0.03 with a 95% CI (by image) above zero; "
-                "(b) >= 10% of target instances detected with k=1 are missed with all 80 classes (mean over orders); or (c) >= 10% of "
+                "GO if, for at least one model: (a) |mAP50(k=1) - mAP50(all 80 classes)| >= 0.03 with a 95% CI (by image) excluding zero; "
+                "(b) >= 10% of target instances change detected / missed between k=1 and all 80 classes (either way; mean over orders); or (c) >= 10% of "
                 "target instances change detected / missed between orders of the same 80 classes", ""]
     for model in ("gdino", "owlv2", "yoloworld"):
         path = os.path.join(a.out, f"results_{model}.jsonl")
@@ -336,7 +336,9 @@ def analyze(a):
                    flip_vs_k1={g: m(v) for g, v in flip.items()}, localisation_flip_vs_k1={g: m(v) for g, v in loc.items()},
                    absent_false_alarm_rate=absent, map50=maps, map50_k1_minus_all80=dict(diff=maps.get("k1", np.nan) - maps.get("all80", np.nan), ci=[float(lo), float(hi)]),
                    lost_at_80=m(lost), order_flip_80=m(order_flip), order_score_range_80=m(order_dscore), sec_per_run=sec)
-        res["go"] = dict(a=bool(res["map50_k1_minus_all80"]["diff"] >= 0.03 and lo > 0), b=bool(res["lost_at_80"] >= 0.10), c=bool(res["order_flip_80"] >= 0.10))
+        # two-sided (PLAN.md amendment B, fixed before any pilot result): an effect in either direction counts
+        res["go"] = dict(a=bool(abs(res["map50_k1_minus_all80"]["diff"]) >= 0.03 and (lo > 0 or hi < 0)),
+                         b=bool(res["flip_vs_k1"].get("all80", 0) >= 0.10), c=bool(res["order_flip_80"] >= 0.10))
         R[model] = res
         f = lambda dct: ", ".join(f"{g} {v:.3f}" for g, v in dct.items() if v == v)
         L += [f"{model} (threshold {th}; {res['pairs']} image-target pairs; {res['instances']} present-target instances)",

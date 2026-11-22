@@ -93,3 +93,11 @@ Code: `ovd/vocab_full.py` (runs, corrections, latency) and `ovd/full_analysis.py
   inference with the full list (`all`), by deployed mAP50 on the same pairs.
 - **Latency:** `bench` stage, 30 images after 3 warm-up images, CUDA-synchronised, per image, for original, single-class
   and the correction, at full list and random 5/20 (/80/200 for LVIS) vocabularies.
+
+## Amendment B (22 Nov 2026, before any pilot result was seen) — GO rule made two-sided
+The original rules (a) and (b) only counted *losses* from k=1 to all 80 (AP drop; instances lost). The CPU smoke
+tests showed that Grounding DINO's target score can *rise* with more classes, and the goal asks for "differences",
+so an effect in either direction must count. New rule: (a) |mAP50(k=1) − mAP50(all 80)| ≥ 0.03 with the 95% CI
+excluding zero; (b) ≥ 10% of target instances change detected/missed status between k=1 and all 80 (either direction,
+mean over the 5 orders); (c) unchanged. `lost_at_80` is still reported. No pilot output had been produced when this
+was changed (the pilot cell was handed to the owner but its results were not yet reported back).

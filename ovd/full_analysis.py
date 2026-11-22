@@ -26,7 +26,7 @@ MODELS = ["gdino", "owlv2", "yoloworld"]
 
 
 def group_of(cond):
-    if cond in ("k1", "FIX"):
+    if cond in ("k1", "FIX", "prune"):
         return cond
     if cond.startswith("all_"):
         return "all"
@@ -111,7 +111,7 @@ def analyse(out, ds, model, boot):
     for c in conds:
         groups[group_of(c)].append(c)
     order = ["k1"] + sorted([g for g in groups if g[:4] == "rand"], key=lambda g: int(g[4:])) + \
-            sorted([g for g in groups if g[:4] in ("near", "far") or g[:3] == "vis"]) + ["all", "FIX"]
+            sorted([g for g in groups if g[:4] in ("near", "far") or g[:3] == "vis"]) + ["all", "prune", "FIX"]
     order = [g for g in order if g in groups]
     S = dict(dataset=ds, model=model, n_runs=len(R), n_pairs=len({(r["image"], r["target"]) for r in R}),
              n_images=len({r["image"] for r in R}), groups={})
@@ -152,7 +152,7 @@ def analyse(out, ds, model, boot):
             e["mean_chunk_size"] = float(np.mean(ck))
         if g != "k1" and boot:
             diffs = [gmap(Td, cs, w) - gmap(Td, groups["k1"], w) for w in W]
-            e["dmAP_deployed_vs_k1_CI"] = [float(np.percentile(diffs, 2.5)), float(np.percentile(diffs, 97.5))]
+            e["dmAP_deployed_vs_k1_CI"] = [float(np.nanpercentile(diffs, 2.5)), float(np.nanpercentile(diffs, 97.5))]
         S["groups"][g] = e
     # order-only effect: instances whose detected status differs among the 5 orders of the full list
     of, rngs = [], []
@@ -167,7 +167,7 @@ def analyse(out, ds, model, boot):
     # vocabulary dependence over all original conditions of a pair (excluding FIX)
     va, vr = [], []
     for d in by.values():
-        rs = [r for c, r in d.items() if c != "FIX"]
+        rs = [r for c, r in d.items() if c not in ("FIX", "prune")]
         if rs and rs[0]["present"]:
             for j in range(len(rs[0]["instances"])):
                 v = [r["instances"][j] for r in rs]
@@ -176,15 +176,15 @@ def analyse(out, ds, model, boot):
     S["any_vocab_score_range"] = float(np.mean(vr)) if vr else np.nan
     # correction vs. baselines (paired bootstrap by image)
     if "FIX" in groups and boot:
-        best = max(("k1", "all"), key=lambda g: S["groups"][g]["mAP50_deployed"])
+        best = max([g for g in ("k1", "all", "prune") if g in S["groups"]], key=lambda g: S["groups"][g]["mAP50_deployed"])
         S["best_baseline"] = best
-        for ref in ("k1", "all"):
+        for ref in [g for g in ("k1", "all", "prune") if g in groups]:
             for mode, T in (("deployed", Td),):
                 diffs = [T.map("FIX", w) - gmap(T, groups[ref], w) for w in W]
                 S[f"FIX_minus_{ref}_mAP50"] = dict(point=S["groups"]["FIX"]["mAP50_deployed"] - S["groups"][ref]["mAP50_deployed"],
-                                                   CI=[float(np.percentile(diffs, 2.5)), float(np.percentile(diffs, 97.5))])
-        orig = [S["groups"][g]["mean_abs_score_change"] for g in order if g not in ("k1", "FIX")]
-        origf = [S["groups"][g]["det_flip_rate"] for g in order if g not in ("k1", "FIX")]
+                                                   CI=[float(np.nanpercentile(diffs, 2.5)), float(np.nanpercentile(diffs, 97.5))])
+        orig = [S["groups"][g]["mean_abs_score_change"] for g in order if g not in ("k1", "FIX", "prune")]
+        origf = [S["groups"][g]["det_flip_rate"] for g in order if g not in ("k1", "FIX", "prune")]
         S["interference_orig"] = dict(score=float(np.nanmean(orig)), flips=float(np.nanmean(origf)))
         S["interference_FIX"] = dict(score=S["groups"]["FIX"]["mean_abs_score_change"], flips=S["groups"]["FIX"]["det_flip_rate"],
                                      note="0 by construction: one output per (image, target) whatever the vocabulary")
@@ -235,7 +235,7 @@ def main():
                              f"{e['absent_false_alarm_deployed']:.3f} | {e.get('mean_chunk_size', float('nan')):.1f} |")
             lines += ["", f"order-only flips (5 orders of the full list): {S['order_flip_rate']:.3f}, mean score range {S['order_score_range']:.4f}",
                       f"instances whose detection flips under some vocabulary: {S['any_vocab_flip_rate']:.3f}, mean score range {S['any_vocab_score_range']:.4f}"]
-            for ref in ("k1", "all"):
+            for ref in ("k1", "all", "prune"):
                 if f"FIX_minus_{ref}_mAP50" in S:
                     x = S[f"FIX_minus_{ref}_mAP50"]
                     lines.append(f"FIX - {ref} mAP50 (deployed): {x['point']:+.4f}, 95% CI [{x['CI'][0]:+.4f}, {x['CI'][1]:+.4f}]")

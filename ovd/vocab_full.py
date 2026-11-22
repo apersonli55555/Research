@@ -16,6 +16,8 @@ Conditions per (image, target c); the target string is always the same name; see
                      whole image for absent targets) - uses no label beyond the box every condition already uses
   far{k}             c + k-1 random classes from the half of the list least similar to c (unrelated)
   all_{d}            the full list (80 or 1203), 5 random orders
+  prune              baseline in the style of VocAda (Liu et al., ICIP 2025) without its captioner: the K classes CLIP
+                     ranks highest for the whole image (K = 10 COCO, 50 LVIS, fixed before results); c may be absent
 Grounding DINO's 256-token limit: a vocabulary that does not fit is packed, in its order, into consecutive chunks
 that fit (standard practice); only the chunk holding c can score c, so only that chunk is run (its size is stored).
 
@@ -49,8 +51,8 @@ h = lambda s: hashlib.md5(s.encode()).hexdigest()
 COCO_ANN = "http://images.cocodataset.org/annotations/annotations_trainval2017.zip"
 LVIS_ANN = "https://dl.fbaipublicfiles.com/LVIS/lvis_v1_val.json.zip"
 N_DEV = 500                                   # pilot development images (never used here)
-CFG = {"coco": dict(n=1000, sizes=(5, 20), draws=5, fam_sizes=(5, 20), present_cap=None),
-       "lvis": dict(n=600, sizes=(5, 20, 80, 200, 500), draws=3, fam_sizes=(5, 20, 80), present_cap=3)}
+CFG = {"coco": dict(prune=10, n=1000, sizes=(5, 20), draws=5, fam_sizes=(5, 20), present_cap=None),
+       "lvis": dict(prune=50, n=600, sizes=(5, 20, 80, 200, 500), draws=3, fam_sizes=(5, 20, 80), present_cap=3)}
 ORDERS, N_ABSENT, MAX_DETS, MIN_SCORE = 5, 2, 50, 0.02
 
 
@@ -135,6 +137,9 @@ def data(a):
     plan = []
     for f, d in info.items():
         img = Image.open(os.path.join(a.out, "images", f)).convert("RGB")
+        with torch.no_grad():                            # VocAda-style pruning baseline (CLIP only, no captioner)
+            ew = torch.nn.functional.normalize(model.encode_image(prep(img)[None]).float(), dim=-1).numpy()[0]
+        pruned = [names[j] for j in np.argsort(-(T @ ew))[: cfg["prune"]]]
         for c in d["present"] + d["absent"]:
             ci = names.index(c); others = [n for n in names if n != c]
             rng = np.random.default_rng(int(h(f"{a.dataset}|{f}|{c}")[:8], 16))
@@ -154,6 +159,7 @@ def data(a):
                     v = [c] + list(pool); rng.shuffle(v); conds[f"{fam}{k}"] = v
             for dd in range(ORDERS):
                 v = list(names); rng.shuffle(v); conds[f"all_{dd}"] = v
+            conds["prune"] = list(pruned)                # may not contain c: then c is not detected at all
             plan.append(dict(image=f, target=c, present=c in d["present"], conds=conds))
     json.dump(dict(dataset=a.dataset, names=names, plan=plan, info=info), open(os.path.join(a.out, f"plan_{a.dataset}.json"), "w"))
     print(f"{a.dataset}: {len(info)} images, {len(plan)} (image, target) pairs, "
@@ -369,6 +375,11 @@ def run(a):
             for p, cn, vocab in todo:
                 c = p["target"]; gts = [g["box"] for g in gt if g["cls"] == c]
                 t1 = time.time(); extra = {}
+                if c not in vocab:                                           # pruned away: no output for c
+                    rec = dict(image=f, target=c, cond=cn, present=p["present"], k=len(vocab), sec=0.0, pruned_out=True, dets=[],
+                               best_box=[0, 0, 0, 0], instances=[dict(raw=0.0, deployed=0.0, best_iou=0.0) for _ in gts],
+                               img_max_raw=0.0, img_max_deployed=0.0)
+                    fh.write(json.dumps(rec) + "\n"); n += 1; continue
                 if base == "owlv2":
                     cols = [names.index(v) for v in vocab]; boxes, S = full[0], full[1][:, cols]
                 elif base == "gdino":
