@@ -202,6 +202,20 @@ LVIS random & 80 & .566 / .579\\
 LVIS random & 200 & .568 / .568\\
 LVIS random & 500 & .570 / .573\\\bottomrule\end{tabular}\end{table}
 
+\paragraph{Can calibration keep single-label output?} Independent read-out lets a box carry several labels. A natural
+alternative keeps one label per box but decides it on calibrated scores: per-class z-scores or reference quantiles
+estimated on half of the development images (Table~\ref{tab:norm}, other half). Both make things worse for both
+models -- more flips and lower mAP50 than plain top-1 -- while the independent read-out removes all flips and is the
+most accurate. Interference from label competition is therefore not a calibration problem that rescaling can fix.
+\begin{table}[t]\centering\small\setlength{\tabcolsep}{3pt}
+\caption{Label decision variants, development split (evaluation half), all 80 names; mAP50 (flips vs.\ k=1).
+YOLO-World uses the fixed guide.}\label{tab:norm}
+\begin{tabular}{lcccc}\toprule
+model & top-1 & z-norm & quantile & independent\\\midrule
+OWLv2 & .729 (.032) & .717 (.052) & .719 (.073) & \textbf{.755} (.000)\\
+YOLO-World & .602 (.001) & .592 (.006) & .585 (.026) & \textbf{.615} (.000)\\\bottomrule
+\end{tabular}\end{table}
+
 \section{Limitations}
 Base/small checkpoints only (one 24\,GB GPU); two datasets; the visually confusable family is defined with CLIP; the
 pruning baseline omits VocAda's captioner. \todo{add result-specific limitations}

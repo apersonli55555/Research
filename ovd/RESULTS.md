@@ -171,3 +171,20 @@ snowboard–skateboard, truck–bus (OWLv2 COCO); bear–teddy bear, dog–cat (
 most of them (e.g. all eight top OWLv2 LVIS losers back to their k1 AP); exceptions for YOLO-World: dining table
 (fix 0.00), Dixie cup (0.33), crape (0.50). Caveat: many LVIS classes have 1–2 instances in this sample, so per-class
 APs are coarse (often 0 or 1).
+
+## OVD run 3c — class-wise normalisation / reference calibration, DEVELOPMENT split, 23 Nov 2026, CPU
+Command: `norm_ablation.py --model {owlv2,yoloworld}`; images split by hash into calibration / evaluation halves
+(per-class score statistics from calibration images; numbers on evaluation images). YOLO-World uses the fixed COCO
+guide, so only label competition varies. Files: `ovd/results/norm_ablation_*.json`.
+| model | vocabulary | raw top-1 | z-norm top-1 | quantile top-1 | independent |
+|---|---|---|---|---|---|
+| OWLv2 mAP50 (flips vs k1) | near20 | 0.7305 (0.029) | 0.7259 (0.036) | 0.7233 (0.045) | 0.7548 (0.000) |
+| OWLv2 mAP50 (flips vs k1) | all 80 | 0.7287 (0.032) | 0.7174 (0.052) | 0.7188 (0.073) | 0.7548 (0.000) |
+| YOLO-World mAP50 (flips) | near20 | 0.6036 (0.001) | 0.5926 (0.005) | 0.5583 (0.029) | 0.6151 (0.000) |
+| YOLO-World mAP50 (flips) | all 80 | 0.6023 (0.001) | 0.5923 (0.006) | 0.5854 (0.026) | 0.6151 (0.000) |
+(k1: 0.7548 OWLv2, 0.6151 YOLO-World, identical for all variants.) **Negative result:** normalising or calibrating
+scores before the top-1 decision makes interference and accuracy worse for both models; only removing label
+competition removes it.
+
+## Traceability check (23 Nov 2026)
+`python ovd/check_numbers.py` → "107 distinct decimal numbers in the manuscript; 107 traced; 0 not traced".
