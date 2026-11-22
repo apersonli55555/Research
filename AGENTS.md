@@ -128,3 +128,9 @@ The owner is not a machine-learning specialist. Explain things in plain language
 ## Coordinating between assistants
 
 More than one AI assistant may work on this repository. Before starting, read the latest commits (`git log`) and `vision/RESULTS.md`. Work on one item from "Remaining work" at a time, commit when done, and update "Current state" above, so the next assistant knows where things stand.
+
+## Second project: vocabulary-set interference in open-vocabulary detection (`ovd/`)
+
+Started 22 Nov 2026 after the owner switched topics. Plan and GO rule: `ovd/PLAN.md` (fixed before results).
+Results log: `ovd/RESULTS.md` (the same rules 1, 2, 4, 7 and 8 above apply: real runs only, no tuning on held-out
+data, honest reporting). Code: `ovd/vocab_pilot.py`, tests `ovd/test_vocab_pilot.py`. Colab outputs go to Drive `ovd/`.

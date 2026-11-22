@@ -3,3 +3,7 @@ __pycache__/
 *.log
 *.out
 *.brf
+weights/
+*.pt
+ovd/__pycache__/
+.pytest_cache/
