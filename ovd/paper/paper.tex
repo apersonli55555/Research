@@ -125,7 +125,16 @@ YOLO-World & .598 & .600 & .052 & .064 & .000 & .024$\to$.011\\
 G-DINO$^\dagger$ & .836 & .835 & .142 & .154 & .000 & .146$\to$.000\\\bottomrule
 \end{tabular}\end{table}
 
-\todo{held-out COCO, LVIS (sizes 200--1203, chunking), distractor families, mechanism probe, corrections, latency, error analysis}
+\subsection{Held-out COCO}
+\paragraph{OWLv2 (1{,}000 held-out images, 5{,}013 pairs).} Raw target scores are again exactly unchanged under every
+vocabulary. What changes is label competition, and it depends on \emph{what} the other names are, not how many:
+unrelated distractors flip 0.1--0.2\% of detections and leave mAP50 at 0.743 (k=1: 0.744), random ones 0.2--0.8\%,
+visually confusable ones 1.9--2.5\% and semantically similar ones 2.5--2.7\% (mAP50 0.724); all 80 names flip 3.1\% and
+cost 2.3 points (95\% CI [1.7, 3.2]). The independent read-out matches single-class inference exactly (0.744), beats the
+80-name output by +2.3 points (CI [+1.7, +3.2]) at no extra cost, and has zero interference. CLIP-based vocabulary
+pruning in the style of VocAda (top-10 classes per image) is far worse (0.637; $-$10.6 points), because it often
+removes the target itself. \todo{YOLO-World, Grounding DINO held-out; LVIS (sizes 200--1203, chunking); mechanism probe;
+latency; error analysis}
 
 \section{Limitations}
 Base/small checkpoints only (one 24\,GB GPU); two datasets; the visually confusable family is defined with CLIP; the
