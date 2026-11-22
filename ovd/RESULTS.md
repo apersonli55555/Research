@@ -125,3 +125,17 @@ Table: `ovd/results/run2_coco_yoloworld_cpu.md`.
   Absent false alarms: FIX 0.009, k1 0.022, all 0.006.
 - Reading: unrelated names in the *guide* help (more guidance), similar/visual names hurt only through top-1 label
   competition; fixing a rich guide and removing competition gives the best of both.
+
+## OVD run 2d — YOLO-World on held-out LVIS, 23 Nov 2026, CPU
+Command: `vocab_full.py run --dataset lvis --model yoloworld` (83,359 runs), `full_analysis.py --boot 1000`.
+Table: `ovd/results/run2_lvis_yoloworld_cpu.md`.
+- Deployed mAP50: k1 0.364; rand5/20/80/200/500 0.397/0.410/0.405/0.369/0.309; far5/20/80 0.397/0.420/0.429;
+  near5/20/80 0.283/0.257/0.243; vis5/20/80 0.325/0.302/0.295; all 1,203 (5 orders) 0.249; prune (K=50) 0.172.
+- Independent read-out mAP50 per group: 0.385–0.455 (max rand200 0.455, rand80 0.452; all 0.442).
+- Mean |score change| vs k1 grows with size: 0.022 (rand5) … 0.087 (all); flips 0.030 … 0.119; localisation flips
+  0.18 … 0.44. Order-only flips 0.000. Instances flipping under some vocabulary: 0.181.
+- **FIX (fixed guide = all 1,203 names, independent read-out):** mAP50 0.442, interference 0;
+  FIX − k1 = +0.078 [+0.062, +0.096]; FIX − all = +0.193 [+0.176, +0.217]; FIX − prune = +0.270 [+0.259, +0.304].
+- Caveat (reported, not tuned): random guides of 80–200 names give slightly higher independent-read-out AP (0.452–0.455)
+  than the full-list guide (0.442), so the full list is not the best possible fixed guide. Choosing a guide must be done
+  on the development split, not on these held-out numbers.
