@@ -193,7 +193,14 @@ def run(a):
     out = os.path.join(a.out, f"results_{a.model}.jsonl")
     done = set()
     if os.path.exists(out):
-        done = {(r["image"], r["target"], r["cond"]) for r in map(json.loads, open(out))}
+        good = []
+        for line in open(out):                       # drop a line cut off by a disconnect, keep the rest
+            try:
+                json.loads(line); good.append(line if line.endswith("\n") else line + "\n")
+            except json.JSONDecodeError:
+                pass
+        open(out, "w").writelines(good)
+        done = {(r["image"], r["target"], r["cond"]) for r in map(json.loads, good)}
     det = {"gdino": GDino, "owlv2": Owl, "yoloworld": YoloWorld}[a.model](dev)
     if a.model == "owlv2" and a.owl_fast:
         full, cache = det, {}
