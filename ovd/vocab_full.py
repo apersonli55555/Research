@@ -270,6 +270,10 @@ class YoloWorld:
         from ultralytics.nn.modules import C2fAttn, WorldDetect
         self.torch, self.dev, self.C2fAttn, self.WorldDetect = torch, dev, C2fAttn, WorldDetect
         self.net = YOLOWorld("yolov8s-worldv2.pt").model.to(dev).eval()
+        self.net.fuse(verbose=False)                       # conv+BN folding, as ultralytics does for inference
+        # layers before the first text-guided block never see the text: cache their outputs per image
+        self.first_text = min(m.i for m in self.net.model if isinstance(m, self.C2fAttn))
+        self._memo = (None, None)
         E = torch.cat([self.net.get_text_pe(names[i:i + 80], cache_clip_model=True)[0] for i in range(0, len(names), 80)])
         self.emb = {n: E[i] for i, n in enumerate(names)}
 
@@ -285,11 +289,24 @@ class YoloWorld:
 
     def __call__(self, img, vocab, guide=None):
         torch = self.torch
-        x, r, dx, dy = self.prep(img)
+        key = getattr(img, "filename_key", None)           # never id(img): ids are reused (see RESULTS run 1a)
+        if key is not None and self._memo[0] == key:
+            r, dx, dy, x0, y0 = self._memo[1]
+        else:
+            x, r, dx, dy = self.prep(img); x0, y0 = None, None
         head = self.text(vocab); g = self.text(guide) if guide is not None else head
-        net = self.net; net.model[-1].nc = len(vocab); y = []
+        net = self.net; net.model[-1].nc = len(vocab)
         with torch.no_grad():
-            for m in net.model:
+            if x0 is None:                                     # run the text-free layers once per image
+                y = []
+                for m in net.model[: self.first_text]:
+                    if m.f != -1:
+                        x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]
+                    x = m(x); y.append(x if m.i in net.save else None)
+                x0, y0 = x, list(y)
+                self._memo = (key, (r, dx, dy, x0, y0)) if key is not None else (None, None)
+            x, y = x0, list(y0)
+            for m in net.model[self.first_text:]:
                 if m.f != -1:
                     x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]
                 if isinstance(m, self.C2fAttn):
@@ -369,7 +386,7 @@ def run(a):
             fix_todo = [p for p in pairs if (f, p["target"], "FIX") not in done and a.model != "gdino_qs"]
             if not todo and not fix_todo:
                 continue
-            img = Image.open(os.path.join(a.out, "images", f)).convert("RGB")
+            img = Image.open(os.path.join(a.out, "images", f)).convert("RGB"); img.filename_key = f
             gt = P["info"][f]["gt"]
             full = det(img, names) if base == "owlv2" else None              # exact for every vocabulary
             for p, cn, vocab in todo:
@@ -457,6 +474,8 @@ def bench(a):
         methods = dict(orig=lambda img, v: det(img, v), fixguide=lambda img, v: det(img, v, guide=names),
                        single=lambda img, v: [det(img, [n]) for n in v])
     imgs = [Image.open(os.path.join(a.out, "images", f)).convert("RGB") for f in files]
+    for f, im in zip(files, imgs):
+        im.filename_key = f
     warm = min(3, len(imgs) - 1)
     for mname, fn in methods.items():
         for vname, v in vocabs.items():
