@@ -96,6 +96,14 @@ class GDino:
         self.torch, self.dev = torch, dev
         self.proc = AutoProcessor.from_pretrained(mid)
         self.model = AutoModelForZeroShotObjectDetection.from_pretrained(mid).to(dev).eval()
+        bb = self.model.model.backbone; orig = bb.forward; memo = {}
+
+        def cached(pixel_values, pixel_mask):              # same image -> same backbone output (identical numbers)
+            k = (tuple(pixel_values.shape), float(pixel_values.double().sum()), float(pixel_values[..., ::7, ::5].double().sum()))
+            if k not in memo:
+                memo.clear(); memo[k] = orig(pixel_values, pixel_mask)
+            return memo[k]
+        bb.forward = cached
 
     def __call__(self, img, vocab):
         torch = self.torch
