@@ -920,3 +920,27 @@ Printed by `vlm_baseline.py` (InternVL3.5-8B, cached scores) at commit `a4698c2`
 InternVL minus FT self-trained, per seed: Kinetics −0.011 (p = 0.49), +0.002 (p = 0.85), +0.010 (p = 0.52); Kinetics hard −0.050 [−0.090, −0.012] (p = 0.008), −0.023 (p = 0.21), −0.019 (p = 0.30). InternVL minus FT hand labels on Kinetics hard: +0.004, +0.056 (p = 0.001), +0.031 (p = 0.093).
 
 Reading: on the independent Kinetics test the fine-tuned self-trained VideoMAE (0.6 GB, 0.023 s per clip) is level with InternVL3.5-8B overall (0.805 vs. 0.805) and has the highest observed mean on falls vs. look-alike motions (0.734; significantly above InternVL for one of three seeds); fine-tuning on our hand labels is the weakest there (0.674).
+
+# Run 29: shortcut-aware self-training with mined non-fall accidents (rule fixed in advance: NOT MET)
+
+`vlm_teacher.py --prompt accident` (InternVL3.5-8B, 6,900 pool clips, 1.02 s/clip) + `nolabel.py --hardneg` at commit `171bee5` (`Research` repository; Colab L4). Rule committed to `AGENTS.md` before any result. Copied from the Colab text output.
+
+**Method.** Pool = run-18 pool (no labelled video). The 690 clips (10%) with the largest rank(accident-prompt score) − rank(fall-prompt score) are mined as likely non-fall accidents and added as negatives in every round of the fixed self-training (synthetic start, 20%, 3 rounds, pre-accident negatives), barred from the pseudo-falls. Baseline: the same self-training without mined negatives.
+
+| Detector | FallOrNot | C (345 labelled accident clips) | OF-ItW | HMDB51 | HMDB51 hard | Kinetics | Kinetics hard |
+|---|---|---|---|---|---|---|---|
+| Self-trained baseline (run-18 pool) | 0.897 | 0.804 | 0.937 | 0.952 | 0.915 | 0.808 | 0.742 |
+| **Shortcut-aware (mined negatives)** | 0.896 | **0.828** | 0.936 | 0.935 | 0.874 | 0.812 | 0.737 |
+| Shortcut-aware, VLM-teacher start (secondary) | 0.898 | 0.850 | 0.947 | 0.888 | 0.797 | 0.771 | 0.672 |
+| Synthetic-only probe | 0.814 | 0.746 | 0.872 | 0.917 | 0.880 | 0.774 | 0.716 |
+
+Ours vs. baseline, paired: FallOrNot −0.001 (p = 0.95); **C +0.024 [+0.006, +0.042], p = 0.011**; OF-ItW −0.001 (p = 0.59); HMDB51 −0.017 [−0.027, −0.008], p < 0.001; HMDB51 hard −0.041 [−0.058, −0.025], p < 0.001; Kinetics +0.005 (p = 0.53); Kinetics hard −0.005 (p = 0.60).
+
+**Mining check** (labels used only to measure): applied to the 345 labelled accident clips, the same rule selects 32, of which **75% are not falls**, against 32% among all labelled accident clips (2.3 times the base rate).
+
+**SHORTCUT-AWARE RESULT: NOT MET** — (i) met (C +0.024, p = 0.011); (ii) not met (Kinetics hard −0.005, not significant); (iii) not met on HMDB51 (−0.017; FallOrNot and OF-ItW within 0.01).
+
+## Reading
+- **The mining works:** asking a VLM two questions and keeping the clips where they disagree finds non-fall accidents at 2.3 times the base rate, with no labels.
+- **Training on them helps where it was aimed** (falls vs. other accidents on OOPS!: +0.024, p = 0.011) **but costs out of domain** (HMDB51 −0.017, HMDB51 hard −0.041) and does nothing on Kinetics. The same in-domain-gain / out-of-domain-loss pattern appeared with the VLM teacher (run 27) and with consequence labelling (run 21): every OOPS!-specific signal we added made the detector more OOPS!-specific.
+- Must not be presented as a working method; it is a test fixed in advance that was not met. The secondary VLM-start variant is better on C (0.850) but worse out of domain, and must not replace it.
