@@ -312,18 +312,30 @@ def analyze(a):
                 gts = [g["box"] for g in P["gt"][key[0]] if g["cls"] == key[1]]
                 cache[(key, c)] = (matches(r["dets"], gts), len(gts))
         conds_of = {g: sorted({c for d in by.values() for c in d if grp(c) == g}) for g in GROUPS}
+        # vectorised AP: per (condition, class) arrays of (image index, score, tp); bootstrap = image weights
+        from full_analysis import wap
+        img_list = sorted({k[0] for k in by}); ix = {f: n for n, f in enumerate(img_list)}
+        arr, npos = {}, {}
+        for (key, c), (m, n) in cache.items():
+            L_ = arr.setdefault((c, key[1]), [[], [], []])
+            for sc, ok in m:
+                L_[0].append(ix[key[0]]); L_[1].append(sc); L_[2].append(float(ok))
+            npos.setdefault((c, key[1]), np.zeros(len(img_list)))[ix[key[0]]] += n
+        arr = {k: tuple(np.array(x) for x in v) for k, v in arr.items()}
+
         def mAP(g, imgs=None):
+            w = np.ones(len(img_list)) if imgs is None else np.array([imgs.get(f, 0) for f in img_list], float)
             vals = []
             for c in conds_of[g]:
                 aps = []
                 for t in P["names"]:
-                    recs, npos = [], 0
-                    for (key, cc), (m, n) in cache.items():
-                        if cc == c and key[1] == t and (imgs is None or key[0] in imgs):
-                            w = imgs[key[0]] if imgs is not None else 1
-                            recs += m * w; npos += n * w
-                    if npos:
-                        aps.append(ap_from(recs, npos))
+                    if (c, t) not in npos:
+                        continue
+                    n = float((npos[(c, t)] * w).sum())
+                    if n <= 0:
+                        continue
+                    im, sc, tp = arr[(c, t)]
+                    aps.append(wap(sc, tp, w[im.astype(int)], n) if len(sc) else 0.0)
                 if aps:
                     vals.append(np.nanmean(aps))
             return float(np.mean(vals)) if vals else np.nan
