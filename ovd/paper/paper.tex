@@ -1,0 +1,128 @@
+% Vocabulary-Set Interference in Open-Vocabulary Object Detection. Draft. Every number must come from ovd/RESULTS.md;
+% missing numbers are [TODO]. Build: pdflatex paper && pdflatex paper (inside ovd/paper).
+\documentclass[10pt,twocolumn,letterpaper]{article}
+\usepackage[review]{cvpr}
+\usepackage{graphicx,booktabs,amsmath,amssymb}
+\usepackage[pagebackref,breaklinks,colorlinks,allcolors=blue]{hyperref}
+\def\paperID{*****}
+\def\confName{ICCV}
+\def\confYear{2027}
+\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
+\title{Vocabulary-Set Interference in Open-Vocabulary Object Detection}
+\author{Anonymous submission}
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Open-vocabulary detectors are queried with a user-chosen list of class names. We ask a narrow question: for the
+\emph{same} image and the \emph{same} target name, does the detector's answer change when \emph{other} names are added,
+removed or reordered? We build a counterfactual protocol that holds the target phrase, image, preprocessing and
+weights fixed and varies only the rest of the vocabulary (1 to 1{,}203 classes; random, semantically similar, visually
+confusable and unrelated distractors; five orders), and apply it to Grounding DINO, YOLO-World and OWLv2 on COCO and
+LVIS. \todo{main measured effect, with CI}. We trace the dependence to specific architectural steps: OWLv2's class
+scores are invariant by construction and change only through top-1 label competition; YOLO-World's text guidance is a
+maximum over the vocabulary, which makes it exactly order-invariant but set-dependent; Grounding DINO's text encoder is
+masked per phrase, so its dependence arises in cross-modal fusion, query selection, label competition and, beyond 256
+tokens, chunking. We then show training-free inference changes that are vocabulary-invariant by construction --
+fixed scoring contexts, a fixed guide vocabulary and independent read-out -- and measure their accuracy and cost:
+\todo{accuracy vs.\ the strongest baseline, latency}.
+\end{abstract}
+
+\section{Introduction}
+Open-vocabulary detectors~\cite{gdino,yoloworld,owlv2} let a user name the classes to detect at test time. In practice,
+the vocabulary is an engineering choice: a deployment lists the classes it cares about, a benchmark lists all of its
+classes, and long vocabularies are split into chunks to fit text-encoder limits. Implicitly, users assume that the
+answer for ``dog'' does not depend on whether ``cat'' or ``toaster'' is also in the list. Recent work shows that
+whole-vocabulary choices matter -- pruning the vocabulary per image helps~\cite{vocada}, and Grounding DINO collapses on
+aerial imagery when given all 80 classes rather than the few present~\cite{aerial} -- but these comparisons change the
+vocabulary and the information about which classes are present at the same time, and do not say \emph{where} the
+dependence arises.
+
+We isolate the effect with a counterfactual protocol: the image, the target phrase, the preprocessing and the weights
+are fixed, and only the other class names change. This lets us (i) measure interference per target instance --
+score changes, detection flips at the deployment threshold, box changes, absent-class false alarms and AP; (ii)
+attribute it to architectural steps, in some cases exactly; and (iii) remove it with training-free changes that are
+invariant by construction, whose only open questions are accuracy and cost.
+
+\paragraph{Contributions.} \todo{finalise after results}
+(1) A fixed-target counterfactual protocol and benchmark for vocabulary interference on COCO and LVIS.
+(2) A per-architecture mechanism analysis separating network-level interference from label competition, thresholds,
+NMS and chunking.
+(3) Training-free, vocabulary-invariant inference for each detector family, with accuracy and latency against original,
+single-class and vocabulary-pruning baselines.
+
+\section{Related work}
+\paragraph{Open-vocabulary detection.} Grounding DINO~\cite{gdino} fuses image and text early and grounds phrases;
+YOLO-World~\cite{yoloworld} injects text embeddings into a YOLO neck for real-time use; OWL-ViT/OWLv2~\cite{owlvit,owlv2}
+score region embeddings against each query independently. Grounding DINO introduced per-phrase attention masks to avoid
+``cross-talk'' between names~\cite{gdino}; we measure what cross-talk remains.
+\paragraph{Vocabulary choice.} VocAda~\cite{vocada} prunes the user vocabulary per image with a captioner and a selector
+(Detic, VLDet, CoDet; COCO, Objects365). An aerial evaluation~\cite{aerial} reports a large gap between all-class and
+present-class prompting for Grounding DINO. Chunked inference over long vocabularies is standard and known to change
+predictions~\cite{mmgdino,slground}. None of these hold the target fixed or attribute the effect to architectural steps.
+\paragraph{Score reliability.} Open-vocabulary scores depend on object scale and on the wording of the target's own
+query~\cite{scalesem}; confident false positives are common on background images~\cite{tractordogs}. We study the
+complementary factor: the \emph{other} queries.
+
+\section{Protocol}
+\paragraph{Data.} COCO val2017~\cite{coco} and LVIS v1.0 val~\cite{lvis}, public annotations only. Images are ranked by an
+MD5 hash of the file name: the first 500 COCO images are a development split (all design choices); the next 1{,}000
+COCO images and 600 LVIS images (excluding the development images) are held out. Targets are every present COCO class
+(LVIS: up to three) plus two absent classes (LVIS: verified absent).
+\paragraph{Conditions.} For target $c$: $\{c\}$; $c$ plus $k{-}1$ random classes ($k\in\{5,20\}$ on COCO;
+$\{5,20,80,200,500\}$ on LVIS); $c$ plus its nearest classes by CLIP text embedding (similar), plus the classes CLIP ranks
+highest for the target's own crop (visually confusable), plus random classes from the least similar half (unrelated);
+and the full list in five orders. The target string is identical in all conditions; seeds derive from hashes.
+\paragraph{Measurements.} Raw target score of the best-matching box (IoU$\ge$0.5) per instance; deployed output
+(each box keeps its top class and must exceed the model's threshold: 0.35 / 0.25 / 0.10 for Grounding DINO / YOLO-World
+/ OWLv2); detection flips; best-box IoU change; false alarms on absent targets; AP50 per class over the target's pairs;
+latency. Confidence intervals: bootstrap over images.
+
+\section{Where does the vocabulary enter?}\label{sec:mech}
+\paragraph{OWLv2.} The logit of box $b$ for query $q$ is a function of $b$'s embedding and $q$'s text embedding only,
+so raw scores are exactly invariant to the other queries (we confirm numerically: \todo{max difference}). Any change
+in deployed output comes from top-1 label assignment.
+\paragraph{YOLO-World.} Text enters twice: as the classifier (a per-class contrastive head) and as a \emph{guide} in the
+neck, where max-sigmoid attention weights each location by $\sigma(\max_{t\in V}\langle e_x, g(t)\rangle)$. The maximum
+makes the features exactly order-invariant and monotone in the vocabulary set: adding a name can only raise the
+attention at each location. Fixing the guide to a constant list makes every class score independent of $V$
+(numerically, $<10^{-6}$ difference).
+\paragraph{Grounding DINO.} Phrases are separated by attention masks and position ids restart per phrase in the text
+encoder, so the target's text features do not depend on other names there. Other names enter through (a) image--text
+fusion in the feature enhancer and decoder, (b) language-guided selection of the 900 decoder queries (maximum over all
+tokens), (c) top-1 label competition and (d) chunking when the prompt exceeds 256 tokens, where order decides which
+names share the target's chunk. We probe (b) by restricting query selection to the target's tokens.
+\todo{results of the probe and of each factor}
+
+\section{Vocabulary-invariant inference}
+\textbf{Fixed context} (Grounding DINO): every class is always scored inside the same chunk of a fixed reference list in
+canonical order; the deployment vocabulary only selects which classes are reported (COCO: one 195-token prompt).
+\textbf{Fixed guide} (YOLO-World): the neck is guided by a fixed reference list, the head uses the deployment vocabulary.
+\textbf{Independent read-out} (all): no top-1 label competition. These are invariant by construction, so we evaluate
+accuracy and cost against original inference with the full list, single-class inference and CLIP-based vocabulary
+pruning in the style of VocAda. \todo{table}
+
+\section{Results}
+\todo{pilot (development split), held-out COCO, LVIS, mechanism ablations, corrections, latency, error analysis}
+
+\section{Limitations}
+Base/small checkpoints only (one 24\,GB GPU); two datasets; the visually confusable family is defined with CLIP; the
+pruning baseline omits VocAda's captioner. \todo{add result-specific limitations}
+
+{\small
+\begin{thebibliography}{99}
+\bibitem{gdino} S. Liu, Z. Zeng, T. Ren, et al. Grounding DINO: Marrying DINO with grounded pre-training for open-set object detection. In \emph{ECCV}, 2024.
+\bibitem{yoloworld} T. Cheng, L. Song, Y. Ge, W. Liu, X. Wang, Y. Shan. YOLO-World: Real-time open-vocabulary object detection. In \emph{CVPR}, 2024.
+\bibitem{owlvit} M. Minderer, A. Gritsenko, A. Stone, et al. Simple open-vocabulary object detection with vision transformers. In \emph{ECCV}, 2022.
+\bibitem{owlv2} M. Minderer, A. Gritsenko, N. Houlsby. Scaling open-vocabulary object detection. In \emph{NeurIPS}, 2023.
+\bibitem{vocada} M. Liu, T. L. Hayes, M. Mancini, E. Ricci, R. Volpi, G. Csurka. Test-time vocabulary adaptation for language-driven object detection. In \emph{ICIP}, 2025. arXiv:2506.00333.
+\bibitem{aerial} C. Tsourveloudis. Do open-vocabulary detectors transfer to aerial imagery? A comparative evaluation. arXiv:2601.22164, 2026.
+\bibitem{scalesem} Y. T. Soon, J.-W. Hsieh. Confidence scores in open-vocabulary detection are a biased mixture of scale and semantics. arXiv:2607.10993, 2026.
+\bibitem{slground} SL-Ground: Sentence-level grounding for fine-grained open-vocabulary object detection. arXiv:2610.24814, 2026. [VERIFY authors]
+\bibitem{mmgdino} X. Zhao, Y. Chen, S. Xu, et al. An open and comprehensive pipeline for unified object grounding and detection (MM-Grounding-DINO). arXiv:2401.02361, 2024. [VERIFY]
+\bibitem{tractordogs} Fantastic tractor-dogs and how not to find them. In \emph{ICLR}, 2026. [VERIFY authors and title]
+\bibitem{coco} T.-Y. Lin, M. Maire, S. Belongie, et al. Microsoft COCO: Common objects in context. In \emph{ECCV}, 2014.
+\bibitem{lvis} A. Gupta, P. Doll\'ar, R. Girshick. LVIS: A dataset for large vocabulary instance segmentation. In \emph{CVPR}, 2019.
+\end{thebibliography}
+}
+\end{document}

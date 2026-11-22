@@ -7,3 +7,7 @@ weights/
 *.pt
 ovd/__pycache__/
 .pytest_cache/
+ovd/paper/*.aux
+ovd/paper/*.log
+ovd/paper/*.out
+ovd/paper/*.brf
