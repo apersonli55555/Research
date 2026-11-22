@@ -54,7 +54,11 @@ full is marked [VERIFY]. This file will be updated after the pilot and the full 
   should be added as the published baseline [TODO].
 - **ICCV 2027 dates/policies** must be checked on the official site before submission; this file states none.
 
-## Submission readiness: NOT READY
-Missing: Grounding DINO held-out runs + query-selection probe + GPU latency (running on the owner's L4), YOLO-World LVIS
-(running on CPU), final figures, full manuscript pass, independent re-check of every number in the paper. Every claim above in "What would
-be new" items 2–3 beyond the CPU smoke checks is still a hypothesis.
+## Submission readiness (23 Nov 2026): NOT READY — blocked only on GPU runs in progress
+Done and traced (RESULTS.md, `ovd/results/`, `check_numbers.py`: 120/120 manuscript numbers traced):
+pre-registered pilot (GO; GPU, cross-checked on CPU); OWLv2 and YOLO-World on held-out COCO and LVIS; corrections vs.
+original / single-class / CLIP-pruning baselines with bootstrap CIs; guide ablation; normalisation/calibration
+ablation (negative); error analysis; figures for held-out COCO/LVIS; manuscript draft (5 pages).
+Missing (owner's L4 run started 23 Nov): Grounding DINO held-out COCO/LVIS incl. 1,203-name chunking and the fixed-
+context correction; query-selection probe; GPU latency for all models (success criterion iii); Grounding DINO rows in
+figures/tables; final manuscript pass (contributions, abstract numbers, limitations); a second human read of the paper.
