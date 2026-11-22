@@ -176,6 +176,15 @@ development split (Sec.~\ref{sec:ablation}).
 \todo{Grounding DINO held-out (incl.\ chunking); probe; latency}
 
 
+\section{Error analysis}
+Which classes lose when the whole list is used? Under single-label output the per-class AP drop grows with the
+class's text similarity to its nearest other name (Spearman $\rho$ = $+$0.18 [0.09, 0.29] for OWLv2 and $+$0.25
+[0.16, 0.35] for YOLO-World on LVIS; $+$0.35 [0.14, 0.54] for OWLv2 on COCO; YOLO-World on COCO $+$0.16, CI
+including zero). The largest losers are near-synonym and part--whole pairs -- calf/cow, teapot/teakettle,
+billboard/signboard, carton/box, stool/chair, truck/bus, bear/teddy bear -- where the label is captured by the
+neighbouring name rather than missed. The invariant read-out restores most of them; for YOLO-World a few remain
+(e.g.\ dining table). Many LVIS classes have one or two instances in our sample, so per-class APs are coarse.
+
 \section{Ablations}\label{sec:ablation}
 \paragraph{Which fixed guide?} On the development split only, we compared YOLO-World guides with the head fixed to
 the 80 COCO names (Table~\ref{tab:guide}). The domain's own full label space is best (0.603 mAP50); guides drawn

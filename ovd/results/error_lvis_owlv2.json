@@ -1,0 +1,157 @@
+{
+ "dataset": "lvis",
+ "model": "owlv2",
+ "n_classes": 390,
+ "spearman_drop_vs_maxsim": 0.17824008350836273,
+ "spearman_CI": [
+  0.08780035978590867,
+  0.28476097804719297
+ ],
+ "frac_classes_losing": 0.6307692307692307,
+ "frac_classes_gaining": 0.08974358974358974,
+ "fix_recovers_frac": 1.0,
+ "top_losers": [
+  {
+   "cls": "wreath",
+   "ap_k1": 1.0,
+   "ap_full": 0.0,
+   "ap_fix": 1.0,
+   "nearest": "bouquet",
+   "sim": 0.8451693058013916
+  },
+  {
+   "cls": "billboard",
+   "ap_k1": 1.0,
+   "ap_full": 0.0,
+   "ap_fix": 1.0,
+   "nearest": "signboard",
+   "sim": 0.8896227478981018
+  },
+  {
+   "cls": "bullet train",
+   "ap_k1": 1.0,
+   "ap_full": 0.0,
+   "ap_fix": 1.0,
+   "nearest": "train",
+   "sim": 0.8020339608192444
+  },
+  {
+   "cls": "bread-bin",
+   "ap_k1": 1.0,
+   "ap_full": 0.0,
+   "ap_fix": 1.0,
+   "nearest": "bread",
+   "sim": 0.7773461937904358
+  },
+  {
+   "cls": "calf",
+   "ap_k1": 1.0,
+   "ap_full": 0.0,
+   "ap_fix": 1.0,
+   "nearest": "cow",
+   "sim": 0.9088029861450195
+  },
+  {
+   "cls": "timer",
+   "ap_k1": 1.0,
+   "ap_full": 0.0,
+   "ap_fix": 1.0,
+   "nearest": "clock",
+   "sim": 0.8972291946411133
+  },
+  {
+   "cls": "tiara",
+   "ap_k1": 1.0,
+   "ap_full": 0.0,
+   "ap_fix": 1.0,
+   "nearest": "crown",
+   "sim": 0.9052639603614807
+  },
+  {
+   "cls": "teapot",
+   "ap_k1": 1.0,
+   "ap_full": 0.0,
+   "ap_fix": 1.0,
+   "nearest": "teakettle",
+   "sim": 0.9150180816650391
+  },
+  {
+   "cls": "sled",
+   "ap_k1": 1.0,
+   "ap_full": 0.0,
+   "ap_fix": 1.0,
+   "nearest": "snowmobile",
+   "sim": 0.831142783164978
+  },
+  {
+   "cls": "school bus",
+   "ap_k1": 1.0,
+   "ap_full": 0.0,
+   "ap_fix": 1.0,
+   "nearest": "bus",
+   "sim": 0.9262365102767944
+  },
+  {
+   "cls": "ram",
+   "ap_k1": 1.0,
+   "ap_full": 0.0,
+   "ap_fix": 1.0,
+   "nearest": "sheep",
+   "sim": 0.84300696849823
+  },
+  {
+   "cls": "gun",
+   "ap_k1": 1.0,
+   "ap_full": 0.0,
+   "ap_fix": 1.0,
+   "nearest": "pistol",
+   "sim": 0.9448747634887695
+  },
+  {
+   "cls": "earphone",
+   "ap_k1": 1.0,
+   "ap_full": 0.0,
+   "ap_fix": 1.0,
+   "nearest": "headset",
+   "sim": 0.9215782284736633
+  },
+  {
+   "cls": "crape",
+   "ap_k1": 1.0,
+   "ap_full": 0.0,
+   "ap_fix": 1.0,
+   "nearest": "pancake",
+   "sim": 0.7786045074462891
+  },
+  {
+   "cls": "dishwasher",
+   "ap_k1": 1.0,
+   "ap_full": 0.0,
+   "ap_fix": 1.0,
+   "nearest": "automatic washer",
+   "sim": 0.8514143228530884
+  }
+ ],
+ "by_sim_quartile": [
+  {
+   "q": 0,
+   "mean_drop": 0.17707549421376662,
+   "n": 98
+  },
+  {
+   "q": 1,
+   "mean_drop": 0.17113382974184108,
+   "n": 97
+  },
+  {
+   "q": 2,
+   "mean_drop": 0.22709544889489527,
+   "n": 97
+  },
+  {
+   "q": 3,
+   "mean_drop": 0.25263140425788233,
+   "n": 98
+  }
+ ]
+}

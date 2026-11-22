@@ -155,3 +155,19 @@ read-out, mAP50 over the 2,471 pilot pairs. File: `ovd/results/ablation_yoloworl
 Conclusion (development data): the best fixed guide is the deployment domain's full label space, the choice fixed in
 PLAN amendment A; out-of-domain guides are worse than single-class inference and small random guides are unstable.
 No held-out number was used for this choice.
+
+## OVD run 3b — error analysis on held-out runs 2a–2d, 23 Nov 2026, CPU
+Command: `error_analysis.py --dataset {coco,lvis} --model {owlv2,yoloworld}`; files `ovd/results/error_*.json`.
+Per class: AP50 drop k1 → full list (single-label output) vs. s_max = highest CLIP text similarity to another name.
+| set / model | classes | Spearman(drop, s_max) [95% CI] | classes losing | mean drop by s_max quartile (low → high) |
+|---|---|---|---|---|
+| LVIS / OWLv2 | 390 | +0.178 [+0.088, +0.285] | 0.63 | +0.177, +0.171, +0.227, +0.253 |
+| LVIS / YOLO-World | 390 | +0.252 [+0.164, +0.345] | 0.51 | +0.043, +0.084, +0.135, +0.196 |
+| COCO / OWLv2 | 80 | +0.350 [+0.138, +0.537] | 0.70 | +0.007, +0.013, +0.046, +0.028 |
+| COCO / YOLO-World | 80 | +0.158 [−0.077, +0.410] | 0.53 | +0.018, +0.003, +0.024, +0.019 |
+Largest losers are near-synonym / part-whole pairs: calf–cow, teapot–teakettle, billboard–signboard, tiara–crown,
+bullet train–train (OWLv2 LVIS); carton–box, stool–chair, toothpaste–toothbrush (YOLO-World LVIS); hot dog–sandwich,
+snowboard–skateboard, truck–bus (OWLv2 COCO); bear–teddy bear, dog–cat (YOLO-World COCO). The correction restores
+most of them (e.g. all eight top OWLv2 LVIS losers back to their k1 AP); exceptions for YOLO-World: dining table
+(fix 0.00), Dixie cup (0.33), crape (0.50). Caveat: many LVIS classes have 1–2 instances in this sample, so per-class
+APs are coarse (often 0 or 1).

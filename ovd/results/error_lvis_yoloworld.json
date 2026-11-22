@@ -1,0 +1,157 @@
+{
+ "dataset": "lvis",
+ "model": "yoloworld",
+ "n_classes": 390,
+ "spearman_drop_vs_maxsim": 0.251879772637963,
+ "spearman_CI": [
+  0.1638817885314575,
+  0.34465265285211505
+ ],
+ "frac_classes_losing": 0.5102564102564102,
+ "frac_classes_gaining": 0.18461538461538463,
+ "fix_recovers_frac": 0.7461538461538462,
+ "top_losers": [
+  {
+   "cls": "Dixie cup",
+   "ap_k1": 1.0,
+   "ap_full": 0.0,
+   "ap_fix": 0.3333333333333333,
+   "nearest": "cup",
+   "sim": 0.8303549885749817
+  },
+  {
+   "cls": "bullet train",
+   "ap_k1": 1.0,
+   "ap_full": 0.0,
+   "ap_fix": 1.0,
+   "nearest": "train",
+   "sim": 0.8020339608192444
+  },
+  {
+   "cls": "carton",
+   "ap_k1": 1.0,
+   "ap_full": 0.0,
+   "ap_fix": 1.0,
+   "nearest": "box",
+   "sim": 0.9234946370124817
+  },
+  {
+   "cls": "toothpaste",
+   "ap_k1": 1.0,
+   "ap_full": 0.0,
+   "ap_fix": 0.9166666666666666,
+   "nearest": "toothbrush",
+   "sim": 0.8839741349220276
+  },
+  {
+   "cls": "stool",
+   "ap_k1": 1.0,
+   "ap_full": 0.0,
+   "ap_fix": 1.0,
+   "nearest": "chair",
+   "sim": 0.9030694961547852
+  },
+  {
+   "cls": "soup",
+   "ap_k1": 1.0,
+   "ap_full": 0.0,
+   "ap_fix": 1.0,
+   "nearest": "soup bowl",
+   "sim": 0.8985377550125122
+  },
+  {
+   "cls": "dining table",
+   "ap_k1": 1.0,
+   "ap_full": 0.0,
+   "ap_fix": 0.0,
+   "nearest": "kitchen table",
+   "sim": 0.9321502447128296
+  },
+  {
+   "cls": "crape",
+   "ap_k1": 1.0,
+   "ap_full": 0.0,
+   "ap_fix": 0.5,
+   "nearest": "pancake",
+   "sim": 0.7786045074462891
+  },
+  {
+   "cls": "rhinoceros",
+   "ap_k1": 1.0,
+   "ap_full": 0.0,
+   "ap_fix": 1.0,
+   "nearest": "elephant",
+   "sim": 0.8633986115455627
+  },
+  {
+   "cls": "dragonfly",
+   "ap_k1": 1.0,
+   "ap_full": 0.0,
+   "ap_fix": 1.0,
+   "nearest": "spider",
+   "sim": 0.8606475591659546
+  },
+  {
+   "cls": "fire engine",
+   "ap_k1": 1.0,
+   "ap_full": 0.0,
+   "ap_fix": 1.0,
+   "nearest": "ambulance",
+   "sim": 0.870587170124054
+  },
+  {
+   "cls": "quilt",
+   "ap_k1": 1.0,
+   "ap_full": 0.0,
+   "ap_fix": 1.0,
+   "nearest": "bedspread",
+   "sim": 0.8656803369522095
+  },
+  {
+   "cls": "beer bottle",
+   "ap_k1": 1.0,
+   "ap_full": 0.0,
+   "ap_fix": 1.0,
+   "nearest": "wine bottle",
+   "sim": 0.9101909399032593
+  },
+  {
+   "cls": "armchair",
+   "ap_k1": 1.0,
+   "ap_full": 0.0,
+   "ap_fix": 1.0,
+   "nearest": "chair",
+   "sim": 0.956248939037323
+  },
+  {
+   "cls": "hog",
+   "ap_k1": 1.0,
+   "ap_full": 0.0,
+   "ap_fix": 1.0,
+   "nearest": "bull",
+   "sim": 0.8322705626487732
+  }
+ ],
+ "by_sim_quartile": [
+  {
+   "q": 0,
+   "mean_drop": 0.042665250073036384,
+   "n": 98
+  },
+  {
+   "q": 1,
+   "mean_drop": 0.0837670754771742,
+   "n": 97
+  },
+  {
+   "q": 2,
+   "mean_drop": 0.13487562598192954,
+   "n": 97
+  },
+  {
+   "q": 3,
+   "mean_drop": 0.19645599341004205,
+   "n": 98
+  }
+ ]
+}
