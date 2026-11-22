@@ -103,7 +103,29 @@ accuracy and cost against original inference with the full list, single-class in
 pruning in the style of VocAda. \todo{table}
 
 \section{Results}
-\todo{pilot (development split), held-out COCO, LVIS, mechanism ablations, corrections, latency, error analysis}
+\subsection{Pilot on the development split}
+Table~\ref{tab:pilot} reports the pilot (500 COCO development images; 2{,}471 image--target pairs; 18 vocabularies per
+pair). OWLv2 and YOLO-World were run on all pairs; Grounding DINO so far only on the first 120 pairs (CPU), so its row
+is provisional. All three models are exactly or nearly order-invariant: reordering the 80 names flips no detection.
+OWLv2's raw scores do not move at all, yet label competition costs 2.0 mAP50 points (95\% CI [1.3, 2.7]) and flips
+2.8\% of detections, ten times more with similar than with random distractors (near20 2.5\% vs.\ rand20 0.7\%).
+YOLO-World's scores move (mean $|\Delta s|$ 0.052) and 6.4\% of detections flip, but gains and losses cancel in AP
+($-$0.3 points, CI [$-$1.2, +1.0]). Grounding DINO is the most affected: 15.4\% of detections flip, its target score
+\emph{rises} with more names (0.43 $\rightarrow$ 0.52), and single-class prompting produces false alarms on 14.6\% of
+absent targets versus none with 80 names.
+
+\begin{table}[t]\centering\small\setlength{\tabcolsep}{3pt}
+\caption{Pilot, k=1 vs.\ all 80 COCO names (5 orders). Flips: detected/missed status at the model's threshold changes
+relative to k=1. FA: false alarms on absent targets. $^\dagger$first 120 pairs only (provisional).}\label{tab:pilot}
+\begin{tabular}{lcccccc}\toprule
+ & \multicolumn{2}{c}{mAP50} & mean & flips & order & FA \\
+model & k=1 & 80 & $|\Delta s|$ & @80 & flips & k=1$\to$80\\\midrule
+OWLv2 & .746 & .726 & .000 & .028 & .000 & .045$\to$.033\\
+YOLO-World & .598 & .600 & .052 & .064 & .000 & .024$\to$.011\\
+G-DINO$^\dagger$ & .836 & .835 & .142 & .154 & .000 & .146$\to$.000\\\bottomrule
+\end{tabular}\end{table}
+
+\todo{held-out COCO, LVIS (sizes 200--1203, chunking), distractor families, mechanism probe, corrections, latency, error analysis}
 
 \section{Limitations}
 Base/small checkpoints only (one 24\,GB GPU); two datasets; the visually confusable family is defined with CLIP; the
