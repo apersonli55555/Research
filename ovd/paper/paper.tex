@@ -133,8 +133,18 @@ visually confusable ones 1.9--2.5\% and semantically similar ones 2.5--2.7\% (mA
 cost 2.3 points (95\% CI [1.7, 3.2]). The independent read-out matches single-class inference exactly (0.744), beats the
 80-name output by +2.3 points (CI [+1.7, +3.2]) at no extra cost, and has zero interference. CLIP-based vocabulary
 pruning in the style of VocAda (top-10 classes per image) is far worse (0.637; $-$10.6 points), because it often
-removes the target itself. \todo{YOLO-World, Grounding DINO held-out; LVIS (sizes 200--1203, chunking); mechanism probe;
-latency; error analysis}
+removes the target itself.
+
+\subsection{Held-out LVIS: large vocabularies}
+\paragraph{OWLv2 (600 images, 2{,}689 pairs, 1{,}203 classes).} Raw scores remain exactly invariant, but under the
+common single-label post-processing (each box keeps its top class, as in the Hugging Face pipeline) the loss grows
+with vocabulary size and similarity: mAP50 falls from 0.765 (k=1) to 0.720, 0.689 and 0.626 with 80, 200 and 500
+random names, to 0.572 with the 80 most similar names, and to 0.558 with all 1{,}203 (19.0\% of detections flip);
+unrelated names barely matter (0.752 at 80). Independent read-out recovers the full 0.765 ($+$20.7 points, 95\% CI
+[$+$17.9, $+$21.6]) with zero interference, at the price of more false alarms on verified-absent classes (6.3\% vs.\
+1.4\%). Benchmark LVIS evaluation already scores (box, class) pairs without top-1 assignment, so this loss concerns
+deployment-style outputs, not published benchmark numbers. CLIP pruning (top-50) reaches only 0.313.
+\todo{YOLO-World, Grounding DINO held-out (incl.\ chunking at 1{,}203 names); mechanism probe; latency; error analysis}
 
 \section{Limitations}
 Base/small checkpoints only (one 24\,GB GPU); two datasets; the visually confusable family is defined with CLIP; the
