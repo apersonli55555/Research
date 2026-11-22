@@ -67,3 +67,29 @@ uncorrected model; (ii) mAP within 1 point of the better of uncorrected and sing
 Bootstrap 95% CIs resampled by image (1,000 resamples in final runs); paired comparisons on identical images; no
 tuning on held-out data; every number in the paper copied from `ovd/RESULTS.md`, which records every run, including
 failed ones.
+
+## Amendment A (22 Nov 2026, before any Stage 2/3 result and before the pilot result) — implementation details
+Code: `ovd/vocab_full.py` (runs, corrections, latency) and `ovd/full_analysis.py` (all statistics).
+- **Sizes and counts:** COCO held-out = 1,000 images (ranks 501–1,500 by hash; compute budget), conditions k=1,
+  random 5/20 (5 draws), near/vis/far 5/20, all 80 (5 orders) = 22 per pair. LVIS = 600 images, ≤ 3 present targets
+  per image (hash-chosen) + 2 verified-absent targets (`neg_category_ids`); k=1, random 5/20/80/200/500 (3 draws),
+  near/vis/far 5/20/80, all 1,203 (5 orders) = 30 per pair.
+- **Visually confusable distractors (replaces train-crop prototypes, which would need the 1 GB LVIS train file):**
+  the classes CLIP ViT-B/32 ranks highest for the target's own largest ground-truth crop (whole image for absent
+  targets). It uses no label beyond the target box every condition already uses. **Unrelated** = random classes from
+  the half of the list least similar to the target (CLIP text).
+- **Chunking:** a Grounding DINO vocabulary over 256 tokens is packed in its order into consecutive chunks; only the
+  target's chunk is run. Because chunk membership depends on order, an order effect at 1,203 classes is expected to
+  come from chunking; the analysis reports chunk size per condition so this is visible.
+- **Corrections, defined before results:** Grounding DINO *fixed context* (each class is scored inside a fixed
+  canonical chunk of the dataset's full list; the deployment vocabulary only selects which classes are output);
+  YOLO-World *fixed guide* (the C2fAttn guide text is the fixed full list; the deployment vocabulary is used only in the
+  classification head); all models *independent read-out* (no top-1 label competition). These are vocabulary-invariant
+  by construction, so their interference is 0 by definition; what is tested is (ii) accuracy and (iii) latency.
+- **Interference of a method** = change of its own output between vocabulary V and its own single-class output.
+- **Mechanism probe:** Grounding DINO with query selection restricted to the target's tokens (`gdino_qs`) on k1,
+  rand20_0 and all_0; if most of the k1→V change remains, query-slot competition is not the main cause.
+- **Accuracy reference ("strongest relevant baseline"):** the better of single-class inference (k1) and original
+  inference with the full list (`all`), by deployed mAP50 on the same pairs.
+- **Latency:** `bench` stage, 30 images after 3 warm-up images, CUDA-synchronised, per image, for original, single-class
+  and the correction, at full list and random 5/20 (/80/200 for LVIS) vocabularies.

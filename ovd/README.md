@@ -24,3 +24,11 @@ Public data only: the COCO val2017 annotations and images are downloaded automat
 Model checkpoints: `IDEA-Research/grounding-dino-base`, `google/owlv2-base-patch16-ensemble` (Hugging Face) and
 `yolov8s-worldv2.pt` (ultralytics, AGPL-3.0). Seeds derive from MD5 hashes of the image and class names, so every
 vocabulary draw is identical on every machine.
+
+## Full study (OVD runs 2–4, only after a GO from the pilot)
+    for DS in coco lvis; do
+      python ovd/vocab_full.py data --dataset $DS --out OUT
+      for M in owlv2 yoloworld gdino gdino_qs; do python ovd/vocab_full.py run --dataset $DS --out OUT --model $M; done
+      for M in owlv2 yoloworld gdino; do python ovd/vocab_full.py bench --dataset $DS --out OUT --model $M; done
+    done
+    python ovd/full_analysis.py --out OUT --boot 1000      # writes OUT/full_summary.{md,json}

@@ -9,3 +9,5 @@ from this file.
   These numbers are too few to mean anything and are not used anywhere.
 
 ## OVD run 1: pilot (500 COCO val2017 images, rule in PLAN.md) — pending
+
+## OVD runs 2–4 (full study, corrections, latency) — pending; code `ovd/vocab_full.py`, analysis `ovd/full_analysis.py`
