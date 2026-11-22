@@ -111,7 +111,7 @@ def analyse(out, ds, model, boot):
     for c in conds:
         groups[group_of(c)].append(c)
     order = ["k1"] + sorted([g for g in groups if g[:4] == "rand"], key=lambda g: int(g[4:])) + \
-            sorted([g for g in groups if g[:4] in ("near", "far") or g[:3] == "vis"]) + ["all", "prune", "FIX"]
+            sorted([g for g in groups if g.startswith(("near", "far", "vis"))]) + ["all", "prune", "FIX"]
     order = [g for g in order if g in groups]
     S = dict(dataset=ds, model=model, n_runs=len(R), n_pairs=len({(r["image"], r["target"]) for r in R}),
              n_images=len({r["image"] for r in R}), groups={})
@@ -137,8 +137,8 @@ def analyse(out, ds, model, boot):
                     for a_, b_ in zip(r["instances"], ref["instances"]):
                         ds_.append(a_["raw"] - b_["raw"]); fl.append((a_["deployed"] >= th) != (b_["deployed"] >= th))
                     bx.append(iou(np.array([r["best_box"]]), np.array(ref["best_box"]))[0] < 0.5)
-                else:
-                    fa.append(r["img_max_deployed"] >= th); far.append(r["img_max_raw"] >= th)
+                else:                         # FIX has no label competition: its deployed output is the raw score
+                    fa.append((r["img_max_raw"] if g == "FIX" else r["img_max_deployed"]) >= th); far.append(r["img_max_raw"] >= th)
                 if "chunk_k" in r:
                     ck.append(r["chunk_k"])
         e.update(mean_abs_score_change=float(np.mean(np.abs(ds_))) if ds_ else np.nan,

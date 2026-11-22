@@ -1,0 +1,234 @@
+{
+ "coco/owlv2": {
+  "dataset": "coco",
+  "model": "owlv2",
+  "n_runs": 120312,
+  "n_pairs": 5013,
+  "n_images": 1000,
+  "groups": {
+   "k1": {
+    "conds": 1,
+    "mAP50_deployed": 0.7436029725842828,
+    "mAP50_indep": 0.7436029725842828,
+    "mean_abs_score_change": 0.0,
+    "mean_score_change": 0.0,
+    "det_flip_rate": 0.0,
+    "loc_flip_rate": 0.0,
+    "absent_false_alarm_deployed": 0.06,
+    "absent_false_alarm_raw": 0.06,
+    "n_instances": 7342
+   },
+   "rand5": {
+    "conds": 5,
+    "mAP50_deployed": 0.7425086958985745,
+    "mAP50_indep": 0.7436029725842828,
+    "mean_abs_score_change": 0.0,
+    "mean_score_change": 0.0,
+    "det_flip_rate": 0.001770634704440207,
+    "loc_flip_rate": 0.0,
+    "absent_false_alarm_deployed": 0.0591,
+    "absent_false_alarm_raw": 0.06,
+    "n_instances": 36710,
+    "dmAP_deployed_vs_k1_CI": [
+     -0.0020512078835325243,
+     -0.0005698006884922947
+    ]
+   },
+   "rand20": {
+    "conds": 5,
+    "mAP50_deployed": 0.7378992823042693,
+    "mAP50_indep": 0.7436029725842828,
+    "mean_abs_score_change": 0.0,
+    "mean_score_change": 0.0,
+    "det_flip_rate": 0.008090438572596023,
+    "loc_flip_rate": 0.0,
+    "absent_false_alarm_deployed": 0.0527,
+    "absent_false_alarm_raw": 0.06,
+    "n_instances": 36710,
+    "dmAP_deployed_vs_k1_CI": [
+     -0.008486757516608542,
+     -0.003840038605552149
+    ]
+   },
+   "far20": {
+    "conds": 1,
+    "mAP50_deployed": 0.7431596354963493,
+    "mAP50_indep": 0.7436029725842828,
+    "mean_abs_score_change": 0.0,
+    "mean_score_change": 0.0,
+    "det_flip_rate": 0.0020430400435848543,
+    "loc_flip_rate": 0.0,
+    "absent_false_alarm_deployed": 0.059,
+    "absent_false_alarm_raw": 0.06,
+    "n_instances": 7342,
+    "dmAP_deployed_vs_k1_CI": [
+     -0.00104122326132286,
+     6.647360324521477e-06
+    ]
+   },
+   "far5": {
+    "conds": 1,
+    "mAP50_deployed": 0.7434845892002839,
+    "mAP50_indep": 0.7436029725842828,
+    "mean_abs_score_change": 0.0,
+    "mean_score_change": 0.0,
+    "det_flip_rate": 0.000681013347861618,
+    "loc_flip_rate": 0.0,
+    "absent_false_alarm_deployed": 0.06,
+    "absent_false_alarm_raw": 0.06,
+    "n_instances": 7342,
+    "dmAP_deployed_vs_k1_CI": [
+     -0.000332679908390654,
+     2.860699321144403e-06
+    ]
+   },
+   "near20": {
+    "conds": 1,
+    "mAP50_deployed": 0.7235570022009926,
+    "mAP50_indep": 0.7436029725842828,
+    "mean_abs_score_change": 0.0,
+    "mean_score_change": 0.0,
+    "det_flip_rate": 0.026695723236175428,
+    "loc_flip_rate": 0.0,
+    "absent_false_alarm_deployed": 0.041,
+    "absent_false_alarm_raw": 0.06,
+    "n_instances": 7342,
+    "dmAP_deployed_vs_k1_CI": [
+     -0.02824992408038482,
+     -0.014989212848391248
+    ]
+   },
+   "near5": {
+    "conds": 1,
+    "mAP50_deployed": 0.7241296267530636,
+    "mAP50_indep": 0.7436029725842828,
+    "mean_abs_score_change": 0.0,
+    "mean_score_change": 0.0,
+    "det_flip_rate": 0.024652683192590574,
+    "loc_flip_rate": 0.0,
+    "absent_false_alarm_deployed": 0.0445,
+    "absent_false_alarm_raw": 0.06,
+    "n_instances": 7342,
+    "dmAP_deployed_vs_k1_CI": [
+     -0.027584656073019985,
+     -0.014443998738805986
+    ]
+   },
+   "vis20": {
+    "conds": 1,
+    "mAP50_deployed": 0.724176307534884,
+    "mAP50_indep": 0.7436029725842828,
+    "mean_abs_score_change": 0.0,
+    "mean_score_change": 0.0,
+    "det_flip_rate": 0.02519749387087987,
+    "loc_flip_rate": 0.0,
+    "absent_false_alarm_deployed": 0.0425,
+    "absent_false_alarm_raw": 0.06,
+    "n_instances": 7342,
+    "dmAP_deployed_vs_k1_CI": [
+     -0.027856565114545033,
+     -0.014214108392773015
+    ]
+   },
+   "vis5": {
+    "conds": 1,
+    "mAP50_deployed": 0.7295618712002165,
+    "mAP50_indep": 0.7436029725842828,
+    "mean_abs_score_change": 0.0,
+    "mean_score_change": 0.0,
+    "det_flip_rate": 0.019068373740125308,
+    "loc_flip_rate": 0.0,
+    "absent_false_alarm_deployed": 0.0475,
+    "absent_false_alarm_raw": 0.06,
+    "n_instances": 7342,
+    "dmAP_deployed_vs_k1_CI": [
+     -0.021446688816848632,
+     -0.009311695793858835
+    ]
+   },
+   "all": {
+    "conds": 5,
+    "mAP50_deployed": 0.7209332244231126,
+    "mAP50_indep": 0.7436029725842828,
+    "mean_abs_score_change": 0.0,
+    "mean_score_change": 0.0,
+    "det_flip_rate": 0.030645600653772816,
+    "loc_flip_rate": 0.0,
+    "absent_false_alarm_deployed": 0.0395,
+    "absent_false_alarm_raw": 0.06,
+    "n_instances": 36710,
+    "dmAP_deployed_vs_k1_CI": [
+     -0.031753936153748684,
+     -0.01728125640053409
+    ]
+   },
+   "prune": {
+    "conds": 1,
+    "mAP50_deployed": 0.6373639827721569,
+    "mAP50_indep": 0.6508417701334442,
+    "mean_abs_score_change": 0.04593957089297721,
+    "mean_score_change": -0.04593957089297721,
+    "det_flip_rate": 0.1909561427403977,
+    "loc_flip_rate": 0.2575506140059741,
+    "absent_false_alarm_deployed": 0.014,
+    "absent_false_alarm_raw": 0.024,
+    "n_instances": 7342,
+    "dmAP_deployed_vs_k1_CI": [
+     -0.12462975423762764,
+     -0.09771409536484991
+    ]
+   },
+   "FIX": {
+    "conds": 1,
+    "mAP50_deployed": 0.7436029725842828,
+    "mAP50_indep": 0.7436029725842828,
+    "mean_abs_score_change": 0.0,
+    "mean_score_change": 0.0,
+    "det_flip_rate": 0.0,
+    "loc_flip_rate": 0.0,
+    "absent_false_alarm_deployed": 0.06,
+    "absent_false_alarm_raw": 0.06,
+    "n_instances": 7342,
+    "dmAP_deployed_vs_k1_CI": [
+     0.0,
+     0.0
+    ]
+   }
+  },
+  "order_flip_rate": 0.0,
+  "order_score_range": 0.0,
+  "any_vocab_flip_rate": 0.030645600653772816,
+  "any_vocab_score_range": 0.0,
+  "best_baseline": "k1",
+  "FIX_minus_k1_mAP50": {
+   "point": 0.0,
+   "CI": [
+    0.0,
+    0.0
+   ]
+  },
+  "FIX_minus_all_mAP50": {
+   "point": 0.022669748161170178,
+   "CI": [
+    0.017281256400534087,
+    0.031753936153748684
+   ]
+  },
+  "FIX_minus_prune_mAP50": {
+   "point": 0.10623898981212587,
+   "CI": [
+    0.09771409536484991,
+    0.12462975423762762
+   ]
+  },
+  "interference_orig": {
+   "score": 0.0,
+   "flips": 0.015427222373558524
+  },
+  "interference_FIX": {
+   "score": 0.0,
+   "flips": 0.0,
+   "note": "0 by construction: one output per (image, target) whatever the vocabulary"
+  }
+ }
+}
