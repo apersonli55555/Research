@@ -190,7 +190,7 @@ def run(a):
     if a.model == "owlv2" and a.owl_fast:
         full, cache = det, {}
         def det(img, vocab, _names=P["names"]):
-            key = id(img)
+            key = img.filename_key                 # file name (NOT id(img): ids are reused after an image is freed)
             if key not in cache:
                 cache.clear(); cache[key] = full(img, _names)
             boxes, S, m = cache[key]
@@ -203,7 +203,8 @@ def run(a):
             for cname, vocab in p["conds"].items():
                 if (p["image"], p["target"], cname) in done:
                     continue
-                img = img or Image.open(os.path.join(a.out, "images", p["image"])).convert("RGB")
+                if img is None:
+                    img = Image.open(os.path.join(a.out, "images", p["image"])).convert("RGB"); img.filename_key = p["image"]
                 t1 = time.time()
                 boxes, S, missing = det(img, vocab)
                 sec = time.time() - t1

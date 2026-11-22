@@ -44,3 +44,39 @@ def test_vocab_conditions_are_reproducible_and_contain_target():
     rng1 = np.random.default_rng(int(vp.h("img|c3")[:8], 16)); rng2 = np.random.default_rng(int(vp.h("img|c3")[:8], 16))
     v1 = list(rng1.choice([n for n in names if n != "c3"], 4, replace=False)); v2 = list(rng2.choice([n for n in names if n != "c3"], 4, replace=False))
     assert v1 == v2 and "c3" not in v1
+
+
+def test_owl_fast_cache_is_keyed_by_file_not_object_id(tmp_path):
+    """Regression (found 22 Nov 2026): the cache was keyed by id(img), which Python reuses, giving stale outputs."""
+    import json
+    from PIL import Image
+    calls = []
+
+    class FakeOwl:
+        def __init__(self, dev):
+            pass
+
+        def __call__(self, img, vocab):
+            calls.append(img.filename_key)
+            v = float(np.asarray(img).mean())                      # depends on the image content
+            return np.array([[0, 0, 4, 4]], float), np.full((1, len(vocab)), v / 255), 0
+
+    names = ["a", "b"]
+    os.makedirs(tmp_path / "images")
+    plan = []
+    for i, val in enumerate((10, 200, 90)):
+        Image.new("RGB", (4, 4), (val,) * 3).save(tmp_path / "images" / f"{i}.png")
+        plan.append(dict(image=f"{i}.png", target="a", present=True, conds={"k1": ["a"], "all80_0": ["b", "a"]}))
+    gt = {f"{i}.png": [dict(cls="a", box=[0, 0, 4, 4])] for i in range(3)}
+    json.dump(dict(names=names, plan=plan, gt=gt), open(tmp_path / "plan.json", "w"))
+    old = vp.Owl; vp.Owl = FakeOwl
+    try:
+        import types
+        vp.run(types.SimpleNamespace(out=str(tmp_path), limit=0, model="owlv2", owl_fast=True))
+    finally:
+        vp.Owl = old
+    R = [json.loads(l) for l in open(tmp_path / "results_owlv2.jsonl")]
+    for r in R:
+        val = (10, 200, 90)[int(r["image"][0])]
+        assert abs(r["img_max_raw"] - val / 255) < 1e-6
+    assert calls == ["0.png", "1.png", "2.png"]
