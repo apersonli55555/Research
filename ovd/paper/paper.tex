@@ -145,6 +145,16 @@ reading classes out independently gives the best accuracy of any variant (0.624;
 inference, CI [$+$1.5, $+$2.6]; $+$3.7 over the full list, CI [$+$2.5, $+$5.1]) with zero interference by
 construction; CLIP pruning reaches 0.527.
 
+\begin{figure*}[t]\centering
+\includegraphics[width=\linewidth]{fig_coco.pdf}\\[-1mm]
+\includegraphics[width=\linewidth]{fig_lvis.pdf}
+\caption{Held-out COCO (top, 1{,}000 images) and LVIS (bottom, 600 images). (a) Mean change of the raw target score
+relative to single-class inference; OWLv2 is exactly zero. (b) Detection flips at the deployment threshold; lines:
+random distractors, markers: similar ($\triangle$), visually confusable ($\square$), unrelated ($\triangledown$).
+(c) mAP50 of single-class inference, the full list under single-label output, and the vocabulary-invariant
+correction (inv.). Grounding DINO: \todo{add when the GPU runs finish}.}\label{fig:heldout}
+\end{figure*}
+
 \subsection{Held-out LVIS: large vocabularies}
 \paragraph{OWLv2 (600 images, 2{,}689 pairs, 1{,}203 classes).} Raw scores remain exactly invariant, but under the
 common single-label post-processing (each box keeps its top class, as in the Hugging Face pipeline) the loss grows
