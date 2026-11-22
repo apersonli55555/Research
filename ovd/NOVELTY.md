@@ -27,12 +27,26 @@ full is marked [VERIFY]. This file will be updated after the pilot and the full 
 3. **Invariant-by-construction, training-free corrections** (fixed context / fixed guide / independent read-out),
    evaluated for accuracy and latency against original, single-class and (where feasible) vocabulary-pruning baselines.
 
+## Evidence so far (23 Nov 2026; numbers from ovd/RESULTS.md)
+- Pre-registered pilot: GO (Grounding DINO mAP50 k=1 0.693 vs. 80 names 0.776, CI of difference [6.1, 9.5] points;
+  16.7% flips). Reproduced across machines (GPU vs. CPU) for OWLv2 and YOLO-World.
+- Held-out COCO: OWLv2 interference is purely label competition (−2.3 AP50 at 80 names, 3× larger for similar/visual
+  distractors than random); YOLO-World guide helps / competition hurts; fixed guide + independent read-out is best
+  (+2.0 over single-class, +3.7 over the full list).
+- Held-out LVIS: OWLv2 single-label output loses 20.7 AP50 at 1,203 classes; independent read-out recovers it.
+- Exact order invariance for all three models at ≤ 256 tokens (predicted from the architectures).
+
 ## Reviewer risks (honest)
 - **"Obvious / known" (high).** Practitioners know vocabulary choice matters (aerial paper, VocAda, chunk-size docs).
   Mitigation: the paper's value must be the controlled measurement + mechanism + a fix with a clear accuracy/cost
   trade-off, not the existence of the effect alone.
-- **"The fix is trivial" (high).** Fixing the context or guide is simple. Its worth depends on it matching or beating the
-  best baseline in AP at ≤ 2× cost. If it costs accuracy, the paper becomes an analysis paper.
+- **"The fix is trivial" (high).** Fixing the context or guide is simple. So far it matches or beats the best baseline
+  (YOLO-World +2.0 over single-class; OWLv2 equal to single-class at 1/K the passes); Grounding DINO and latency pending.
+- **"Independent read-out is what benchmarks already do" (high, OWLv2).** True: LVIS/COCO evaluation scores
+  (box, class) pairs. The OWLv2 loss concerns deployment-style single-label outputs (the default HF post-processing);
+  the paper states this explicitly. The YOLO-World guide effect and the Grounding DINO fusion effect are not of this kind.
+- **Absent-class false alarms (medium).** Independent read-out raises false alarms on verified-absent LVIS classes
+  (6.3% vs. 1.4%); reported as a trade-off.
 - **Effect size (unknown until the pilot).** If the pilot shows < 3 AP points and < 10% flips, the GO rule says STOP.
 - **Scope.** Base / small checkpoints only (one L4). Reviewers may ask for Grounding DINO 1.5 / LLMDet / YOLOE /
   Florence-2; at least one extra recent model would strengthen replication [TODO after Stage 2].
@@ -41,5 +55,6 @@ full is marked [VERIFY]. This file will be updated after the pilot and the full 
 - **ICCV 2027 dates/policies** must be checked on the official site before submission; this file states none.
 
 ## Submission readiness: NOT READY
-Missing: pilot result (run 1), full runs 2–4, VocAda-CLIP baseline, figures, manuscript. Every claim above in "What would
+Missing: Grounding DINO held-out runs + query-selection probe + GPU latency (running on the owner's L4), YOLO-World LVIS
+(running on CPU), final figures, full manuscript pass, independent re-check of every number in the paper. Every claim above in "What would
 be new" items 2–3 beyond the CPU smoke checks is still a hypothesis.
