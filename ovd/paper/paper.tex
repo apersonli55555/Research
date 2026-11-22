@@ -136,6 +136,15 @@ cost 2.3 points (95\% CI [1.7, 3.2]). The independent read-out matches single-cl
 pruning in the style of VocAda (top-10 classes per image) is far worse (0.637; $-$10.6 points), because it often
 removes the target itself.
 
+\paragraph{YOLO-World (same 1{,}000 images).} Here the vocabulary acts twice, with opposite signs. As a \emph{guide},
+more names help: with five or twenty unrelated names mAP50 rises from 0.604 to 0.618--0.623, and with the independent
+read-out every vocabulary reaches 0.617--0.624. As \emph{competitors}, similar or visually confusable names hurt
+(0.589--0.591), and the full list yields 0.588 under single-label post-processing. 8.3\% of instances flip under some
+vocabulary and 14\% of best boxes move, yet order never matters. Fixing the guide to the full reference list and
+reading classes out independently gives the best accuracy of any variant (0.624; $+$2.0 points over single-class
+inference, CI [$+$1.5, $+$2.6]; $+$3.7 over the full list, CI [$+$2.5, $+$5.1]) with zero interference by
+construction; CLIP pruning reaches 0.527.
+
 \subsection{Held-out LVIS: large vocabularies}
 \paragraph{OWLv2 (600 images, 2{,}689 pairs, 1{,}203 classes).} Raw scores remain exactly invariant, but under the
 common single-label post-processing (each box keeps its top class, as in the Hugging Face pipeline) the loss grows
