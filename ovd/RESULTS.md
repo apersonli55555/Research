@@ -95,3 +95,20 @@ image) then `run --model owlv2` (83,359 runs) and `full_analysis.py --boot 1000`
 - Caveat for the paper: "deployed" = the common single-label post-processing (Hugging Face
   `post_process_object_detection` keeps each box's top class). Benchmark LVIS evaluation scores (box, class) pairs
   without top-1 assignment and therefore does not suffer this loss; the finding concerns deployment-style output.
+
+### Run 1e — FULL PILOT on the owner's Colab L4 GPU, 23 Nov 2026 — **PILOT RESULT: GO**
+Code `4703704` (research repo). Commands: `vocab_pilot.py run` for gdino, owlv2 `--owl-fast` (re-run after deleting the
+file made with the buggy pre-fix cache), yoloworld; `analyze --boot 1000`. 2,471 pairs, 3,722 instances (YOLO-World 3,717).
+| model | mAP50 k1 | mAP50 all80 | k1−all80 [95% CI] | abs score change @80 | flips @80 | loc flips @80 | absent FA k1→80 | GO a/b/c |
+|---|---|---|---|---|---|---|---|---|
+| Grounding DINO | 0.693 | 0.776 | **−0.083 [−0.095, −0.061]** | 0.135 | **0.167** | 0.085 | 0.164 → 0.004 | **T/T/F** |
+| OWLv2 | 0.746 | 0.726 | +0.020 [+0.013, +0.027] | 0.000 | 0.028 | 0.000 | 0.045 → 0.033 | F/F/F |
+| YOLO-World | 0.598 | 0.600 | −0.002 [−0.013, +0.010] | 0.052 | 0.063 | 0.068 | 0.024 → 0.011 | F/F/F |
+Grounding DINO by group: mAP50 rand5 0.783, near5 0.776, rand20 0.779, near20 0.776; detected rate k1 0.581 → 0.706;
+mean raw target score 0.404 → 0.509; order-only flips 0.000 (score range 0.0002).
+**Independent check:** OWLv2 GPU numbers equal the CPU run 1b to every printed decimal; YOLO-World GPU vs CPU run 1c
+differ by ≤ 0.001 (e.g. near5 mAP50 0.595 vs 0.596, flips@80 0.063 vs 0.064). The CPU Grounding DINO subsample (1d)
+is consistent in direction and size (flips 0.154 vs 0.167).
+**Decision (fixed rule): GO.** Interpretation: for Grounding DINO, single-class prompting is the *worst* context —
+the extra names raise target scores and remove false alarms; YOLO-World changes per instance without net AP change;
+OWLv2 changes only through label competition.
