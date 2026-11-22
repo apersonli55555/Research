@@ -81,3 +81,17 @@ the independent read-out it is defined with.)
   interference 0 (flips 0.000). Absent-target false alarms: FIX 0.060 (= k1) vs. all 0.040.
 - **Baseline: CLIP vocabulary pruning (VocAda-style, K=10):** mAP50 0.637; FIX − prune = +0.106 [+0.098, +0.125];
   pruning removes the target in many images (19% detection flips, 26% localisation flips).
+
+## OVD run 2b — OWLv2 on held-out LVIS v1 val, 22 Nov 2026, CPU (development container)
+Command: `vocab_full.py data --dataset lvis` (600 images, 2,689 pairs; ≤3 present + 2 verified-absent targets per
+image) then `run --model owlv2` (83,359 runs) and `full_analysis.py --boot 1000`. Table: `ovd/results/run2_lvis_owlv2_cpu.md`.
+- Raw scores: mean |change| 0.0000 everywhere (exact invariance holds at 1,203 classes).
+- Deployed (top-1 label) mAP50: k1 0.765; rand5 0.763, rand20 0.752, rand80 0.720, rand200 0.689, rand500 0.626;
+  far5/20/80 0.761/0.761/0.752; vis5/20/80 0.684/0.656/0.613; near5/20/80 0.644/0.602/0.572; all 1,203 (5 orders) 0.558.
+- Detection flips vs k1: rand500 0.110, near80 0.173, vis80 0.134, far80 0.005, all 0.190. Order-only flips 0.000.
+- **FIX (independent read-out):** mAP50 0.765 (= k1); FIX − all = +0.207, 95% CI [+0.179, +0.216]; interference 0.
+  Trade-off: absent-target (verified-negative) false alarms FIX 0.063 vs. all 0.014.
+- Pruning baseline (K=50): mAP50 0.313; FIX − prune = +0.452 [+0.431, +0.478].
+- Caveat for the paper: "deployed" = the common single-label post-processing (Hugging Face
+  `post_process_object_detection` keeps each box's top class). Benchmark LVIS evaluation scores (box, class) pairs
+  without top-1 assignment and therefore does not suffer this loss; the finding concerns deployment-style output.
