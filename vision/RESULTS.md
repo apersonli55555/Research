@@ -842,3 +842,69 @@ Paired tests (by compilation):
 - **The main comparisons hold under the independent annotator's labels:** the self-trained probe beats the synthetic probe under both annotators and the consensus (p ≤ 0.009); fine-tuned self-training beats fine-tuned synthetic for 3 of 3 seeds under annotator 1 and 2 of 3 under annotator 2.
 - Against hand-labelled training nothing is significant under either annotator. Under annotator 2, whose labels the hand-labelled models were not trained on, the self-trained probe is 0.044 higher (p = 0.10); the hand-labelled models may benefit from sharing annotator 1's labelling style, which this subset cannot settle.
 - **Caveats:** 98 videos; the hand-labelled models were trained on annotator 1's labels of other videos.
+
+# Run 26: shortcut audit (rules fixed in advance) and a fourth, independent test set (Kinetics-700)
+
+Commit `87ae06f` (`Research` repository; Colab L4). Rules committed to `AGENTS.md` before any result. Copied from the Colab text output.
+
+## (a) Kinetics-700 validation as a fourth test set
+`kinetics_prep.py`: 147 fall videos (faceplanting, falling off bike, falling off chair), 782 hard negatives (16 fixed look-alike classes), 681 easy negatives (one per other class); 1,610 clips, 7,510 windows (2 s every 2 s, at most 5; max over windows). Not from fail compilations. Kinetics hard = falls + the 782 look-alike negatives (929 clips).
+
+## (b) Accident prompt vs. fall prompt (VLMs), same clips
+Accident prompt (never mentions falls): "Does something go wrong in this clip, such as an accident or a mishap?" Both scored as fall detectors. Paired, by compilation.
+
+| Test set | Qwen3-VL-4B fall | Qwen accident | accident − fall | InternVL3.5-8B fall | InternVL accident | accident − fall |
+|---|---|---|---|---|---|---|
+| FallOrNot | 0.920 | 0.846 | −0.074 [−0.118, −0.033], p = 0.001 | 0.936 | 0.891 | −0.045 [−0.074, −0.018], p = 0.003 |
+| FallOrNot hard | 0.902 | 0.738 | −0.164 [−0.234, −0.099], p < 0.001 | 0.930 | 0.825 | −0.105 [−0.156, −0.057], p < 0.001 |
+| C (345 labelled accident clips) | 0.881 | 0.711 | −0.170 [−0.222, −0.118], p < 0.001 | 0.891 | 0.799 | −0.092 [−0.130, −0.057], p < 0.001 |
+| OF-ItW | 0.946 | 0.898 | −0.049 [−0.063, −0.035], p < 0.001 | 0.964 | 0.946 | −0.018 [−0.025, −0.011], p < 0.001 |
+
+Rule: H1 (accident prompt ≥ 0.90 on OF-ItW): Qwen **False (0.898)**, InternVL True (0.946). H2 (accident prompt below fall prompt on C, CI below zero): both True. **Rule required H1 and H2 for both models: NOT MET** (Qwen misses H1 by 0.002).
+
+## (c) Every detector on every test set (descriptive)
+AUROC. Probes trained on the run-18 pool (no labelled video) unless stated; random start: mean ± s.d. over 5 seeds. VLM rows: zero-shot, fall prompt.
+
+| Detector | FallOrNot | FallOrNot hard | C | OF-ItW | HMDB51 | HMDB51 hard | Kinetics | Kinetics hard |
+|---|---|---|---|---|---|---|---|---|
+| Synthetic-only probe | 0.814 | 0.772 | 0.746 | 0.872 | 0.917 | 0.880 | 0.774 | 0.716 |
+| Self-trained, synthetic teacher | 0.897 | 0.840 | 0.804 | 0.937 | 0.952 | 0.915 | **0.808** | **0.742** |
+| Self-trained, VLM teacher (run 27) | 0.903 | 0.858 | 0.834 | 0.948 | 0.926 | 0.856 | 0.787 | 0.698 |
+| VLM teacher, 1 round (secondary) | 0.916 | 0.886 | 0.858 | 0.951 | 0.919 | 0.833 | 0.755 | 0.658 |
+| Accident detector (no fall information) | 0.851 | 0.729 | 0.707 | 0.923 | 0.885 | 0.887 | 0.737 | 0.725 |
+| Random start (no fall information) | 0.870 ± 0.006 | 0.768 ± 0.013 | 0.732 ± 0.019 | 0.930 ± 0.004 | 0.903 ± 0.015 | 0.876 ± 0.014 | 0.759 ± 0.021 | 0.719 ± 0.022 |
+| Hand-labelled real probe (268 clips) | 0.899 | 0.860 | – | 0.931* | 0.888 | 0.777 | 0.720 | 0.609 |
+| Qwen3-VL-4B, zero-shot | 0.920 | 0.902 | 0.881 | 0.946† | 0.953 | 0.873 | 0.822 | 0.724 |
+| InternVL3.5-8B, zero-shot | **0.936** | **0.930** | **0.891** | 0.964† | 0.950 | 0.848 | 0.805 | 0.704 |
+
+\* includes 20 clips from OF-ItW test videos that run 11 removes. † on the 1,613 OF-ItW clips without our labelled videos (probes: 1,671 clips; the teacher comparison below matched 1,531).
+
+## Reading
+- **The shortcut signature appears in both VLMs, but the rule fixed in advance was not met** (Qwen's accident prompt reached 0.898 on OF-ItW, 0.002 below the 0.90 threshold). In both models, replacing "did someone fall?" by "did something go wrong?" costs little on OF-ItW (−0.018, −0.049) and a lot on falls vs. other accidents (C: −0.092, −0.170); for InternVL the accident prompt alone scores 0.946 on OF-ItW. The difference between the two drops was not tested formally.
+- **Detectors with no fall information reach 0.923–0.930 on OF-ItW** (accident detector, random start), against 0.937–0.964 for fall-aware detectors, but only 0.707–0.732 on C.
+- **Kinetics-700 (independent of OOPS!) is hard for every detector:** falls vs. look-alike motions 0.609–0.742. The cheap self-trained probe (synthetic teacher) is the best detector there (0.742; 0.808 on all of Kinetics), above both VLMs (0.704–0.724); the hand-labelled probe is the worst (0.609). Paired tests between these were not run.
+- **Caveats:** one prompt per question; VLM training data unknown; Kinetics falls are trimmed action clips of three classes; fine-tuned models on Kinetics were scored (`scores_kinetics_*.npz` on Drive) but not yet reported.
+
+# Run 27: VLM-taught self-training (rule fixed in advance: NOT MET)
+
+`vlm_teacher.py` (InternVL3.5-8B scored 6,900 pool event clips at 1.03 s/clip) + `nolabel.py --teacher`. Copied from the Colab text output.
+
+VLM-taught vs. synthetic-taught probe (same pool), paired: FallOrNot +0.006 (p = 0.40); FallOrNot hard +0.017 (p = 0.14); **C +0.029 [+0.012, +0.048], p < 0.001**; OF-ItW +0.011 [+0.005, +0.016], p < 0.001; HMDB51 −0.026 (p < 0.001); HMDB51 hard −0.059 (p < 0.001); Kinetics −0.021 (p = 0.006); Kinetics hard −0.043 (p < 0.001).
+
+Taught probe minus its teacher, same clips: FallOrNot −0.033 [−0.074, +0.006] (0.903 vs. 0.936); FallOrNot hard −0.072 (p = 0.007); **C −0.057 [−0.094, −0.023]** (0.834 vs. 0.891); OF-ItW −0.017 [−0.028, −0.007] (0.946 vs. 0.963, n = 1,531); HMDB51 −0.024 (p = 0.084); HMDB51 hard +0.007 (p = 0.69); Kinetics −0.019 (p = 0.21); Kinetics hard −0.006 (p = 0.79).
+
+**VLM-TEACHER RESULT: NOT MET** — (i) met (beats the synthetic teacher on C); (ii) not met on FallOrNot (−0.033) and C (−0.057), met on OF-ItW (−0.017).
+
+## Reading
+- A VLM teacher helps in domain (C +0.029, OF-ItW +0.011) but hurts out of domain (HMDB51, Kinetics), and the small student does not reach its teacher on the hard OOPS!-based tests. One round from the VLM scores looked better in domain (secondary, must not replace the fixed setting).
+
+# Run 28: inference cost (`speed.py`, NVIDIA L4, batch 1, from decoded frames)
+
+| Detector | Seconds per 2 s clip | Peak GPU memory |
+|---|---|---|
+| Frozen CLIP ViT-L/14 (8 frames) + VideoMAE-B (16 frames) + linear probe | 0.063 | 2.43 GB |
+| Fine-tuned VideoMAE-B (16 frames) | 0.023 | 0.59 GB |
+| Qwen3-VL-4B (run 24) | 0.22 | 9.2 GB |
+| InternVL3.5-8B (run 24) | 1.0 | 18.1 GB |
+
+The fine-tuned self-trained VideoMAE is about 43 times faster than InternVL3.5-8B and uses about 30 times less memory; the probe is about 16 times faster.
