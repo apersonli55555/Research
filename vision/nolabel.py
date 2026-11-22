@@ -69,6 +69,8 @@ def main():
     ap.add_argument("--out", default=None)
     ap.add_argument("--hard", action="store_true",
                     help="hard-subset analysis (run 17): falls vs other accidents only; reading fixed in AGENTS.md beforehand")
+    ap.add_argument("--hardneg", default="",
+                    help="VLM accident-prompt JSON on the pool: shortcut-aware self-training with mined non-fall accidents (run 29)")
     ap.add_argument("--teacher", default="", help="vlm_teacher.py JSON: VLM-taught self-training + shortcut audit (runs 26-27)")
     ap.add_argument("--vlm-dir", default="", help="finetune work dir holding vlm_<model>_*.json (the teacher's own test scores)")
     ap.add_argument("--teacher-model", default="InternVL3_5-8B-HF")
@@ -273,6 +275,9 @@ def main():
         text = "\n".join(L)
         open(os.path.join(out, "nolabel_hard.md"), "w").write(text + "\n")
         print(text + f"\n\nwrote {out}/nolabel_hard.md, nolabel_hard.json")
+    if a.hardneg:
+        shortcut_aware(a, out, frames, videos, labels, meta, test_names, ev_keys, pre_keys, Xev, Xpre, s0, syn, pack,
+                       (Xe, ye, cmax, E) if a.external else None)
     if a.teacher:
         teacher_audit(a, out, frames, videos, labels, meta, test_names, ev_keys, pre_keys, Xev, Xpre, s0, syn, real_full, pack,
                       (Xe, ye, cmax, E) if a.external else None)
@@ -372,6 +377,114 @@ def main():
         print(text + f"\n\nwrote {out}/nolabel_hard2.md, nolabel_hard2.json")
     if a.explore:
         explore(out, s0, Xev, Xpre, ev_keys, meta, labels, tests, (Xe, ye, cmax) if a.external else None)
+
+
+MINE_Q = 0.10       # run 29: share of pool accident clips mined as non-fall accidents
+
+
+def shortcut_aware(a, out, frames, videos, labels, meta, test_names, ev_keys, pre_keys, Xev, Xpre, s0, syn, pack, ext):
+    """RUN 29 (rule fixed in AGENTS.md before any result). Mine likely NON-FALL ACCIDENTS without labels: pool
+    accident clips that a zero-shot VLM rates high for "something went wrong" but low for "a person falls"
+    (largest rank(accident) - rank(fall), top 10%). Then run the fixed self-training (synthetic start, 20%, 3 rounds,
+    pre-accident negatives) with the mined clips added as negatives in every round and barred from the pseudo-falls.
+    Pool = run-18 pool (no labelled video); baseline = the same self-training without mined negatives."""
+    from scipy.stats import rankdata
+    F, A = json.load(open(a.teacher)), json.load(open(a.hardneg))
+    lab_names = {n for n, l in labels.items() if l in ("fall", "not_fall")}
+    ke = np.array([k[0] not in lab_names for k in ev_keys]); kp = np.array([k[0] not in lab_names for k in pre_keys])
+    names = [k[0] for k, keep in zip(ev_keys, ke) if keep]
+    X1, P1, s1 = Xev[ke], Xpre[kp], s0[ke]
+    ok = np.array([n in F and n in A for n in names])
+    f = np.array([F.get(n, np.nan) for n in names]); acc = np.array([A.get(n, np.nan) for n in names])
+    d = np.full(len(names), -np.inf)
+    d[ok] = rankdata(acc[ok]) / ok.sum() - rankdata(f[ok]) / ok.sum()
+    m = np.zeros(len(names), bool); m[np.argsort(-d)[: int(round(MINE_Q * ok.sum()))]] = True
+    def train(start, mined, rounds=ROUNDS, q=Q):
+        sc, model = start.copy(), None
+        n = max(2, int(round(q * len(X1))))
+        for _ in range(rounds):
+            cand = np.where(~mined)[0]
+            order = cand[np.argsort(-sc[cand])]
+            pos = X1[order[:n]]; neg = [X1[order[-n:]], P1]
+            if mined.any():
+                neg.append(X1[mined])
+            neg = np.concatenate(neg)
+            model = probe().fit(np.concatenate([pos, neg]), np.r_[np.ones(len(pos)), np.zeros(len(neg))])
+            sc = model.decision_function(X1)
+        return model
+    none = np.zeros(len(names), bool)
+    models = {"self-trained (baseline, run-18 pool)": train(s1, none),
+              "shortcut-aware: + mined non-fall accidents (ours, run 29)": train(s1, m),
+              "shortcut-aware with VLM-teacher start (secondary)": train(np.where(np.isnan(f), np.nanmedian(f), f), m),
+              "synthetic-only probe": syn}
+    # test sets, as in run 26
+    O = np.load(a.ofitw); ote = O["split"] == "test"
+    te = [k for k in sorted(frames) if k in videos and k[0] in test_names and labels.get(k[0]) in ("fall", "not_fall")]
+    hk = [k for k in sorted(frames) if k in videos and k[1] == "event" and k[0] in meta and k[0] in lab_names]
+    sets = {}
+    sets["FallOrNot"] = (pack(te), np.array([int(k[1] == "event" and labels[k[0]] == "fall") for k in te]), np.array([compilation(k[0]) for k in te]), None)
+    sets["C: all labelled accident clips"] = (pack(hk), np.array([int(labels[k[0]] == "fall") for k in hk]), np.array([compilation(k[0]) for k in hk]), None)
+    sets["OF-ItW"] = (featurize(O["frames"][ote], KIND, O["video"][ote]), O["label"][ote], np.array([compilation(n) for n in O["name"][ote]]), None)
+    for nm, path in (("HMDB51", a.external), ("Kinetics-700", a.kinetics)):
+        if path:
+            Z = np.load(path); Xw = featurize(Z["frames"], KIND, Z["video"]); wc = Z["win_clip"]; yz = Z["clip_label"]
+            hard = Z["clip_hard"].astype(bool) | (yz == 1)
+            agg = (lambda wc_, n_: (lambda w: (lambda o: (np.maximum.at(o, wc_, w), o)[1])(np.full(n_, -np.inf))))(wc, len(yz))
+            sets[nm] = (Xw, yz, Z["clip_name"], (agg, None)); sets[nm + " hard"] = (Xw, yz, Z["clip_name"], (agg, hard))
+    ours, base = "shortcut-aware: + mined non-fall accidents (ours, run 29)", "self-trained (baseline, run-18 pool)"
+    R = {"pool": dict(accident_clips=int(ke.sum()), with_both_vlm_scores=int(ok.sum()), mined=int(m.sum())), "auroc": {}, "tests": {}}
+    for sn, (X, y, g, agg) in sets.items():
+        sc_ = {}
+        for nm_, mod in models.items():
+            v = mod.decision_function(X); mk = np.ones(len(y), bool)
+            if agg is not None:
+                v = agg[0](v); mk = agg[1] if agg[1] is not None else mk
+            sc_[nm_] = (v, mk)
+        R["auroc"][sn] = {nm_: float(_auroc(y[mk], v[mk])) for nm_, (v, mk) in sc_.items()}
+        v_o, mk = sc_[ours]; v_b, _ = sc_[base]
+        R["tests"][sn] = paired(y[mk], v_o[mk], v_b[mk], g[mk])
+    # diagnostic (labels used only to measure): would the same rule pick non-falls among the labelled accident clips?
+    if a.vlm_dir:
+        fl = {}; ac = {}
+        for nm_, dst in (("", fl), ("_accident", ac)):
+            for part in ("fallornot", "trainpool"):
+                pth = os.path.join(a.vlm_dir, f"vlm_{a.teacher_model}{nm_}_{part}.json")
+                if os.path.exists(pth):
+                    dst.update({k.split("|")[0]: v for k, v in json.load(open(pth)).items() if k.endswith("|event")})
+        common = [n for n in sorted(fl) if n in ac and n in lab_names]
+        if common:
+            pf = np.sort(f[ok]); pa = np.sort(acc[ok]); cut = np.sort(d[ok])[::-1][int(round(MINE_Q * ok.sum())) - 1]
+            dd = np.array([np.searchsorted(pa, ac[n]) / len(pa) - np.searchsorted(pf, fl[n]) / len(pf) for n in common])
+            sel = dd >= cut
+            R["mining_check_on_labelled_clips"] = dict(labelled_accident_clips=len(common), selected=int(sel.sum()),
+                                                       share_not_falls_among_selected=float(np.mean([labels[n] == "not_fall" for n, s_ in zip(common, sel) if s_])) if sel.any() else None,
+                                                       share_not_falls_overall=float(np.mean([labels[n] == "not_fall" for n in common])))
+    c = "C: all labelled accident clips"
+    r1 = bool(R["tests"][c][1] > 0)
+    r2 = bool("Kinetics-700 hard" in R["auroc"] and R["auroc"]["Kinetics-700 hard"][ours] >= R["auroc"]["Kinetics-700 hard"][base])
+    r3 = {sn: bool(R["auroc"][sn][ours] >= R["auroc"][sn][base] - 0.01) for sn in ("FallOrNot", "OF-ItW", "HMDB51") if sn in R["auroc"]}
+    R["verdict"] = dict(C_beats_baseline=r1, kinetics_hard_not_lower=r2, no_loss_over_0_01_elsewhere=r3,
+                        success=bool(r1 and r2 and len(r3) == 3 and all(r3.values())))
+    json.dump(R, open(os.path.join(out, "nolabel_hardneg.json"), "w"), indent=1)
+    g_ = lambda t: f"{t[0]:+.3f} [{t[1]:+.3f}, {t[2]:+.3f}], p = {t[3]:.3f}"
+    cols = list(sets)
+    L = ["", "SHORTCUT-AWARE SELF-TRAINING (run 29): mined non-fall accidents as negatives",
+         f"Pool (no labelled video): {R['pool']['accident_clips']} accident clips; {R['pool']['mined']} mined as likely non-fall accidents "
+         f"(top {int(MINE_Q * 100)}% of rank(accident prompt) - rank(fall prompt))", "",
+         "| Detector | " + " | ".join(cols) + " |", "|---|" + "---|" * len(cols)]
+    for nm_ in models:
+        L.append(f"| {nm_} | " + " | ".join(f"{R['auroc'][c_][nm_]:.3f}" for c_ in cols) + " |")
+    L += ["", "Ours vs baseline (paired):"] + [f"- {sn}: {g_(t)}" for sn, t in R["tests"].items()]
+    if "mining_check_on_labelled_clips" in R:
+        mc = R["mining_check_on_labelled_clips"]
+        L.append(f"\nMining check on {mc['labelled_accident_clips']} labelled accident clips: the same rule selects {mc['selected']}; "
+                 f"share that are NOT falls: {mc['share_not_falls_among_selected']} (all labelled accident clips: {mc['share_not_falls_overall']:.2f})")
+    L += ["", "Rule (run 29): (i) on C ours beats the baseline, paired 95% CI above zero; (ii) on Kinetics hard ours is not lower than the "
+              "baseline; (iii) on FallOrNot, OF-ItW and HMDB51 ours is at most 0.01 below the baseline",
+          f"SHORTCUT-AWARE RESULT: {'SUCCESS' if R['verdict']['success'] else 'NOT MET'} (i: {r1}; ii: {r2}; iii: {r3})"]
+    text = "\n".join(L)
+    open(os.path.join(out, "nolabel_hardneg.md"), "w").write(text + "\n")
+    print(text + f"\n\nwrote {out}/nolabel_hardneg.md, nolabel_hardneg.json")
 
 
 def teacher_audit(a, out, frames, videos, labels, meta, test_names, ev_keys, pre_keys, Xev, Xpre, s0, syn, real_full, pack, ext):

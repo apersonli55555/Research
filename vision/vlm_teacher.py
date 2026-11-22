@@ -21,7 +21,7 @@ from common import sample_clip  # noqa: E402
 from finetune import square  # noqa: E402
 from labeler import load_labels  # noqa: E402
 from oops_mine import URL, ResumableStream  # noqa: E402
-from vlm_baseline import VLM  # noqa: E402
+from vlm_baseline import PROMPTS, VLM  # noqa: E402
 
 
 def main():
@@ -30,6 +30,7 @@ def main():
     ap.add_argument("--ofitw", required=True)
     ap.add_argument("--out", required=True)
     ap.add_argument("--model", default="OpenGVLab/InternVL3_5-8B-HF")
+    ap.add_argument("--prompt", default="fall", choices=list(PROMPTS), help="run 29 uses the accident prompt")
     ap.add_argument("--workers", type=int, default=6)
     ap.add_argument("--limit", type=int, default=0, help="testing only")
     a = ap.parse_args()
@@ -45,7 +46,7 @@ def main():
     if not left:
         return
     dev = "cuda" if torch.cuda.is_available() else "cpu"
-    vlm = VLM(a.model, dev)
+    vlm = VLM(a.model, dev, PROMPTS[a.prompt])
 
     def decode(data, t):
         return [square(f) for f in sample_clip(data, max(0.0, t - 1), t + 1)]
