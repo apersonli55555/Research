@@ -154,7 +154,20 @@ unrelated names barely matter (0.752 at 80). Independent read-out recovers the f
 [$+$17.9, $+$21.6]) with zero interference, at the price of more false alarms on verified-absent classes (6.3\% vs.\
 1.4\%). Benchmark LVIS evaluation already scores (box, class) pairs without top-1 assignment, so this loss concerns
 deployment-style outputs, not published benchmark numbers. CLIP pruning (top-50) reaches only 0.313.
-\todo{YOLO-World, Grounding DINO held-out (incl.\ chunking at 1{,}203 names); mechanism probe; latency; error analysis}
+
+\paragraph{YOLO-World (same 600 images).} The two roles of the vocabulary now pull far apart. As a guide, unrelated
+names help a lot (mAP50 0.364 with the target alone, 0.429 with 80 unrelated names); as competitors, similar names
+hurt a lot (0.243 with the 80 most similar), and the full list under single-label output gives 0.249. 18.1\% of
+instances flip under some vocabulary and up to 44\% of best boxes move, while order still has no effect. The fixed
+guide with independent read-out reaches 0.442 with zero interference: $+$7.8 points over single-class inference (CI
+[$+$6.2, $+$9.6]) and $+$19.3 over the full list (CI [$+$17.6, $+$21.7]); CLIP pruning reaches 0.172. The full list is
+not the best possible guide: random 80--200-name guides reach 0.452--0.455 here; we choose guides only on the
+development split (Sec.~\ref{sec:ablation}).
+\todo{Grounding DINO held-out (incl.\ chunking); probe; latency}
+
+
+\section{Ablations}\label{sec:ablation}
+\todo{fixed-guide choice for YOLO-World on the development split (guide\_ablation.py)}
 
 \section{Limitations}
 Base/small checkpoints only (one 24\,GB GPU); two datasets; the visually confusable family is defined with CLIP; the
