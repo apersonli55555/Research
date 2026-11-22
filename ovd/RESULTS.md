@@ -139,3 +139,19 @@ Table: `ovd/results/run2_lvis_yoloworld_cpu.md`.
 - Caveat (reported, not tuned): random guides of 80–200 names give slightly higher independent-read-out AP (0.452–0.455)
   than the full-list guide (0.442), so the full list is not the best possible fixed guide. Choosing a guide must be done
   on the development split, not on these held-out numbers.
+
+## OVD run 3a — YOLO-World fixed-guide ablation, DEVELOPMENT split only (500 pilot images), 23 Nov 2026, CPU
+Command: `guide_ablation.py --pilot <pilot> --lvis-plan <plan_lvis.json>`; head = all 80 COCO names, independent
+read-out, mAP50 over the 2,471 pilot pairs. File: `ovd/results/ablation_yoloworld_guide_dev.json`.
+| guide | size | mAP50 |
+|---|---|---|
+| COCO 80 (the dataset's own label space) | 80 | **0.6033** |
+| single class (guide = target) | 1 | 0.5803 |
+| LVIS all | 1,203 | 0.5706 |
+| LVIS random, seeds 0 / 1 | 20 | 0.5462 / 0.5954 |
+| LVIS random, seeds 0 / 1 | 80 | 0.5660 / 0.5792 |
+| LVIS random, seeds 0 / 1 | 200 | 0.5682 / 0.5681 |
+| LVIS random, seeds 0 / 1 | 500 | 0.5697 / 0.5731 |
+Conclusion (development data): the best fixed guide is the deployment domain's full label space, the choice fixed in
+PLAN amendment A; out-of-domain guides are worse than single-class inference and small random guides are unstable.
+No held-out number was used for this choice.

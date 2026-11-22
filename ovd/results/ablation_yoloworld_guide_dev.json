@@ -1,0 +1,57 @@
+{
+ "coco80": {
+  "mAP50": 0.6032502299754253,
+  "n_classes": 78,
+  "guide_size": 80
+ },
+ "lvis1203": {
+  "mAP50": 0.5706166575097141,
+  "n_classes": 78,
+  "guide_size": 1203
+ },
+ "lvis_rand20_s0": {
+  "mAP50": 0.5462150779961207,
+  "n_classes": 78,
+  "guide_size": 20
+ },
+ "lvis_rand20_s1": {
+  "mAP50": 0.5953598820792846,
+  "n_classes": 78,
+  "guide_size": 20
+ },
+ "lvis_rand80_s0": {
+  "mAP50": 0.5659707930899698,
+  "n_classes": 78,
+  "guide_size": 80
+ },
+ "lvis_rand80_s1": {
+  "mAP50": 0.5791822405210925,
+  "n_classes": 78,
+  "guide_size": 80
+ },
+ "lvis_rand200_s0": {
+  "mAP50": 0.5681789717804507,
+  "n_classes": 78,
+  "guide_size": 200
+ },
+ "lvis_rand200_s1": {
+  "mAP50": 0.5681493288437777,
+  "n_classes": 78,
+  "guide_size": 200
+ },
+ "lvis_rand500_s0": {
+  "mAP50": 0.5696652577594571,
+  "n_classes": 78,
+  "guide_size": 500
+ },
+ "lvis_rand500_s1": {
+  "mAP50": 0.5731421490924824,
+  "n_classes": 78,
+  "guide_size": 500
+ },
+ "single(target only)": {
+  "mAP50": 0.5802573430353914,
+  "n_classes": 78,
+  "guide_size": 1
+ }
+}

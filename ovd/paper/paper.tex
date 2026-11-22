@@ -167,7 +167,21 @@ development split (Sec.~\ref{sec:ablation}).
 
 
 \section{Ablations}\label{sec:ablation}
-\todo{fixed-guide choice for YOLO-World on the development split (guide\_ablation.py)}
+\paragraph{Which fixed guide?} On the development split only, we compared YOLO-World guides with the head fixed to
+the 80 COCO names (Table~\ref{tab:guide}). The domain's own full label space is best (0.603 mAP50); guides drawn
+from another label space (LVIS) are worse than single-class inference (0.546--0.595 vs.\ 0.580) and small random
+guides are unstable across draws. This supports the rule fixed before the held-out runs: guide with the full label
+space of the deployment domain.
+\begin{table}[t]\centering\small
+\caption{YOLO-World fixed-guide ablation, development split, independent read-out (two random draws where random).}\label{tab:guide}
+\begin{tabular}{lcc}\toprule guide & size & mAP50\\\midrule
+COCO label space & 80 & \textbf{.603}\\
+target only (single-class) & 1 & .580\\
+LVIS label space & 1203 & .571\\
+LVIS random & 20 & .546 / .595\\
+LVIS random & 80 & .566 / .579\\
+LVIS random & 200 & .568 / .568\\
+LVIS random & 500 & .570 / .573\\\bottomrule\end{tabular}\end{table}
 
 \section{Limitations}
 Base/small checkpoints only (one 24\,GB GPU); two datasets; the visually confusable family is defined with CLIP; the
