@@ -146,8 +146,19 @@ class YoloWorld:
     """YOLO-World v2: text embeddings of the whole vocabulary also steer the image features. Only the deployed output
     (after NMS, one class per box) is available."""
     def __init__(self, dev):
+        import torch
         from ultralytics import YOLOWorld
         self.model, self.dev, self.cur = YOLOWorld("yolov8s-worldv2.pt"), dev, None
+        net, cache = self.model.model, {}
+        orig = net.get_text_pe
+
+        def cached_pe(text, batch=80, cache_clip_model=False):      # same embeddings, CLIP loaded once
+            new = [t for t in text if t not in cache]
+            if new:
+                e = orig(new, batch=batch, cache_clip_model=True)[0]
+                cache.update({t: e[i] for i, t in enumerate(new)})
+            return torch.stack([cache[t] for t in text])[None]
+        net.get_text_pe = cached_pe
 
     def __call__(self, img, vocab):
         if self.cur != tuple(vocab):
