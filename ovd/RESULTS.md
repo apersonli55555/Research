@@ -112,3 +112,16 @@ is consistent in direction and size (flips 0.154 vs 0.167).
 **Decision (fixed rule): GO.** Interpretation: for Grounding DINO, single-class prompting is the *worst* context —
 the extra names raise target scores and remove false alarms; YOLO-World changes per instance without net AP change;
 OWLv2 changes only through label competition.
+
+## OVD run 2c — YOLO-World on held-out COCO, 23 Nov 2026, CPU (fused conv+BN, cached text-free layers; max diff 2e-5)
+Command: `vocab_full.py run --dataset coco --model yoloworld` (115,299 runs incl. FIX), `full_analysis.py --boot 1000`.
+Table: `ovd/results/run2_coco_yoloworld_cpu.md`.
+- Deployed mAP50: k1 0.604; far5 0.618, far20 0.623; rand5 0.618, rand20 0.613; near5 0.589, near20 0.590;
+  vis5 0.590, vis20 0.591; all 80 0.588 (Δ vs k1 CI [−0.031, −0.003]). Independent read-out ("indep") 0.617–0.624.
+- Mean |score change| vs k1: 0.032 (rand5) … 0.053 (all); flips 0.039 … 0.066; localisation flips 0.085 … 0.140.
+  Order-only flips 0.000. Instances flipping under some vocabulary: 0.083.
+- **FIX (fixed guide = all 80 names; head = deployment vocabulary; independent read-out):** mAP50 0.624, interference 0;
+  FIX − k1 = +0.020 [+0.015, +0.026]; FIX − all = +0.037 [+0.025, +0.051]; FIX − prune = +0.097 [+0.086, +0.116].
+  Absent false alarms: FIX 0.009, k1 0.022, all 0.006.
+- Reading: unrelated names in the *guide* help (more guidance), similar/visual names hurt only through top-1 label
+  competition; fixing a rich guide and removing competition gives the best of both.
