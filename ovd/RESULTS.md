@@ -283,5 +283,8 @@ OWLv2 1.0× (same pass). Single-class at 80 names: 47× (Grounding DINO), 39× (
 ### Reproducibility of the held-out plans (owner's Colab vs. development container)
 `md5sum plan_coco.json`: f92528394033c5b07545914e745113fd on both machines (identical COCO plan).
 `md5sum plan_lvis.json`: 22114501f7a6a38314b3a9033cac7e02 (Colab) vs. 1b56ab8013aab9dd1b0f6c2e948f1992 (container) —
-**the LVIS plans differ**; cause under investigation (see below). Consequence: Grounding DINO LVIS (Colab) and
+**the LVIS plans differ**. Rebuilding the LVIS plan a second time in the container gives the identical file
+(1b56ab…; the code is deterministic on one machine), so the difference is between machines — most likely tiny
+floating-point differences in CLIP embeddings reordering near-tied neighbours among 1,203 names (COCO, 80 names,
+matched). `ovd/plan_fingerprint.py` hashes each part (images, pairs, each distractor family) to locate it. Consequence: Grounding DINO LVIS (Colab) and
 OWLv2 / YOLO-World LVIS (container) are each internally consistent but may not use identical distractor lists.
