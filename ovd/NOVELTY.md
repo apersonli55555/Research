@@ -50,8 +50,10 @@ full is marked [VERIFY]. This file will be updated after the pilot and the full 
 - **Effect size (unknown until the pilot).** If the pilot shows < 3 AP points and < 10% flips, the GO rule says STOP.
 - **Scope.** Base / small checkpoints only (one L4). Reviewers may ask for Grounding DINO 1.5 / LLMDet / YOLOE /
   Florence-2; at least one extra recent model would strengthen replication [TODO after Stage 2].
-- **Missing published baseline.** VocAda needs LLaVA-Next-7B + Llama3-8B; a CLIP-only VocAda variant fits on the L4 and
-  should be added as the published baseline [TODO].
+- **Published baseline only approximated (medium).** VocAda needs LLaVA-Next-7B + Llama3-8B; we evaluate a CLIP-only
+  VocAda-style pruning baseline (top-K classes per image, K fixed before results). It is far below every other variant
+  (e.g. COCO OWLv2 0.637 vs. 0.744; LVIS YOLO-World 0.172 vs. 0.442) because it often prunes the target. Reviewers may
+  object that the full captioner-based VocAda would prune better; running it is future work and is stated as a limitation.
 - **ICCV 2027 dates/policies** must be checked on the official site before submission; this file states none.
 
 ## Submission readiness (23 Nov 2026): NOT READY — blocked only on GPU runs in progress
