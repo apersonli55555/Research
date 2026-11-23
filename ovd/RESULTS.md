@@ -250,3 +250,15 @@ numbers. Table: `ovd/results/run2g_coco_gdino_sub200_cpu.md`. Still provisional 
   FIX − prune +0.109 [+0.069, +0.195]; interference 0.
 - **Query-selection probe** (314 instances): mean |score change| k1 → all_0: 0.116 full vs. 0.117 target-only query
   selection; k1 → rand20_0: 0.093 vs. 0.094. Confirms run 2e: the effect is not query-slot competition.
+
+## OVD run 2h — Grounding DINO on held-out LVIS, CPU SUBSAMPLE extended to the first 100 pairs, 24–25 Nov 2026
+Same command as run 2f with `--limit 100` (resumed; 3,100 runs). Supersedes run 2f. Table:
+`ovd/results/run2h_lvis_gdino_sub100_cpu.md`. Provisional relative to the full GPU run.
+- **Chunking order effect (confirms 2f):** among the 5 orders of all 1,203 names (≈ 14 chunks of ~87 names),
+  detection flips 0.026, mean score range 0.0389 (per-pair max-score range mean 0.0329, median 0.0163).
+- Interference: mean |score change| vs k1 0.089–0.126; flips 0.175–0.233; instances flipping under some vocabulary
+  0.291. Absent (verified-negative) false alarms: k1 0.532; other vocabularies 0.000–0.064.
+- Deployed mAP50: k1 0.700; rand5/20/80/200/500 0.781/0.783/0.751/0.771/0.727; far5/20/80 0.818/0.792/0.758;
+  near5/20/80 0.735/0.680/0.695; vis5/20/80 0.763/0.758/0.760; all 0.751; prune 0.388.
+- **FIX (fixed canonical chunks):** 0.756, interference 0; FIX − k1 +0.056 [−0.013, +0.113]; FIX − all +0.005
+  [−0.022, +0.029]; FIX − prune +0.368 [+0.233, +0.467]. Not significant vs. k1 or all at n = 100 pairs.

@@ -96,8 +96,8 @@ names share the target's chunk. We probe (b) by restricting query selection to t
 (CPU subsample, 314 instances) this leaves the effect unchanged: the mean absolute change of the target score from k=1
 to all 80 names is 0.116 without and 0.117 with the restriction (0.093 vs.\ 0.094 for 20 random names). The dependence
 therefore arises in cross-modal fusion, not in query-slot competition. Order is irrelevant within one prompt (order-only flips 0.000 at 80 names) but not
-once the list is chunked: with all 1{,}203 LVIS names (14 chunks of about 90), reordering flips 1.2\% of detections
-and moves the target score by 0.039 on average (CPU subsample, 20 pairs), because order decides which names share the
+once the list is chunked: with all 1{,}203 LVIS names (14 chunks of about 87), reordering flips 2.6\% of detections
+and moves the target score by 0.039 on average (CPU subsample, 100 pairs), because order decides which names share the
 target's chunk. Fixed canonical chunks remove this. \todo{probe on the full held-out GPU run}
 
 \section{Vocabulary-invariant inference}
