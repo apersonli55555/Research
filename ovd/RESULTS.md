@@ -312,3 +312,7 @@ These supersede the CPU subsamples 2e–2h (which agree in direction).
 ## Final verification (26 Nov 2026)
 Paper: 0 TODOs; `check_numbers.py` → 214/214 traced. Figures redrawn from `ovd/results/figure_data_heldout.json`
 (analysis summaries; Grounding DINO rows parsed from `run2_gdino_full_gpu.md`). Success criteria: see NOVELTY.md.
+`independent_check.py --all-groups` (every table row, not only k1/all/FIX) on all raw files held in the container:
+COCO OWLv2+YOLO-World 24 values, LVIS OWLv2+YOLO-World 36, Grounding DINO COCO subsample 12, LVIS subsample 18 —
+90/90 agree, largest absolute difference 2.2e-16. Output: `ovd/results/independent_check_allgroups.txt`. (The full
+Grounding DINO GPU files are on the owner's Drive; their headline values were checked on Colab, 6/6.)

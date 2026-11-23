@@ -30,6 +30,7 @@ def ap(scored, npos):
 
 def main():
     p = argparse.ArgumentParser(); p.add_argument("--out", required=True); p.add_argument("--summary", required=True)
+    p.add_argument("--all-groups", action="store_true", help="check every group in the summary, not only k1/all/FIX")
     a = p.parse_args()
     S = json.load(open(a.summary)); worst = 0.0; n = 0
     for key, summ in S.items():
@@ -40,8 +41,10 @@ def main():
         R = [json.loads(l) for l in open(os.path.join(a.out, f"full_{ds}_{model}.jsonl")) if l.strip().startswith("{")]
         pairs = {(r["image"], r["target"]) for r in R}
         present = {(x["image"], x["target"]) for x in P["plan"] if x["present"]}
-        for grp in ("k1", "all", "FIX"):
-            conds = sorted({r["cond"] for r in R if (r["cond"] == grp) or (grp == "all" and r["cond"].startswith("all_"))})
+        groups = list(summ["groups"]) if a.all_groups else ["k1", "all", "FIX"]
+        for grp in groups:
+            gof = lambda c: c if c in ("k1", "FIX", "prune") else ("all" if c.startswith("all_") else c.split("_")[0])
+            conds = sorted({r["cond"] for r in R if gof(r["cond"]) == grp})
             vals = []
             for cd in conds:
                 per = {}

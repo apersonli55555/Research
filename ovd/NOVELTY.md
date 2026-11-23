@@ -64,7 +64,7 @@ full is marked [VERIFY]. This file will be updated after the pilot and the full 
 | (ii) mAP within 1 point of the better baseline | **met** (+1.3 COCO, +5.0 LVIS) | **met** (+2.0, +7.8) | **met** (= k1 on both) |
 | (iii) cost < 2× original | **met** on COCO (1.01–1.14×) and the full LVIS list (1.00×); **not met** for 5–200-name LVIS vocabularies (4.4–10.4×) | **met** (0.94–1.14×) | **met** (1.0×) |
 | goal 5: replication | 3 architectures × 2 held-out datasets (COCO 1,000 images, LVIS 600) | | |
-Independent verification: `independent_check.py` 21/21 headline mAPs (6 GPU + 15 CPU), max diff 1e-16; `check_numbers.py`
+Independent verification: `independent_check.py` 6/6 GPU headline mAPs + 90/90 table values (all groups) on the CPU-run files, max diff 2.2e-16; `check_numbers.py`
 214/214 manuscript numbers traced; pilot reproduced GPU vs. CPU to ≤ 0.001.
 
 ## Submission readiness (26 Nov 2026): COMPLETE AS A RESEARCH STUDY; NOT YET SUBMISSION-READY
