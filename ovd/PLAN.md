@@ -110,3 +110,6 @@ Not invariant by construction; its interference is measured. Design/selection on
 (first 40 pilot pairs, CPU, compared with original inference on the same pairs from run 1d); success = interference
 (mean |score change| vs. the method's own single-class output, and detection flips) reduced ≥ 80% vs. original and
 mAP50 not lower than original's best condition minus 1 point. Only if it passes is it run on held-out LVIS.
+Clarification (before any result; the first attempt crashed after 13 runs on an over-long prompt): if A ∪ V exceeds
+256 tokens, V is split in order into consecutive pieces that each fit together with A, and the piece holding the target
+is run (the same rule as standard chunking, with A always included).

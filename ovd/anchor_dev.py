@@ -44,7 +44,16 @@ def main():
             for cn, V in p["conds"].items():
                 if (p["image"], p["target"], cn) in done:
                     continue
-                prompt = A + [v for v in V if v not in A]
+                rest = [v for v in V if v not in A]
+                prompt = A + rest
+                if len(g.chunks(prompt)) > 1:                 # too long: split V into pieces that fit WITH the anchors
+                    pieces, cur = [], []
+                    for v in rest:
+                        if cur and len(g.chunks(A + cur + [v])) > 1:
+                            pieces.append(cur); cur = []
+                        cur.append(v)
+                    pieces.append(cur)
+                    prompt = A + next(pc for pc in pieces if p["target"] in pc)
                 boxes, S = g(img, prompt)
                 r = dict(image=p["image"], target=p["target"], cond=cn, present=p["present"])
                 r.update(target_record(boxes, S, prompt.index(p["target"]), gts, TH, False))
