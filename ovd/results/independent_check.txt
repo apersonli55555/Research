@@ -1,0 +1,19 @@
+coco/owlv2         k1   independent 0.7436  reported 0.7436  diff +0.00e+00
+coco/owlv2         all  independent 0.7209  reported 0.7209  diff +0.00e+00
+coco/owlv2         FIX  independent 0.7436  reported 0.7436  diff +0.00e+00
+coco/yoloworld     k1   independent 0.6037  reported 0.6037  diff +0.00e+00
+coco/yoloworld     all  independent 0.5875  reported 0.5875  diff +1.11e-16
+coco/yoloworld     FIX  independent 0.6241  reported 0.6241  diff +1.11e-16
+6 values checked; largest absolute difference 1.11e-16
+lvis/owlv2         k1   independent 0.7655  reported 0.7655  diff +0.00e+00
+lvis/owlv2         all  independent 0.5584  reported 0.5584  diff +0.00e+00
+lvis/owlv2         FIX  independent 0.7655  reported 0.7655  diff +0.00e+00
+lvis/yoloworld     k1   independent 0.3638  reported 0.3638  diff +0.00e+00
+lvis/yoloworld     all  independent 0.2493  reported 0.2493  diff +2.78e-17
+lvis/yoloworld     FIX  independent 0.4420  reported 0.4420  diff +0.00e+00
+6 values checked; largest absolute difference 2.78e-17
+coco/gdino         k1   independent 0.7389  reported 0.7389  diff +0.00e+00
+coco/gdino         all  independent 0.7266  reported 0.7266  diff +0.00e+00
+coco/gdino         FIX  independent 0.7652  reported 0.7652  diff +0.00e+00
+3 values checked; largest absolute difference 0.00e+00
+IND_DONE

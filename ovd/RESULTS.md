@@ -231,3 +231,10 @@ images per setting; s/image). File: `ovd/results/bench_coco_cpu.json`. Absolute 
 Relative to original: fixed guide 0.83–1.02×, fixed context 0.96–1.16×, OWLv2 independent read-out 1.0× (same
 pass); single-class 2.6–78× (46× for YOLO-World and Grounding DINO, 78× for OWLv2 at 80 names). Success criterion
 (iii) (< 2× original at 80 classes) is met on CPU for all three corrections; GPU confirmation pending.
+
+## Independent verification (24 Nov 2026)
+`independent_check.py` recomputes headline mAP50 values (k1, full list, FIX) from the raw result files with separately
+written IoU, matching and AP code (no code shared with `full_analysis.py`). All 15 values (COCO and LVIS for OWLv2 and
+YOLO-World, COCO subsample for Grounding DINO) agree with the reported numbers; largest absolute difference 1.1e-16.
+Output: `ovd/results/independent_check.txt`. Also: GPU vs. CPU reproduction of the pilot (run 1e) and the traceability
+check (`check_numbers.py`, all manuscript numbers traced).
