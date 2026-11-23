@@ -288,3 +288,27 @@ OWLv2 1.0× (same pass). Single-class at 80 names: 47× (Grounding DINO), 39× (
 floating-point differences in CLIP embeddings reordering near-tied neighbours among 1,203 names (COCO, 80 names,
 matched). `ovd/plan_fingerprint.py` hashes each part (images, pairs, each distractor family) to locate it. Consequence: Grounding DINO LVIS (Colab) and
 OWLv2 / YOLO-World LVIS (container) are each internally consistent but may not use identical distractor lists.
+
+## OVD runs 2i/2j/4c — FULL held-out Grounding DINO on the owner's L4 (COCO 1,000 images; LVIS 600 images) + LVIS latency, 26 Nov 2026
+Commands: `vocab_full.py run --model {gdino_qs,gdino}` for coco and lvis (LVIS resumed after a disconnect and a GPU
+usage limit; plan file unchanged, md5 22114501…), `bench --dataset lvis`, `full_analysis.py --boot 1000`,
+`independent_check.py` (6/6 headline values agree, max diff 1.1e-16). Verbatim output: `ovd/results/run2_gdino_full_gpu.md`.
+These supersede the CPU subsamples 2e–2h (which agree in direction).
+- **COCO:** mAP50 k1 0.707, all 0.792, FIX 0.805; FIX − k1 +0.0975 [+0.085, +0.106]; FIX − all +0.013 [+0.009, +0.017];
+  FIX − prune +0.116 [+0.106, +0.133]. Instances flipping under some vocabulary 0.278; flips vs k1 0.160–0.205; order-only
+  flips 0.000. Absent false alarms k1 0.179 vs. ≤ 0.028 with distractors, FIX 0.004.
+  Probe (7,342 instances): k1 → all mean |Δs| 0.140 full vs. 0.142 target-only query selection; k1 → rand20 0.110 vs 0.111.
+- **LVIS:** mAP50 k1 0.496, all 0.508, FIX 0.558; FIX − k1 +0.062 [+0.040, +0.076]; FIX − all +0.050 [+0.043, +0.067];
+  FIX − prune +0.302 [+0.292, +0.340]. near80 0.424, vis80 0.434, far80 0.519. Order-only flips 0.036 (score range
+  0.029) — chunking. Instances flipping under some vocabulary 0.218. Absent false alarms k1 0.559. Probe (4,798):
+  0.091 vs 0.091; 0.098 vs 0.097.
+- **LVIS latency (L4, s/image):** Grounding DINO original full 4.284 / r5 0.363 / r20 0.369 / r80 0.410 / r200 0.962;
+  fixed context 4.278 / 1.613 / 3.380 / 4.279 / 4.275 → overhead 1.00× (full), 4.4× (r5), 9.2× (r20), 10.4× (r80),
+  4.4× (r200); single-class r5 1.286 / r20 4.801 / r80 18.831. YOLO-World fixed guide 0.016–0.017 vs original
+  0.014–0.016 (1.0–1.14×; full 1.0×). OWLv2 independent read-out = original pass.
+  **Criterion (iii) not met for Grounding DINO's fixed context on LVIS with small vocabularies**: it must run every
+  canonical chunk that contains a requested class (up to 14 chunks). It is met for the full list and on COCO.
+
+## Final verification (26 Nov 2026)
+Paper: 0 TODOs; `check_numbers.py` → 214/214 traced. Figures redrawn from `ovd/results/figure_data_heldout.json`
+(analysis summaries; Grounding DINO rows parsed from `run2_gdino_full_gpu.md`). Success criteria: see NOVELTY.md.

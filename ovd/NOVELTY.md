@@ -56,12 +56,24 @@ full is marked [VERIFY]. This file will be updated after the pilot and the full 
   object that the full captioner-based VocAda would prune better; running it is future work and is stated as a limitation.
 - **ICCV 2027 dates/policies** must be checked on the official site before submission; this file states none.
 
-## Submission readiness (25 Nov 2026): NOT READY — blocked only on the owner's GPU run in progress
-Done, traced (`check_numbers.py`: 131/131 manuscript numbers) and independently re-computed (`independent_check.py`: 15/15 headline mAPs, max diff 1e-16):
-pre-registered pilot (GO; GPU, cross-checked on CPU); OWLv2 and YOLO-World on held-out COCO and LVIS; corrections vs.
-original / single-class / CLIP-pruning baselines with bootstrap CIs; guide ablation; normalisation/calibration
-ablation (negative); error analysis; figures for held-out COCO/LVIS; manuscript draft (5 pages).
-Also done: Grounding DINO held-out CPU subsamples (COCO 200 pairs, LVIS 100 pairs; runs 2g, 2h) incl. the query-selection probe and the
-chunking order effect; CPU relative latency (corrections 0.83–1.16×, single-class 46–78×).
-Missing (owner's L4 run started 23 Nov): full Grounding DINO held-out COCO/LVIS; full probe; GPU absolute latency; Grounding DINO rows in
-figures/tables; final manuscript pass (contributions, abstract numbers, limitations); a second human read of the paper.
+## Pre-registered success criteria (PLAN.md), evaluated once on held-out data (26 Nov 2026)
+| criterion | Grounding DINO | YOLO-World | OWLv2 |
+|---|---|---|---|
+| goal 1: interference ≥ 3 AP or > 10% flips | **met** (COCO 9.8 AP k1 vs ours; 27.8% instances flip) | **met** (LVIS 18.1% flip; 11.5 AP k1 vs full) | **met** on LVIS (20.7 AP, 19.0% flips); COCO 2.3 AP / 3.1% (below) |
+| (i) interference reduced ≥ 80% | **met** (100%, by construction) | **met** (100%) | **met** (100%) |
+| (ii) mAP within 1 point of the better baseline | **met** (+1.3 COCO, +5.0 LVIS) | **met** (+2.0, +7.8) | **met** (= k1 on both) |
+| (iii) cost < 2× original | **met** on COCO (1.01–1.14×) and the full LVIS list (1.00×); **not met** for 5–200-name LVIS vocabularies (4.4–10.4×) | **met** (0.94–1.14×) | **met** (1.0×) |
+| goal 5: replication | 3 architectures × 2 held-out datasets (COCO 1,000 images, LVIS 600) | | |
+Independent verification: `independent_check.py` 21/21 headline mAPs (6 GPU + 15 CPU), max diff 1e-16; `check_numbers.py`
+214/214 manuscript numbers traced; pilot reproduced GPU vs. CPU to ≤ 0.001.
+
+## Submission readiness (26 Nov 2026): COMPLETE AS A RESEARCH STUDY; NOT YET SUBMISSION-READY
+All planned experiments, corrections, ablations, statistics, figures and a 6-page draft with no open TODOs are done and
+traceable. Before an ICCV submission:
+1. Resolve the LVIS plan difference between machines (run `ovd/plan_fingerprint.py` on the Colab plan; if images/pairs
+   differ, re-run OWLv2/YOLO-World LVIS on the Colab plan — about 1 GPU hour).
+2. A human (teacher / mentor) read of the paper; check the official ICCV 2027 template, page limit and policies.
+3. Recommended for reviewers: one more recent detector (e.g. a newer Grounding DINO variant) and the full
+   captioner-based VocAda baseline; a cheaper invariant method for small vocabularies in early-fusion models.
+Main reviewer risks remain "known/obvious" (mitigated by the controlled protocol and mechanism) and "the fix is simple"
+(mitigated by it matching or beating every baseline at ~1× cost, except the stated LVIS small-vocabulary case).

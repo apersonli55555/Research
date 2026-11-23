@@ -25,8 +25,11 @@ scores are invariant by construction and change only through top-1 label competi
 maximum over the vocabulary, which makes it exactly order-invariant but set-dependent; Grounding DINO's text encoder is
 masked per phrase, so its dependence arises in cross-modal fusion, query selection, label competition and, beyond 256
 tokens, chunking. We then show training-free inference changes that are vocabulary-invariant by construction --
-fixed scoring contexts, a fixed guide vocabulary and independent read-out -- and measure their accuracy and cost:
-\todo{accuracy vs.\ the strongest baseline, latency}.
+fixed scoring contexts, a fixed guide vocabulary and independent read-out -- and measure their accuracy and cost. On
+held-out data they match or beat the strongest baseline for every detector (e.g.\ on LVIS: Grounding DINO $+$5.0 mAP50
+points over the better baseline, YOLO-World $+$7.8; OWLv2 equals single-class inference and is $+$20.7 over the full list) at 0.94--1.14$\times$
+the cost of original inference whenever the vocabulary fits one prompt; for Grounding DINO with small vocabularies drawn
+from a 1{,}203-class label space the fixed context costs up to 10$\times$.
 \end{abstract}
 
 \section{Introduction}
@@ -45,8 +48,9 @@ score changes, detection flips at the deployment threshold, box changes, absent-
 attribute it to architectural steps, in some cases exactly; and (iii) remove it with training-free changes that are
 invariant by construction, whose only open questions are accuracy and cost.
 
-\paragraph{Contributions.} \todo{finalise after results}
-(1) A fixed-target counterfactual protocol and benchmark for vocabulary interference on COCO and LVIS.
+\paragraph{Contributions.}
+(1) A pre-registered, fixed-target counterfactual protocol for vocabulary interference on COCO and LVIS, showing that up
+to 28\% of target instances change detection status with the vocabulary alone while order never matters within a prompt.
 (2) A per-architecture mechanism analysis separating network-level interference from label competition, thresholds,
 NMS and chunking.
 (3) Training-free, vocabulary-invariant inference for each detector family, with accuracy and latency against original,
@@ -81,7 +85,7 @@ latency. Confidence intervals: bootstrap over images.
 
 \section{Where does the vocabulary enter?}\label{sec:mech}
 \paragraph{OWLv2.} The logit of box $b$ for query $q$ is a function of $b$'s embedding and $q$'s text embedding only,
-so raw scores are exactly invariant to the other queries (we confirm numerically: \todo{max difference}). Any change
+so raw scores are exactly invariant to the other queries (we confirm numerically: the mean absolute change of the target score is 0.0000 under every held-out vocabulary). Any change
 in deployed output comes from top-1 label assignment.
 \paragraph{YOLO-World.} Text enters twice: as the classifier (a per-class contrastive head) and as a \emph{guide} in the
 neck, where max-sigmoid attention weights each location by $\sigma(\max_{t\in V}\langle e_x, g(t)\rangle)$. The maximum
@@ -93,12 +97,12 @@ encoder, so the target's text features do not depend on other names there. Other
 fusion in the feature enhancer and decoder, (b) language-guided selection of the 900 decoder queries (maximum over all
 tokens), (c) top-1 label competition and (d) chunking when the prompt exceeds 256 tokens, where order decides which
 names share the target's chunk. We probe (b) by restricting query selection to the target's tokens. On held-out COCO
-(CPU subsample, 314 instances) this leaves the effect unchanged: the mean absolute change of the target score from k=1
-to all 80 names is 0.116 without and 0.117 with the restriction (0.093 vs.\ 0.094 for 20 random names). The dependence
-therefore arises in cross-modal fusion, not in query-slot competition. Order is irrelevant within one prompt (order-only flips 0.000 at 80 names) but not
-once the list is chunked: with all 1{,}203 LVIS names (14 chunks of about 87), reordering flips 2.6\% of detections
-and moves the target score by 0.039 on average (CPU subsample, 100 pairs), because order decides which names share the
-target's chunk. Fixed canonical chunks remove this. \todo{probe on the full held-out GPU run}
+(7{,}342 instances) this leaves the effect unchanged: the mean absolute change of the target score from k=1 to all 80
+names is 0.140 without and 0.142 with the restriction (0.110 vs.\ 0.111 for 20 random names); on LVIS 0.091 vs.\ 0.091.
+The dependence therefore arises in cross-modal fusion, not in query-slot competition. Order is irrelevant within one prompt (order-only flips 0.000 at 80 names) but not
+once the list is chunked: with all 1{,}203 LVIS names (chunks of about 87), reordering flips 3.6\% of detections and
+moves the target score by 0.029 on average, because order decides which names share the target's chunk. Fixed
+canonical chunks remove this.
 
 \section{Vocabulary-invariant inference}
 \textbf{Fixed context} (Grounding DINO): every class is always scored inside the same chunk of a fixed reference list in
@@ -106,7 +110,7 @@ canonical order; the deployment vocabulary only selects which classes are report
 \textbf{Fixed guide} (YOLO-World): the neck is guided by a fixed reference list, the head uses the deployment vocabulary.
 \textbf{Independent read-out} (all): no top-1 label competition. These are invariant by construction, so we evaluate
 accuracy and cost against original inference with the full list, single-class inference and CLIP-based vocabulary
-pruning in the style of VocAda. \todo{table}
+pruning in the style of VocAda (Table~\ref{tab:main}).
 
 \section{Results}
 \subsection{Pilot on the development split}
@@ -150,12 +154,25 @@ reading classes out independently gives the best accuracy of any variant (0.624;
 inference, CI [$+$1.5, $+$2.6]; $+$3.7 over the full list, CI [$+$2.5, $+$5.1]) with zero interference by
 construction; CLIP pruning reaches 0.527.
 
-\paragraph{Grounding DINO (CPU subsample: first 200 held-out pairs, 314 instances).} The pilot replicates in
-direction: 19.1\% of instances flip under some vocabulary, single-class prompting false-alarms on 15.9\% of absent
-targets (0\% with any distractors), and order does not matter (score range 0.0002). The fixed-context correction
-(all 80 names in canonical order, independent read-out) reaches 0.782 mAP50 with zero interference: $+$2.8 points over
-the 80-name list under single-label output (CI [$+$0.0, $+$6.0]) and $+$1.3 over single-class inference (CI [$-$2.9,
-$+$5.4], not significant at this sample size). \todo{replace with the full held-out GPU run}
+\paragraph{Grounding DINO (same 1{,}000 images).} The pilot replicates: single-class prompting is the worst context
+(mAP50 0.707) and any distractors raise it to 0.784--0.796; 27.8\% of instances flip under some vocabulary; with the
+target alone Grounding DINO false-alarms on 17.9\% of absent targets versus at most 2.8\% with distractors; order does
+not matter (score range 0.0002). The fixed context (all 80 names in canonical order, independent read-out) reaches
+0.805 with zero interference: $+$9.8 points over single-class inference (CI [$+$8.5, $+$10.6]) and $+$1.3 over the 80-name
+list under single-label output (CI [$+$0.9, $+$1.7]); CLIP pruning reaches 0.689.
+
+\begin{table}[t]\centering\small\setlength{\tabcolsep}{2.5pt}
+\caption{Held-out mAP50: single-class inference, the full list under single-label output, CLIP pruning, and the
+vocabulary-invariant correction (interference 0 by construction). $\Delta$: correction minus the better baseline, 95\% CI.}\label{tab:main}
+\begin{tabular}{llccccc}\toprule
+set & model & k=1 & full & prune & ours & $\Delta$ vs.\ best\\\midrule
+COCO & G-DINO & .707 & .792 & .689 & \textbf{.805} & $+$.013 [.009, .017]\\
+ & YOLO-W & .604 & .588 & .527 & \textbf{.624} & $+$.020 [.015, .026]\\
+ & OWLv2 & .744 & .721 & .637 & \textbf{.744} & $\pm$.000 (= k=1)\\
+LVIS & G-DINO & .496 & .508 & .256 & \textbf{.558} & $+$.050 [.043, .067]\\
+ & YOLO-W & .364 & .249 & .172 & \textbf{.442} & $+$.078 [.062, .096]\\
+ & OWLv2 & .765 & .558 & .313 & \textbf{.765} & $\pm$.000 (= k=1)\\\bottomrule
+\end{tabular}\end{table}
 
 \begin{figure*}[t]\centering
 \includegraphics[width=\linewidth]{fig_coco.pdf}\\[-1mm]
@@ -164,7 +181,7 @@ $+$5.4], not significant at this sample size). \todo{replace with the full held-
 relative to single-class inference; OWLv2 is exactly zero. (b) Detection flips at the deployment threshold; lines:
 random distractors, markers: similar ($\triangle$), visually confusable ($\square$), unrelated ($\triangledown$).
 (c) mAP50 of single-class inference, the full list under single-label output, and the vocabulary-invariant
-correction (inv.). Grounding DINO: \todo{add when the GPU runs finish}.}\label{fig:heldout}
+correction (inv.), for all three detectors.}\label{fig:heldout}
 \end{figure*}
 
 \subsection{Held-out LVIS: large vocabularies}
@@ -185,7 +202,13 @@ guide with independent read-out reaches 0.442 with zero interference: $+$7.8 poi
 [$+$6.2, $+$9.6]) and $+$19.3 over the full list (CI [$+$17.6, $+$21.7]); CLIP pruning reaches 0.172. The full list is
 not the best possible guide: random 80--200-name guides reach 0.452--0.455 here; we choose guides only on the
 development split (Sec.~\ref{sec:ablation}).
-\todo{Grounding DINO held-out (incl.\ chunking); probe; latency}
+
+\paragraph{Grounding DINO (same 600 images).} Distractors again help on average (single-class 0.496; five random names
+0.571), but similar and visually confusable names hurt once there are many (0.424 with the 80 most similar, 0.434 with
+80 visually confusable); 21.8\% of instances flip under some vocabulary and single-class prompting false-alarms on
+55.9\% of verified-absent classes. Long vocabularies are chunked, so here order matters (3.6\% order-only flips). The
+fixed canonical chunks reach 0.558 with zero interference: $+$6.2 points over single-class inference (CI [$+$4.0,
+$+$7.6]) and $+$5.0 over the full list (CI [$+$4.3, $+$6.7]).
 
 
 \subsection{Cost}
@@ -193,7 +216,11 @@ All three corrections need one forward pass per image for a vocabulary that fits
 (Table~\ref{tab:lat}) the fixed context costs 1.01--1.14$\times$ original Grounding DINO inference, the fixed guide
 0.94--1.00$\times$ YOLO-World, and OWLv2's independent read-out is the same pass; single-class inference, the usual way
 to avoid interference, costs 39$\times$ (YOLO-World), 47$\times$ (Grounding DINO) and 75$\times$ (OWLv2) at 80 classes.
-Relative costs on a 4-core CPU agree (corrections 0.83--1.16$\times$, single-class 46--78$\times$).
+Relative costs on a 4-core CPU agree (corrections 0.83--1.16$\times$, single-class 46--78$\times$). On LVIS the fixed
+guide stays at 1.0--1.14$\times$, but Grounding DINO's fixed context must run every canonical chunk that contains a
+requested class: for the full 1{,}203-name list it costs the same as original inference (4.278 vs.\ 4.284\,s), yet for
+5--200 random LVIS names it costs 4.4--10.4$\times$ (e.g.\ 3.380 vs.\ 0.369\,s for 20 names), comparable to single-class
+inference (4.801\,s). Cheap invariance for small vocabularies from large label spaces remains open for early-fusion detectors.
 \begin{table}[t]\centering\small\setlength{\tabcolsep}{3pt}
 \caption{Latency per image on one L4 GPU, held-out COCO (s); vocabulary of 80 / 5 / 20 names.}\label{tab:lat}
 \begin{tabular}{llccc}\toprule
@@ -250,7 +277,12 @@ YOLO-World & .602 (.001) & .592 (.006) & .585 (.026) & \textbf{.615} (.000)\\\bo
 
 \section{Limitations}
 Base/small checkpoints only (one 24\,GB GPU); two datasets; the visually confusable family is defined with CLIP; the
-pruning baseline omits VocAda's captioner. \todo{add result-specific limitations}
+pruning baseline omits VocAda's captioner. Grounding DINO's fixed context is expensive for small vocabularies drawn from
+a large label space (Sec.~Cost). Independent read-out raises false alarms on verified-absent LVIS classes for OWLv2.
+The LVIS evaluation plan was rebuilt on two machines and its CLIP-ranked distractor lists differ between them (COCO plans
+are identical), so Grounding DINO (GPU) and OWLv2/YOLO-World (CPU) LVIS numbers may use slightly different similar/visual
+distractor lists; each model's numbers are internally consistent. Several held-out numbers for OWLv2 and YOLO-World were
+computed on CPU and checked against GPU on the development split (agreement to $\le$0.001).
 
 {\small
 \begin{thebibliography}{99}
