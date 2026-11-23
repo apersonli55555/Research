@@ -220,7 +220,9 @@ guide stays at 1.0--1.14$\times$, but Grounding DINO's fixed context must run ev
 requested class: for the full 1{,}203-name list it costs the same as original inference (4.278 vs.\ 4.284\,s), yet for
 5--200 random LVIS names it costs 4.4--10.4$\times$ (e.g.\ 3.380 vs.\ 0.369\,s for 20 names), comparable to single-class
 inference (4.801\,s). Running the touched chunks as one batched forward pass saves only 2--4\% (e.g.\ 1.557 vs.\ 1.615\,s
-for 5 names), because the cost is per prompt. Cheap invariance for small vocabularies from large label spaces remains
+for 5 names), because the cost is per prompt. A cheaper approximation -- one prompt made of the vocabulary plus 40 fixed
+anchor names -- removes only 58--66\% of the interference and loses 4 mAP50 points on the development split, so we do not
+adopt it. Cheap invariance for small vocabularies from large label spaces remains
 open for early-fusion detectors.
 \begin{table}[t]\centering\small\setlength{\tabcolsep}{3pt}
 \caption{Latency per image on one L4 GPU, held-out COCO (s); vocabulary of 80 / 5 / 20 names.}\label{tab:lat}

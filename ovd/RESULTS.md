@@ -347,3 +347,15 @@ and for every COCO vocabulary. Repeated original/fixed-context timings agree wit
 `independent_check.py --all-groups` on the owner's full GPU Grounding DINO files (Colab, CPU runtime): 30 values
 (COCO 12 + LVIS 18 groups) agree, largest absolute difference 1.1e-16. Independent verification is now complete for every
 reported mAP: 6/6 + 30/30 (GPU) and 90/90 (CPU).
+
+## OVD run 3d — anchored context for Grounding DINO (PLAN amendment C), DEVELOPMENT split, 27 Nov 2026 — NEGATIVE
+Command: `anchor_dev.py --pilot <pilot> --lvis-plan <plan_lvis.json> --pairs 40` (720 runs, CPU; resumed once after a
+container restart). Anchors: 40 fixed non-COCO LVIS names (first by MD5). Compared with original inference on the same
+40 pairs (run 1d file).
+| | mean abs score change vs own k1 | flips vs own k1 | mAP50 k1 / rand5 / near5 / rand20 / near20 / all80 |
+|---|---|---|---|
+| original | 0.1100 | 0.2204 | 0.748 / 0.820 / 0.812 / 0.783 / 0.805 / 0.765 |
+| anchored | 0.0376 | 0.0920 | 0.728 / 0.731 / 0.734 / 0.758 / 0.780 / 0.767 |
+Interference reduced by 66% (score) and 58% (flips), below the pre-set 80%; best mAP50 0.780 vs. 0.820 (−4 points), below
+the pre-set accuracy criterion. **Not adopted; not run on held-out data.** The cost problem for small vocabularies from
+large label spaces (run 4e) remains open.
