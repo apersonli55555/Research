@@ -189,10 +189,24 @@ development split (Sec.~\ref{sec:ablation}).
 
 
 \subsection{Cost}
-All three corrections need one forward pass per image for a vocabulary that fits one prompt: on a 4-core CPU, the
-fixed guide takes 0.83--1.02$\times$ and the fixed context 0.96--1.16$\times$ the time of original inference, and
-OWLv2's independent read-out is the same pass (1.0$\times$). Single-class inference, the usual way to avoid interference,
-costs 46$\times$ (YOLO-World, Grounding DINO) to 78$\times$ (OWLv2) at 80 classes. \todo{GPU (L4) latency}
+All three corrections need one forward pass per image for a vocabulary that fits one prompt. On one NVIDIA L4
+(Table~\ref{tab:lat}) the fixed context costs 1.01--1.14$\times$ original Grounding DINO inference, the fixed guide
+0.94--1.00$\times$ YOLO-World, and OWLv2's independent read-out is the same pass; single-class inference, the usual way
+to avoid interference, costs 39$\times$ (YOLO-World), 47$\times$ (Grounding DINO) and 75$\times$ (OWLv2) at 80 classes.
+Relative costs on a 4-core CPU agree (corrections 0.83--1.16$\times$, single-class 46--78$\times$).
+\begin{table}[t]\centering\small\setlength{\tabcolsep}{3pt}
+\caption{Latency per image on one L4 GPU, held-out COCO (s); vocabulary of 80 / 5 / 20 names.}\label{tab:lat}
+\begin{tabular}{llccc}\toprule
+model & method & 80 & 5 & 20\\\midrule
+G-DINO & original & .406 & .356 & .371\\
+ & fixed context & .409 & .407 & .406\\
+ & single-class & 19.146 & 1.307 & 4.873\\
+YOLO-W & original & .016 & .015 & .015\\
+ & fixed guide & .015 & .015 & .015\\
+ & single-class & .621 & .045 & .160\\
+OWLv2 & original = indep. & .190 & .180 & .182\\
+ & single-class & 14.190 & .888 & 3.553\\\bottomrule
+\end{tabular}\end{table}
 
 \section{Error analysis}
 Which classes lose when the whole list is used? Under single-label output the per-class AP drop grows with the

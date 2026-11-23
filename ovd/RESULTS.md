@@ -262,3 +262,26 @@ Same command as run 2f with `--limit 100` (resumed; 3,100 runs). Supersedes run 
   near5/20/80 0.735/0.680/0.695; vis5/20/80 0.763/0.758/0.760; all 0.751; prune 0.388.
 - **FIX (fixed canonical chunks):** 0.756, interference 0; FIX − k1 +0.056 [−0.013, +0.113]; FIX − all +0.005
   [−0.022, +0.029]; FIX − prune +0.368 [+0.233, +0.467]. Not significant vs. k1 or all at n = 100 pairs.
+
+## OVD run 4b — latency on the owner's Colab L4 GPU, held-out COCO, 25 Nov 2026
+Command: `vocab_full.py bench --dataset coco --model {gdino,yoloworld,owlv2}` (30 images after 3 warm-up, CUDA-synchronised,
+s/image). Code version 668d666 (research repo).
+| model | method | full 80 | random 5 | random 20 |
+|---|---|---|---|---|
+| Grounding DINO | original | 0.406 | 0.356 | 0.371 |
+| Grounding DINO | fixed context (ours) | 0.409 | 0.407 | 0.406 |
+| Grounding DINO | single-class | 19.146 | 1.307 | 4.873 |
+| YOLO-World | original | 0.016 | 0.015 | 0.015 |
+| YOLO-World | fixed guide (ours) | 0.015 | 0.015 | 0.015 |
+| YOLO-World | single-class | 0.621 | 0.045 | 0.160 |
+| OWLv2 | original (= independent read-out) | 0.190 | 0.180 | 0.182 |
+| OWLv2 | single-class | 14.190 | 0.888 | 3.553 |
+Overhead of the corrections vs. original: Grounding DINO 1.01× (80), 1.14× (5), 1.09× (20); YOLO-World 0.94–1.00×;
+OWLv2 1.0× (same pass). Single-class at 80 names: 47× (Grounding DINO), 39× (YOLO-World), 75× (OWLv2).
+**Success criterion (iii) (< 2× at 80 classes): met for all three corrections on the L4.** The CPU ratios (run 4a) agree.
+
+### Reproducibility of the held-out plans (owner's Colab vs. development container)
+`md5sum plan_coco.json`: f92528394033c5b07545914e745113fd on both machines (identical COCO plan).
+`md5sum plan_lvis.json`: 22114501f7a6a38314b3a9033cac7e02 (Colab) vs. 1b56ab8013aab9dd1b0f6c2e948f1992 (container) —
+**the LVIS plans differ**; cause under investigation (see below). Consequence: Grounding DINO LVIS (Colab) and
+OWLv2 / YOLO-World LVIS (container) are each internally consistent but may not use identical distractor lists.
