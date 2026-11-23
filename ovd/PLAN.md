@@ -101,3 +101,12 @@ so an effect in either direction must count. New rule: (a) |mAP50(k=1) − mAP50
 excluding zero; (b) ≥ 10% of target instances change detected/missed status between k=1 and all 80 (either direction,
 mean over the 5 orders); (c) unchanged. `lost_at_80` is still reported. No pilot output had been produced when this
 was changed (the pilot cell was handed to the owner but its results were not yet reported back).
+
+## Amendment C (26 Nov 2026, before any result of this method) — anchored context for Grounding DINO (cost)
+Motivation: exact invariance (fixed canonical chunks) costs 4–10× for small vocabularies from the 1,203 LVIS names.
+Method "anchored context": one prompt = A ∪ V, where A is a FIXED anchor list (the 40 LVIS names that are not COCO
+names, first by MD5 of the name), A before V; independent read-out. One forward pass when it fits 256 tokens.
+Not invariant by construction; its interference is measured. Design/selection on the DEVELOPMENT split only
+(first 40 pilot pairs, CPU, compared with original inference on the same pairs from run 1d); success = interference
+(mean |score change| vs. the method's own single-class output, and detection flips) reduced ≥ 80% vs. original and
+mAP50 not lower than original's best condition minus 1 point. Only if it passes is it run on held-out LVIS.

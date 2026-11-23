@@ -344,3 +344,6 @@ vs. OWLv2/YOLO-World (container plan) are built from slightly different lists.
 saves only 2–4%: Grounding DINO's cost is per prompt, not per launch. **Criterion (iii) remains unmet for Grounding
 DINO's fixed context with 5–200-name vocabularies drawn from the 1,203 LVIS classes (4.3–10.6×)**; met for the full list
 and for every COCO vocabulary. Repeated original/fixed-context timings agree with run 4c within 2%.
+`independent_check.py --all-groups` on the owner's full GPU Grounding DINO files (Colab, CPU runtime): 30 values
+(COCO 12 + LVIS 18 groups) agree, largest absolute difference 1.1e-16. Independent verification is now complete for every
+reported mAP: 6/6 + 30/30 (GPU) and 90/90 (CPU).
