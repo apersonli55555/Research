@@ -181,6 +181,12 @@ development split (Sec.~\ref{sec:ablation}).
 \todo{Grounding DINO held-out (incl.\ chunking); probe; latency}
 
 
+\subsection{Cost}
+All three corrections need one forward pass per image for a vocabulary that fits one prompt: on a 4-core CPU, the
+fixed guide takes 0.83--1.02$\times$ and the fixed context 0.96--1.16$\times$ the time of original inference, and
+OWLv2's independent read-out is the same pass (1.0$\times$). Single-class inference, the usual way to avoid interference,
+costs 46$\times$ (YOLO-World, Grounding DINO) to 78$\times$ (OWLv2) at 80 classes. \todo{GPU (L4) latency}
+
 \section{Error analysis}
 Which classes lose when the whole list is used? Under single-label output the per-class AP drop grows with the
 class's text similarity to its nearest other name (Spearman $\rho$ = $+$0.18 [0.09, 0.29] for OWLv2 and $+$0.25

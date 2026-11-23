@@ -228,6 +228,6 @@ images per setting; s/image). File: `ovd/results/bench_coco_cpu.json`. Absolute 
 | Grounding DINO | original | 7.563 | 6.433 | 6.651 |
 | Grounding DINO | fixed context (ours) | 7.256 | 7.381 | 7.682 |
 | Grounding DINO | single-class | 344.863 | 24.025 | 90.213 |
-Relative to original: fixed guide 0.83–1.02×, fixed context 0.96–1.15×, OWLv2 independent read-out 1.0× (same
+Relative to original: fixed guide 0.83–1.02×, fixed context 0.96–1.16×, OWLv2 independent read-out 1.0× (same
 pass); single-class 2.6–78× (46× for YOLO-World and Grounding DINO, 78× for OWLv2 at 80 names). Success criterion
 (iii) (< 2× original at 80 classes) is met on CPU for all three corrections; GPU confirmation pending.
