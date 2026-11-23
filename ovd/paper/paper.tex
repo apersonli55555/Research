@@ -28,8 +28,7 @@ tokens, chunking. We then show training-free inference changes that are vocabula
 fixed scoring contexts, a fixed guide vocabulary and independent read-out -- and measure their accuracy and cost. On
 held-out data they match or beat the strongest baseline for every detector (e.g.\ on LVIS: Grounding DINO $+$5.0 mAP50
 points over the better baseline, YOLO-World $+$7.8; OWLv2 equals single-class inference and is $+$20.7 over the full list) at 0.94--1.14$\times$
-the cost of original inference whenever the vocabulary fits one prompt; for Grounding DINO with small vocabularies drawn
-from a 1{,}203-class label space the fixed context costs up to 10$\times$.
+the cost of original inference whenever the vocabulary fits one prompt, versus 39--75$\times$ for single-class inference.
 \end{abstract}
 
 \section{Introduction}
