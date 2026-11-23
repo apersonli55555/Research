@@ -203,3 +203,14 @@ the full held-out run is on the owner's GPU.
   target tokens only 0.105; k1 → all_0: 0.118 vs. 0.118 (signed +0.040 vs. +0.042). Restricting query selection does not
   reduce the effect → the vocabulary dependence arises in image–text fusion (feature enhancer / decoder cross-attention),
   not in language-guided query selection.
+
+## OVD run 2f — Grounding DINO on held-out LVIS, CPU SUBSAMPLE (first 20 pairs), 24 Nov 2026 — chunking check
+Command: `vocab_full.py run --dataset lvis --model gdino --limit 20` (620 runs), `full_analysis.py --boot 1000`.
+Table: `ovd/results/run2f_lvis_gdino_sub20_cpu.md`. Very small sample: only the chunking result is used.
+- The full 1,203-name list needs 14 chunks of 86–92 names; random 200/500-name vocabularies are chunked too
+  (mean target chunk 85.1 / 86.8 names).
+- **Order-only effect appears with chunking:** among the 5 orders of the full list, detection flips 0.012 and mean
+  target-score range 0.039 (mean of per-pair max-score range 0.0377, median 0.0171), vs. 0.000 / 0.0001–0.0002 at
+  80 names in one prompt (runs 1e, 2e). Order matters only through which names share the target's chunk.
+- FIX (fixed canonical chunks) has zero order effect by construction. Other numbers (mAP50 k1 0.633, all 0.700,
+  FIX 0.766; CIs touching zero) are too noisy at 20 pairs to report.
