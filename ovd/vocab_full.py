@@ -190,7 +190,14 @@ class GDino:
         self.ntok = {}
         bb = self.model.model.backbone; orig = bb.forward; self._bb = {}
 
+        self._same = False
+
         def cached(pixel_values, pixel_mask):
+            B = pixel_values.shape[0]
+            if self._same and B > 1:                       # batch of one image repeated: run the backbone once, expand
+                feats, pos = cached(pixel_values[:1], pixel_mask[:1])
+                ex = lambda t: t.expand(B, *t.shape[1:])
+                return [(ex(f), ex(m)) for f, m in feats], [ex(q) for q in pos]
             k = (tuple(pixel_values.shape), float(pixel_values.double().sum()), float(pixel_values[..., ::7, ::5].double().sum()))
             if k not in self._bb:
                 self._bb.clear(); self._bb[k] = orig(pixel_values, pixel_mask)
@@ -241,6 +248,35 @@ class GDino:
         b = o.pred_boxes[0].float().cpu().numpy()
         boxes = np.stack([(b[:, 0] - b[:, 2] / 2) * W, (b[:, 1] - b[:, 3] / 2) * H, (b[:, 0] + b[:, 2] / 2) * W, (b[:, 1] + b[:, 3] / 2) * H], 1)
         return boxes, S
+
+
+    def batch(self, img, vocabs):
+        """Several prompts for the same image in ONE forward pass (padding to the longest prompt; backbone run once).
+        Used by the batched fixed-context correction; returns one (boxes, S) per vocabulary."""
+        torch = self.torch
+        texts = [" . ".join(v) + " ." for v in vocabs]
+        x = self.proc(images=[img] * len(vocabs), text=texts, return_tensors="pt", padding="longest").to(self.dev)
+        self._same = True
+        try:
+            with torch.no_grad():
+                o = self.model(**x)
+        finally:
+            self._same = False
+        W, H = img.size; out = []
+        for i, vocab in enumerate(vocabs):
+            ids = x["input_ids"][i].tolist(); spans, pos = [], 1
+            for n in vocab:
+                t = self.tokens(n)
+                while pos < len(ids) and ids[pos:pos + len(t)] != t:
+                    pos += 1
+                spans.append(list(range(pos, min(pos + len(t), len(ids)))) if pos < len(ids) else [])
+                pos += len(t)
+            p = o.logits[i].sigmoid().float().cpu().numpy()
+            S = np.stack([p[:, s].max(1) if s else np.zeros(len(p)) for s in spans], 1)
+            b = o.pred_boxes[i].float().cpu().numpy()
+            boxes = np.stack([(b[:, 0] - b[:, 2] / 2) * W, (b[:, 1] - b[:, 3] / 2) * H, (b[:, 0] + b[:, 2] / 2) * W, (b[:, 1] + b[:, 3] / 2) * H], 1)
+            out.append((boxes, S))
+        return out
 
 
 class Owl:
@@ -468,7 +504,11 @@ def bench(a):
         def single(img, v):
             for n in v:
                 det(img, [n])
-        methods = dict(orig=orig, fixctx=fixctx, single=single)
+        def fixctx_batch(img, v, B=8):                      # same fixed chunks, run as batched forward passes
+            t = [ch for ch in ctx if any(n in ch for n in v)]
+            for i in range(0, len(t), B):
+                det.batch(img, t[i:i + B])
+        methods = dict(orig=orig, fixctx=fixctx, fixctx_batch=fixctx_batch, single=single)
     elif a.model == "owlv2":
         det = Owl(dev)
         methods = dict(orig=lambda img, v: det(img, v), single=lambda img, v: [det(img, [n]) for n in v])

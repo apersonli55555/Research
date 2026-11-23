@@ -316,3 +316,10 @@ Paper: 0 TODOs; `check_numbers.py` → 214/214 traced. Figures redrawn from `ovd
 COCO OWLv2+YOLO-World 24 values, LVIS OWLv2+YOLO-World 36, Grounding DINO COCO subsample 12, LVIS subsample 18 —
 90/90 agree, largest absolute difference 2.2e-16. Output: `ovd/results/independent_check_allgroups.txt`. (The full
 Grounding DINO GPU files are on the owner's Drive; their headline values were checked on Colab, 6/6.)
+
+## OVD run 4d — batched fixed context for Grounding DINO (engineering for criterion iii), 26 Nov 2026
+`GDino.batch(img, chunks)`: all canonical chunks touched by a vocabulary in one forward pass (prompts padded to the
+longest; image backbone computed once and expanded). Equivalence vs. per-chunk passes (CPU, 3 LVIS chunks, one image):
+max |score difference| 3.3e-05, max box difference 0.9 px, identical top-20 boxes in every chunk. CPU time 28.7 s vs.
+28.4 s (no CPU gain, as expected for a compute-bound CPU; a 12-chunk batch exceeded the container's 15 GB RAM).
+GPU latency pending (`bench --dataset lvis --model gdino`, new method `fixctx_batch`, batches of ≤ 8 chunks).
