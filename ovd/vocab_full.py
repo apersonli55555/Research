@@ -78,6 +78,9 @@ def dev_files(out):
 
 # ----------------------------------------------------------------------------- data
 def data(a):
+    plan_path = os.path.join(a.out, f"plan_{a.dataset}.json")
+    if os.path.exists(plan_path) and not a.force:      # never replace a plan that results were computed with
+        print(f"{plan_path} exists; keeping it (use --force to rebuild)", flush=True); return
     cfg = CFG[a.dataset]; n_img = a.n_images or cfg["n"]
     os.makedirs(os.path.join(a.out, "images"), exist_ok=True)
     C, ranked = dev_files(a.out)
@@ -505,6 +508,7 @@ def main():
     ap.add_argument("--n-images", type=int, default=0)
     ap.add_argument("--limit", type=int, default=0, help="testing only: number of (image, target) pairs")
     ap.add_argument("--bench-images", type=int, default=30)
+    ap.add_argument("--force", action="store_true", help="data: rebuild the plan even if it exists")
     a = ap.parse_args()
     {"data": data, "run": run, "bench": bench}[a.stage](a)
 
