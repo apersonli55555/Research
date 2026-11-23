@@ -188,3 +188,18 @@ competition removes it.
 
 ## Traceability check (23 Nov 2026)
 `python ovd/check_numbers.py` → "107 distinct decimal numbers in the manuscript; 107 traced; 0 not traced".
+
+## OVD run 2e — Grounding DINO on held-out COCO, CPU SUBSAMPLE (first 60 pairs, 82 instances), 24 Nov 2026
+Commands: `vocab_full.py run --dataset coco --model gdino_qs --limit 60` and `--model gdino --limit 60` (1,380 runs incl.
+FIX), `full_analysis.py --boot 1000`. Table: `ovd/results/run2e_coco_gdino_sub60_cpu.md`. Provisional (small n);
+the full held-out run is on the owner's GPU.
+- Deployed mAP50: k1 0.739; rand5 0.777, rand20 0.746; far5 0.776, far20 0.777; near5 0.717, near20 0.721;
+  vis5 0.757, vis20 0.722; all 80 0.727; prune 0.558. Mean |score change| vs k1 0.076–0.118; flips 0.032–0.146.
+  Instances flipping under some vocabulary 0.195. Order-only flips 0.000 (score range 0.0001).
+  Absent-target false alarms: k1 0.292, every other vocabulary 0.000.
+- **FIX (fixed context = all 80 names in canonical order, independent read-out):** 0.765; FIX − k1 +0.026
+  [−0.059, +0.115]; FIX − all +0.039 [−0.004, +0.086]; FIX − prune +0.207 [+0.032, +0.345]. CIs wide at n = 60 pairs.
+- **Query-selection probe** (82 instances): mean |score change| k1 → rand20_0: full model 0.102, query selection on
+  target tokens only 0.105; k1 → all_0: 0.118 vs. 0.118 (signed +0.040 vs. +0.042). Restricting query selection does not
+  reduce the effect → the vocabulary dependence arises in image–text fusion (feature enhancer / decoder cross-attention),
+  not in language-guided query selection.
