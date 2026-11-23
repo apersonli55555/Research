@@ -238,3 +238,15 @@ written IoU, matching and AP code (no code shared with `full_analysis.py`). All 
 YOLO-World, COCO subsample for Grounding DINO) agree with the reported numbers; largest absolute difference 1.1e-16.
 Output: `ovd/results/independent_check.txt`. Also: GPU vs. CPU reproduction of the pilot (run 1e) and the traceability
 check (`check_numbers.py`, all manuscript numbers traced).
+
+## OVD run 2g — Grounding DINO on held-out COCO, CPU SUBSAMPLE extended to the first 200 pairs (314 instances), 24 Nov 2026
+Same commands as run 2e with `--limit 200` (resumed; 4,600 runs incl. FIX; probe 600 runs). Supersedes run 2e's
+numbers. Table: `ovd/results/run2g_coco_gdino_sub200_cpu.md`. Still provisional relative to the full GPU run.
+- Deployed mAP50: k1 0.769; rand5 0.791, rand20 0.771; far5 0.792, far20 0.787; near5 0.749, near20 0.745;
+  vis5 0.792, vis20 0.764; all 80 0.753; prune 0.673. Mean |score change| vs k1 0.068–0.116; flips 0.086–0.134;
+  localisation flips 0.068–0.169. Instances flipping under some vocabulary 0.191. Order-only flips 0.000 (range 0.0002).
+  Absent-target false alarms: k1 0.159, all other vocabularies 0.000.
+- **FIX (fixed context):** 0.782; FIX − all +0.028 [+0.0002, +0.060]; FIX − k1 +0.013 [−0.029, +0.054];
+  FIX − prune +0.109 [+0.069, +0.195]; interference 0.
+- **Query-selection probe** (314 instances): mean |score change| k1 → all_0: 0.116 full vs. 0.117 target-only query
+  selection; k1 → rand20_0: 0.093 vs. 0.094. Confirms run 2e: the effect is not query-slot competition.
