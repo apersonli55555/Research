@@ -214,3 +214,20 @@ Table: `ovd/results/run2f_lvis_gdino_sub20_cpu.md`. Very small sample: only the 
   80 names in one prompt (runs 1e, 2e). Order matters only through which names share the target's chunk.
 - FIX (fixed canonical chunks) has zero order effect by construction. Other numbers (mAP50 k1 0.633, all 0.700,
   FIX 0.766; CIs touching zero) are too noisy at 20 pairs to report.
+
+## OVD run 4a — latency, CPU (4-core development container; RELATIVE overhead only), held-out COCO, 24 Nov 2026
+Command: `vocab_full.py bench --dataset coco --model {yoloworld,owlv2,gdino} --bench-images 3` (3 warm-up + 3 timed
+images per setting; s/image). File: `ovd/results/bench_coco_cpu.json`. Absolute GPU latency comes from the owner's L4.
+| model | method | full 80 | random 5 | random 20 |
+|---|---|---|---|---|
+| YOLO-World | original | 0.114 | 0.126 | 0.114 |
+| YOLO-World | fixed guide (ours) | 0.108 | 0.105 | 0.116 |
+| YOLO-World | single-class | 5.299 | 0.330 | 1.262 |
+| OWLv2 | original (= independent read-out, one pass) | 3.241 | 3.060 | 3.149 |
+| OWLv2 | single-class | 251.788 | 15.415 | 60.809 |
+| Grounding DINO | original | 7.563 | 6.433 | 6.651 |
+| Grounding DINO | fixed context (ours) | 7.256 | 7.381 | 7.682 |
+| Grounding DINO | single-class | 344.863 | 24.025 | 90.213 |
+Relative to original: fixed guide 0.83–1.02×, fixed context 0.96–1.15×, OWLv2 independent read-out 1.0× (same
+pass); single-class 2.6–78× (46× for YOLO-World and Grounding DINO, 78× for OWLv2 at 80 names). Success criterion
+(iii) (< 2× original at 80 classes) is met on CPU for all three corrections; GPU confirmation pending.
