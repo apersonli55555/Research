@@ -323,3 +323,24 @@ longest; image backbone computed once and expanded). Equivalence vs. per-chunk p
 max |score difference| 3.3e-05, max box difference 0.9 px, identical top-20 boxes in every chunk. CPU time 28.7 s vs.
 28.4 s (no CPU gain, as expected for a compute-bound CPU; a 12-chunk batch exceeded the container's 15 GB RAM).
 GPU latency pending (`bench --dataset lvis --model gdino`, new method `fixctx_batch`, batches of ≤ 8 chunks).
+
+## LVIS plan identity — RESOLVED (owner's Colab, code c00cb88, 26 Nov 2026)
+`plan_fingerprint.py` on the Colab plan vs. the container plan: names 5df393fa6e, images 6c0fb871bf, gt 1255111891,
+pairs e8e7bb9f47, all ce7c7c30da, far cc79b599f5, k 6657b21726, near 3576012995, rand d9f380a5c1 — **identical**.
+Different: prune (Colab d921807c72 vs. 712e3f5d61) and vis (cfd5a3bf25 vs. 6065fe809a) — the only two lists built from
+CLIP *image* embeddings, which differ slightly between machines. So all three detectors use the same LVIS images,
+targets and random/unrelated/similar/full-list vocabularies; only the vis* and prune rows of Grounding DINO (Colab plan)
+vs. OWLv2/YOLO-World (container plan) are built from slightly different lists.
+
+## OVD run 4e — batched fixed context on the L4 (LVIS, s/image), 26 Nov 2026 — NEGATIVE
+| vocabulary | original | fixed context | fixed context, batched (≤ 8 chunks) | single-class |
+|---|---|---|---|---|
+| full 1,203 | 4.210 | 4.301 | 4.178 | — |
+| random 5 | 0.355 | 1.615 | 1.557 | 1.245 |
+| random 20 | 0.361 | 3.398 | 3.300 | 4.627 |
+| random 80 | 0.405 | 4.289 | 4.156 | 18.170 |
+| random 200 | 0.968 | 4.292 | 4.162 | — |
+(One CUDA out-of-memory warning during the batched runs; the allocator recovered and all timings completed.) Batching
+saves only 2–4%: Grounding DINO's cost is per prompt, not per launch. **Criterion (iii) remains unmet for Grounding
+DINO's fixed context with 5–200-name vocabularies drawn from the 1,203 LVIS classes (4.3–10.6×)**; met for the full list
+and for every COCO vocabulary. Repeated original/fixed-context timings agree with run 4c within 2%.

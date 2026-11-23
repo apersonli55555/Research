@@ -220,7 +220,9 @@ Relative costs on a 4-core CPU agree (corrections 0.83--1.16$\times$, single-cla
 guide stays at 1.0--1.14$\times$, but Grounding DINO's fixed context must run every canonical chunk that contains a
 requested class: for the full 1{,}203-name list it costs the same as original inference (4.278 vs.\ 4.284\,s), yet for
 5--200 random LVIS names it costs 4.4--10.4$\times$ (e.g.\ 3.380 vs.\ 0.369\,s for 20 names), comparable to single-class
-inference (4.801\,s). Cheap invariance for small vocabularies from large label spaces remains open for early-fusion detectors.
+inference (4.801\,s). Running the touched chunks as one batched forward pass saves only 2--4\% (e.g.\ 1.557 vs.\ 1.615\,s
+for 5 names), because the cost is per prompt. Cheap invariance for small vocabularies from large label spaces remains
+open for early-fusion detectors.
 \begin{table}[t]\centering\small\setlength{\tabcolsep}{3pt}
 \caption{Latency per image on one L4 GPU, held-out COCO (s); vocabulary of 80 / 5 / 20 names.}\label{tab:lat}
 \begin{tabular}{llccc}\toprule
@@ -279,9 +281,10 @@ YOLO-World & .602 (.001) & .592 (.006) & .585 (.026) & \textbf{.615} (.000)\\\bo
 Base/small checkpoints only (one 24\,GB GPU); two datasets; the visually confusable family is defined with CLIP; the
 pruning baseline omits VocAda's captioner. Grounding DINO's fixed context is expensive for small vocabularies drawn from
 a large label space (Sec.~Cost). Independent read-out raises false alarms on verified-absent LVIS classes for OWLv2.
-The LVIS evaluation plan was rebuilt on two machines and its CLIP-ranked distractor lists differ between them (COCO plans
-are identical), so Grounding DINO (GPU) and OWLv2/YOLO-World (CPU) LVIS numbers may use slightly different similar/visual
-distractor lists; each model's numbers are internally consistent. Several held-out numbers for OWLv2 and YOLO-World were
+The LVIS evaluation plan was built on two machines: images, targets and the random, unrelated, similar and full-list
+vocabularies are identical, but the visually confusable and pruning lists (the only ones built from CLIP image
+embeddings) differ slightly, so those LVIS rows for Grounding DINO and for OWLv2/YOLO-World use slightly different lists
+(COCO plans are identical). Several held-out numbers for OWLv2 and YOLO-World were
 computed on CPU and checked against GPU on the development split (agreement to $\le$0.001).
 
 {\small
