@@ -233,7 +233,7 @@ instances flip under some vocabulary and up to 44\% of best boxes move, while or
 guide with independent read-out reaches 0.442 with zero interference: $+$7.8 points over single-class inference (CI
 [$+$6.2, $+$9.6]) and $+$19.3 over the full list (CI [$+$17.6, $+$21.7]); CLIP pruning reaches 0.172. The full list is
 not the best possible guide: random 80--200-name guides reach 0.452--0.455 here; we choose guides only on the
-development split (Sec.~\ref{sec:ablation}).
+development split (Sec.~\ref{sec:ablation}). On a third held-out sample (the 600 images of Sec.~\ref{sec:inv}, five-name requests) the fixed guide again leads (0.490 vs.\ 0.424, CI [$+$4.5, $+$7.9]), as does OWLv2's independent read-out ($+$1.5, CI [$+$0.6, $+$2.0]).
 
 \paragraph{Grounding DINO (same 600 images).} Distractors again help on average (single-class 0.496; five random names
 0.571), but similar and visually confusable names hurt once there are many (0.424 with the 80 most similar, 0.434 with
@@ -317,13 +317,7 @@ YOLO-World & .602 (.001) & .592 (.006) & .585 (.026) & \textbf{.615} (.000)\\\bo
 
 \section{Limitations}
 Base/small checkpoints only (one 24\,GB GPU); two datasets; the visually confusable family is defined with CLIP; the
-pruning baseline omits VocAda's captioner. Grounding DINO's fixed chunks are expensive for small vocabularies drawn from
-a large label space; the fixed class bank with Soft-NMS reduces this to 1.81$\times$ standard inference and is non-inferior to the
-unmodified standard prompt, but not shown non-inferior to a standard prompt that also uses Soft-NMS; the bank was
-evaluated with five-class requests on sampled LVIS pairs with macro-averaged AP50, not with the official LVIS evaluator
-across IoU thresholds; in the confirmation set 374 classes have a positive target and 126 of them on a single image, so
-per-class APs and the bootstrap intervals are coarse. Evaluating the frozen bank and fixed chunks with identical Soft-NMS
-on the standard LVIS split with the official evaluator is the natural next test. Independent read-out raises false alarms on verified-absent LVIS classes for OWLv2.
+pruning baseline omits VocAda's captioner. Grounding DINO's fixed chunks are expensive for small vocabularies from a large label space; the fixed bank with Soft-NMS costs 1.81$\times$ standard inference and is non-inferior to the unmodified prompt, but not shown non-inferior to a prompt that also uses Soft-NMS. The bank was tested with five-class requests on sampled LVIS pairs (the official LVIS evaluator, restricted to these pairs, agrees), not on the full-image LVIS protocol; 126 of the 374 positive classes occur on one image, so per-class APs are coarse. Independent read-out raises false alarms on verified-absent LVIS classes for OWLv2.
 The LVIS evaluation plan was built on two machines: images, targets and the random, unrelated, similar and full-list
 vocabularies are identical, but the visually confusable and pruning lists (the only ones built from CLIP image
 embeddings) differ slightly, so those LVIS rows for Grounding DINO and for OWLv2/YOLO-World use slightly different lists

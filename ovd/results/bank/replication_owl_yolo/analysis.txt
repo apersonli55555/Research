@@ -1,0 +1,14 @@
+== owlv2 on the 600-image confirmation set (600 images, 2669 pairs)
+  owl_fix            mAP50 0.7887
+  owl_req_deployed   mAP50 0.7733   owl_fix − owl_req_deployed: +0.0153 [+0.0063, +0.0201]
+  detection flips vs single class (owl_fix), threshold 0.1: owl_req_deployed 4/1469 (0.3%)
+== yoloworld on the 600-image confirmation set (600 images, 2669 pairs)
+  yolo_fix           mAP50 0.4904
+  yolo_req           mAP50 0.4243   yolo_fix − yolo_req: +0.0661 [+0.0448, +0.0794]
+  yolo_req_deployed  mAP50 0.4214   yolo_fix − yolo_req_deployed: +0.0690 [+0.0485, +0.0844]
+  yolo_k1            mAP50 0.3793   yolo_fix − yolo_k1: +0.1111 [+0.0831, +0.1223]
+  detection flips vs single class (yolo_k1), threshold 0.25: yolo_fix 305/1469 (20.8%)
+  detection flips vs single class (yolo_k1), threshold 0.25: yolo_req 88/1469 (6.0%)
+  detection flips vs single class (yolo_k1), threshold 0.25: yolo_req_deployed 92/1469 (6.3%)
+Independent check, official LVIS evaluator on the same outputs (restricted ground truth as in official_lvis_eval.py), AP50:
+owl_fix 0.7884, owl_req_deployed 0.7731, yolo_fix 0.4914, yolo_k1 0.3801, yolo_req 0.4251, yolo_req_deployed 0.4222

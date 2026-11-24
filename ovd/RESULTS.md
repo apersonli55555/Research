@@ -514,3 +514,25 @@ standard +0.0188 [−0.0005, +0.0279]; − standard + Soft-NMS +0.0000 [−0.017
 [+0.0160, +0.0469]. All conclusions of run 3h are unchanged under the official evaluator (values within 0.0005 of the
 study's own; the official one uses 101-point interpolation). Over IoU 0.5:0.95 (official AP) bank + Soft-NMS is also
 the highest (0.501 vs 0.493 standard, 0.498 standard + Soft-NMS).
+
+## Run 3i — OWLv2 / YOLO-World corrections on the 600-image confirmation set (PLAN Amendment F), CPU, 24 Nov 2026
+`python ovd/bank/replicate_owl_yolo.py run|analyze` — the run-3h images, 2,669 pairs and five-name requests (1,469 present
+targets). Outputs and log: `results/bank/replication_owl_yolo/`. mAP50 (run-3h definition), paired image bootstrap
+(1,000 resamples) of fix − condition; detection flips against the single-class output on present targets at each
+model's deployment threshold (OWLv2 0.10, YOLO-World 0.25).
+
+| model | condition | mAP50 | fix − condition [95% CI] | flips vs single class |
+|---|---|---|---|---|
+| OWLv2 | independent read-out (fix; = single class) | 0.7887 | — | 0 (by construction) |
+| OWLv2 | five-name request, single-label output | 0.7733 | +0.0153 [+0.0063, +0.0201] | 4/1,469 (0.3%) |
+| YOLO-World | fixed guide + independent read-out (fix) | 0.4904 | — | (list-invariant) |
+| YOLO-World | five-name request | 0.4243 | +0.0661 [+0.0448, +0.0794] | 88/1,469 (6.0%) |
+| YOLO-World | five-name request, single-label output | 0.4214 | +0.0690 [+0.0485, +0.0844] | 92/1,469 (6.3%) |
+| YOLO-World | single class | 0.3793 | +0.1111 [+0.0831, +0.1223] | — |
+
+Independent check: the official LVIS evaluator on the same outputs gives 0.7884 / 0.7731 / 0.4914 / 0.4251 / 0.4222 /
+0.3801 (all within 0.001). Pre-registered criterion (ii) — the fix within 1 AP50 of the better baseline — is met for both
+models on this third held-out sample (the fix is the best condition for both). With five-name requests the OWLv2
+label-competition loss is small (1.5 points; it was 20.7 at 1,203 names), and YOLO-World's request is 6.0% flips from the
+single-class output; the fixed guide differs from the single-class output on 20.8% of present targets, which is the
+accuracy gain of the full guide (+11.1), not interference (its output does not depend on the request).

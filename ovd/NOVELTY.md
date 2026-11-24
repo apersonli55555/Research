@@ -98,3 +98,6 @@ on small objects; #10 one-command Table 1 reproduction. Shown by construction an
 the other names (identical to 3e-6 for other orders / names alone). Running on the owner's GPU (notebook
 `bank/followup_bank.ipynb`): #3 image-independent requests, #4 half-dictionary banks, #5 cost 1–1,203 names, #6 pooling and
 mask ablations, #7 grounding-dino-tiny, #9 qualitative figure.
+Run 3i (24 Nov 2026, Amendment F): on the 600 confirmation images the OWLv2 and YOLO-World corrections replicate on a
+third held-out sample (OWLv2 +1.5 [+0.6, +2.0] over single-label five-name output; YOLO-World fixed guide 0.490 vs
+0.424 request, +6.6 [+4.5, +7.9], and 0.379 single-class); official LVIS evaluator agrees within 0.001.
