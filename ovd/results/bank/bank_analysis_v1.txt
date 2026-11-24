@@ -1,0 +1,24 @@
+== (1) Table 1: mAP50 on 600 images, 2669 pairs
+  stock5       mAP50 0.6312   bank_soft − stock5: +0.0189 [-0.0006, +0.0264]
+  stock5_soft  mAP50 0.6501   bank_soft − stock5_soft: +0.0000 [-0.0169, +0.0096]
+  fixed        mAP50 0.5942
+  fixed_soft   mAP50 0.6175   bank_soft − fixed_soft: +0.0326 [+0.0165, +0.0442]
+  bank         mAP50 0.5942
+  bank_soft    mAP50 0.6501
+== (2) per-class paired AP50 difference, bank_soft − fixed_soft
+  positive imgs           1: n= 126 classes  mean diff +0.0422  classes better 28, worse 13, equal 85
+  positive imgs         2-3: n=  97 classes  mean diff +0.0308  classes better 43, worse 32, equal 22
+  positive imgs          4+: n= 151 classes  mean diff +0.0258  classes better 79, worse 62, equal 10
+  median size         large: n= 100 classes  mean diff +0.0051  classes better 20, worse 28, equal 52
+  median size        medium: n= 133 classes  mean diff +0.0239  classes better 55, worse 44, equal 34
+  median size         small: n= 141 classes  mean diff +0.0603  classes better 75, worse 35, equal 31
+  name words         1 word: n= 279 classes  mean diff +0.0362  classes better 117, worse 85, equal 77
+  name words       2+ words: n=  95 classes  mean diff +0.0220  classes better 33, worse 22, equal 40
+  sensitivity: mean diff over all 374 classes +0.0326; over the 248 classes with >= 2 positive images +0.0278
+== (3) duplicate boxes (a detection on an object that already has a higher-scoring match)
+  stock5       TP   3729  FP  64911  duplicates   5551 (8.6% of FP)  duplicates outranking a TP of their class   1696
+  stock5_soft  TP   3680  FP  32588  duplicates   1005 (3.1% of FP)  duplicates outranking a TP of their class    358
+  fixed        TP   3409  FP  28977  duplicates   4754 (16.4% of FP)  duplicates outranking a TP of their class   1646
+  fixed_soft   TP   3352  FP  14746  duplicates    762 (5.2% of FP)  duplicates outranking a TP of their class    310
+  bank         TP   3543  FP  48673  duplicates  12103 (24.9% of FP)  duplicates outranking a TP of their class   4807
+  bank_soft    TP   3506  FP  19567  duplicates   1145 (5.9% of FP)  duplicates outranking a TP of their class    334

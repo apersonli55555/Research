@@ -473,3 +473,18 @@ Derived: fixed_soft / bank_soft latency = 1.3991 / 0.6499 = 2.15× (bank faster)
   Detectors", ICLR 2026 (title/authors read from the proceedings PDF) — early-fusion false positives on images without
   prompted objects, attention-sink tokens; now cited and contrasted. SL-Ground (Li, Yang, Jui, Lu; arXiv 2610.24814) and
   MM-Grounding-DINO (Zhao, Chen, Xu, Li, Wang, et al.; arXiv 2401.02361) verified from arXiv pages.
+
+## Run 3h follow-up analyses from saved outputs (expert improvements #10, #8, #2), 28 Nov 2026
+`python ovd/bank_analysis.py --lvis lvis_v1_val.json` (no inference; ground truth rebuilt from the official LVIS v1 val
+file). Full output: `results/bank/bank_analysis_v1.txt`.
+- **#10 Table 1 reproduction.** Point estimates reproduce exactly (stock5 0.6312, stock5_soft 0.6501, fixed 0.5942,
+  fixed_soft 0.6175, bank 0.5942, bank_soft 0.6501). Our bootstrap (1,000 resamples, seed 0) gives CIs within 0.003 of
+  the saved ones (e.g. bank_soft − stock5 [−0.0006, +0.0264] vs saved [−0.0007, +0.0266]); the difference is resampling noise.
+- **#8 What drives the +3.26 over fixed_soft.** Not single-image classes: without the 126 classes that occur in one image
+  the gain is +2.78 (248 classes). By object size (median box area): small +6.03, medium +2.39, large +0.51. By name
+  length: one word +3.62, two or more words +2.20. By positive-image count: 1 → +4.22, 2–3 → +3.08, 4+ → +2.58.
+- **#2 Duplicate boxes** (detection on an object that already has a higher-scoring match at IoU ≥ 0.5):
+  raw bank 12,103 duplicates (24.9% of its false positives; 4,807 outrank a true positive of their class) vs raw fixed
+  4,754 (16.4%; 1,646) and raw stock5 5,551 (8.6%; 1,696). Soft-NMS removes 91% of the bank's duplicates (to 1,145; 334
+  outranking a TP). This explains why Soft-NMS adds +5.59 to the bank but +2.32 to fixed chunks: the bank produces many
+  more duplicate boxes, and Soft-NMS removes them.
