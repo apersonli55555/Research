@@ -1,0 +1,8 @@
+== owlv2 + class-wise Gaussian Soft-NMS (sigma 0.5, 0.02, top 50), 300 resamples
+  owl_fix_soft           mAP50 0.7905
+  owl_req_deployed_soft  mAP50 0.7751   owl_fix_soft - owl_req_deployed_soft: +0.0154 [+0.0061, +0.0204]
+== yoloworld + class-wise Gaussian Soft-NMS (sigma 0.5, 0.02, top 50), 300 resamples
+  yolo_fix_soft          mAP50 0.4925
+  yolo_k1_soft           mAP50 0.3766   yolo_fix_soft - yolo_k1_soft: +0.1159 [+0.0882, +0.1258]
+  yolo_req_deployed_soft mAP50 0.4193   yolo_fix_soft - yolo_req_deployed_soft: +0.0732 [+0.0507, +0.0859]
+  yolo_req_soft          mAP50 0.4224   yolo_fix_soft - yolo_req_soft: +0.0701 [+0.0461, +0.0825]

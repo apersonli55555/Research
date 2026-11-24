@@ -536,3 +536,9 @@ models on this third held-out sample (the fix is the best condition for both). W
 label-competition loss is small (1.5 points; it was 20.7 at 1,203 names), and YOLO-World's request is 6.0% flips from the
 single-class output; the fixed guide differs from the single-class output on 20.8% of present targets, which is the
 accuracy gain of the full guide (+11.1), not interference (its output does not depend on the request).
+Run 3i with the same class-wise Gaussian Soft-NMS on every condition (`results/bank/replication_owl_yolo/analysis_softnms.txt`,
+300 resamples): Soft-NMS changes nothing material for these detectors — OWLv2 fix 0.7905 vs request 0.7751 (+1.54
+[+0.61, +2.04]); YOLO-World fix 0.4925 vs request 0.4224 (+7.01 [+4.61, +8.25]) and single class 0.3766. Their gains are
+not a post-processing effect. COCO note: the 80 COCO names fit in one 256-token prompt, so for Grounding DINO on COCO the
+fixed context is already one full-list pass (1.01–1.14× cost, run 4b) and the bank — introduced for LVIS's 1,203 names —
+is not needed there.
