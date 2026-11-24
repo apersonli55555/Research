@@ -14,14 +14,19 @@ class ReadOnlyText:
         self.saved = []
         for layer in self.m.model.encoder.layers:
             layer.register_forward_pre_hook(self._hook, with_kwargs=True)
-        self.capture = False
+        self.m.model.decoder.register_forward_pre_hook(self._dhook, with_kwargs=True)
+        self.capture = False; self.dec = None
+
+    def _dhook(self, mod, args, kwargs):
+        if self.capture:
+            self.dec = dict(kwargs); self.dec_args = args
 
     def _hook(self, mod, args, kwargs):
         if self.capture:
             self.saved.append({k: v for k, v in kwargs.items()})
 
     def fixed(self, img, F):
-        g = self.g; self.saved = []; self.capture = True
+        g = self.g; self.saved = []; self.capture = True; self.dec = None
         x = g.proc(images=img, text=" . ".join(F) + " .", return_tensors="pt").to(g.dev)
         try:
             with torch.no_grad():
@@ -59,3 +64,29 @@ class ReadOnlyText:
         t, tam, sm, pos = self.text_inputs(c + " .")
         t = self.replay(t, tam, sm, pos)[0]
         return t[1:1 + len(self.g.tokens(c))]
+
+    def decode(self, text_states, text_mask_real):
+        """Re-run ONLY the decoder from the fixed pass's inputs, with `text_states` as the text it cross-attends to.
+        Returns (normalised cxcywh boxes, logits over text tokens) of the last decoder layer."""
+        kw = dict(self.dec)
+        for k in list(kw):
+            if k.startswith("text_encoder_hidden_states") or k == "text_encoder_hidden_states":
+                kw[k] = text_states
+            if k == "text_encoder_attention_mask":
+                kw[k] = ~text_mask_real if kw[k].dtype == torch.bool else kw[k]
+        with torch.no_grad():
+            d = self.m.model.decoder(*self.dec_args, **kw)
+            hs, refs = d.intermediate_hidden_states, d.intermediate_reference_points
+            L = hs.shape[1] - 1
+            ref = torch.special.logit(refs[:, L - 1], eps=1e-5)
+            box = (self.m.bbox_embed[L](hs[:, L]) + ref).sigmoid()[0]
+            logit = (hs[:, L] @ text_states.transpose(-1, -2))[0]
+        return box, logit
+
+    def class_decode(self, c):
+        """Variant C: class tokens replayed read-only through the encoder, then a decoder pass reading only them."""
+        t, tam, sm, pos = self.text_inputs(c + " .")
+        T = self.replay(t, tam, sm, pos)
+        box, logit = self.decode(T, ~tam)
+        n = len(self.g.tokens(c))
+        return box, logit[:, 1:1 + n]

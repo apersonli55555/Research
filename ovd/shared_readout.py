@@ -3,7 +3,7 @@
 
   python ovd/shared_readout.py --out OUT_WITH_plan_lvis --pairs 100 --coco-plan PILOT/plan.json
 """
-import argparse, json, os, sys
+import argparse, json, os, sys, time
 
 import numpy as np
 
@@ -16,7 +16,7 @@ from read_only_text import ReadOnlyText  # noqa: E402
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", required=True); ap.add_argument("--pairs", type=int, default=100); ap.add_argument("--coco-plan", required=True)
-    ap.add_argument("--variant", default="A", choices=["A", "B"]); ap.add_argument("--no-recall", action="store_true")
+    ap.add_argument("--variant", default="A", choices=["A", "B", "C"]); ap.add_argument("--no-recall", action="store_true")
     a = ap.parse_args()
     import torch
     from PIL import Image
@@ -50,12 +50,13 @@ def main():
     plan = P["plan"][: a.pairs]; by = {}
     for p in plan:
         by.setdefault(p["image"], []).append(p)
+    tfix, tdec = [], []
     rec_fix = {0.5: [], 0.75: []}; rec_chunk = {0.5: [], 0.75: []}
     per_new, per_fix = {}, {}
     FIXR = {(r["image"], r["target"]): r for r in map(json.loads, open(os.path.join(a.out, "full_lvis_gdino.jsonl"))) if r["cond"] == "FIX"}
     for f, pairs in by.items():
         img = Image.open(os.path.join(a.out, "images", f)).convert("RGB"); g._bb.clear()
-        boxes, Q = fixed_pass(img)
+        t0 = time.time(); boxes, Q = fixed_pass(img); tfix.append(time.time() - t0)
         for p in pairs:
             c = p["target"]; gts = [x["box"] for x in info[f]["gt"] if x["cls"] == c]; ign = c in info[f].get("not_exh", [])
             if gts and not a.no_recall:                       # (a) box recall, fixed prompt vs the target's canonical chunk
@@ -63,11 +64,18 @@ def main():
                 for gt in gts:
                     for t in (0.5, 0.75):
                         rec_fix[t].append(iou(boxes, np.array(gt)).max() >= t); rec_chunk[t].append(iou(cb, np.array(gt)).max() >= t)
+            bx = boxes
             with torch.no_grad():                              # (b) independent readout on the shared queries
-                T = text_tokens(c) if a.variant == "A" else rot.class_tokens(c)
-                s = torch.sigmoid((Q @ T.T).max(1).values).float().cpu().numpy()
+                if a.variant == "C":
+                    t0 = time.time(); bn, lg = rot.class_decode(c); tdec.append(time.time() - t0)
+                    s = torch.sigmoid(lg.max(1).values).float().cpu().numpy()
+                    bn = bn.float().cpu().numpy(); W, H = img.size
+                    bx = np.stack([(bn[:, 0] - bn[:, 2] / 2) * W, (bn[:, 1] - bn[:, 3] / 2) * H, (bn[:, 0] + bn[:, 2] / 2) * W, (bn[:, 1] + bn[:, 3] / 2) * H], 1)
+                else:
+                    T = text_tokens(c) if a.variant == "A" else rot.class_tokens(c)
+                    s = torch.sigmoid((Q @ T.T).max(1).values).float().cpu().numpy()
             order = np.argsort(-s)[:50]
-            dets = [[float(s[i])] + list(map(float, boxes[i])) for i in order if s[i] >= 0.02]
+            dets = [[float(s[i])] + list(map(float, bx[i])) for i in order if s[i] >= 0.02]
             for store, D in ((per_new, dets), (per_fix, sorted(FIXR[(f, c)]["dets"], key=lambda d: -d[0]) if (f, c) in FIXR else None)):
                 if D is None:
                     continue
@@ -77,6 +85,7 @@ def main():
     if not a.no_recall:
       print(f"(a) box recall IoU0.5: fixed prompt {np.mean(rec_fix[0.5]):.3f} vs canonical chunk {np.mean(rec_chunk[0.5]):.3f}; "
           f"IoU0.75: {np.mean(rec_fix[0.75]):.3f} vs {np.mean(rec_chunk[0.75]):.3f}  (n={len(rec_fix[0.5])})")
+    print(f"timing (this machine): fixed pass {np.mean(tfix):.2f}s/image" + (f", per-class decoder {np.mean(tdec):.3f}s" if tdec else ""))
     print(f"(b) variant {a.variant} mAP50: independent readout on shared queries {mp(per_new):.4f} vs fixed chunks {mp(per_fix):.4f}")
 
 

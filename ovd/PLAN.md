@@ -137,3 +137,8 @@ text tokens obtained by replaying ONLY the text side of each encoder layer ("c .
 per-layer visual states (`read_only_text.py`; validated: replaying the fixed prompt's own text reproduces the model's
 encoder text output with max abs difference 0.0). Visual states, proposals and decoder queries come only from F.
 Same 100 pairs, same adoption rule (within 1 mAP50 point of the fixed chunks).
+Amendment E3 (27 Nov 2026, after variant B's result 0.664, before any variant-C result): variant C = variant B's
+read-only class tokens, plus a re-run of ONLY the decoder per class (same queries, proposals and visual memory from the
+fixed pass; the decoder cross-attends only to the class's tokens); boxes and scores from the model's own heads.
+Validated: replaying the decoder with the fixed prompt's own text reproduces the model's boxes and logits exactly (0.0).
+Invariant by construction. Same 100 pairs, same adoption rule; cost reported as fixed pass + per-class decoder time.
