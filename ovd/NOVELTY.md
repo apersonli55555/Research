@@ -117,3 +117,8 @@ third held-out sample (OWLv2 +1.5 [+0.6, +2.0] over single-label five-name outpu
 **Reviewer risk added:** "the bank only works for one checkpoint" (high; stated in abstract and limitations).
 **Readiness:** all ten expert items addressed with evidence. Remaining before submission: a human read, ICCV 2027
 template and rules, and the anonymous supplement rebuilt with the new scripts/results.
+- Criterion (ii) on grounding-dino-tiny: no invariant method tested is within 1 AP50 of the standard prompt (fixed chunks
+  −2.52, bank + Soft-NMS −5.75); stated in the paper's results and limitations.
+- ICCV 2027 rules (checked 24 Nov 2026): no official call for papers or author kit is published yet; third-party trackers
+  only estimate an early-to-mid March 2027 deadline. The draft follows the previous ICCV review format (8 pages
+  excluding references; this draft has 7). It must be re-checked against the official kit at iccv.thecvf.com when published.
