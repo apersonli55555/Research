@@ -179,10 +179,9 @@ class GDino:
     is cached per image (identical numbers; verified in tests) so many vocabularies per image cost less."""
     LIMIT = 256
 
-    def __init__(self, dev, qs_target=False):
+    def __init__(self, dev, qs_target=False, mid="IDEA-Research/grounding-dino-base"):
         import torch
         from transformers import AutoModelForZeroShotObjectDetection, AutoProcessor
-        mid = "IDEA-Research/grounding-dino-base"
         self.torch, self.dev = torch, dev
         self.proc = AutoProcessor.from_pretrained(mid)
         self.model = AutoModelForZeroShotObjectDetection.from_pretrained(mid).to(dev).eval()
