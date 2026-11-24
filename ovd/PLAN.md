@@ -171,3 +171,19 @@ only one, or neither; and how often the top-scoring box moves to a different ins
 images, for each present target instance, base and tiny, standard five-class prompt and bank: candidate recall (does
 any of the 900 boxes reach IoU ≥ 0.5) and the score rank of the best matching box. Lower recall points to the boxes;
 equal recall with worse ranks points to the scores.
+
+## Amendment H (24 Nov 2026, before any result): bank-proposed context ("hybrid") for Grounding DINO
+Motivation: run 3l — the bank is 6.7× faster than exact chunks but 2.0 AP worse on the full-image protocol (common/rare
+classes), while on base it keeps the right boxes and their ranking (G3). Method (training-free, request-invariant by
+construction because every step depends only on the image):
+ 1. one bank pass (frozen, as in run 3h) → its raw top-300 (class, score, box) list (as in run 3l);
+ 2. candidate classes = the first K distinct classes in that list (= the K classes with the highest bank score);
+ 3. one standard Grounding DINO pass whose prompt is the candidates in canonical LVIS order (split into ≤ 256-token
+    chunks if needed); candidates are scored from this pass, all other classes keep their bank scores;
+ 4. per class top 50 boxes ≥ 0.02, class-wise Gaussian Soft-NMS (σ 0.5), top 300 per image — as in run 3l.
+K ∈ {10, 25, 50} is chosen ONLY on the development images (the 24 pilot + 100 validation LVIS images; official full-image
+LVIS AP with Soft-NMS; ties → smaller K). Then ONE test on the 1,000 run-3l images (not used for developing this method)
+against the run-3l chunks + Soft-NMS (primary: AP and AP50 difference, paired image bootstrap) and bank + Soft-NMS.
+Cost reported as forward passes (1 bank + ⌈candidate tokens/256⌉ prompt passes vs 14 for chunks) and, if a GPU run is
+available, seconds. Inference for this amendment runs on CPU (numerical differences to the L4 outputs ≤ 0.007 in score,
+run 3l check). All results reported whatever their direction.
