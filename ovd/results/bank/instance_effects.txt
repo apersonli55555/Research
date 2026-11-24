@@ -1,0 +1,22 @@
+{
+ "instances": 5292,
+ "pairs": 1469,
+ "both": 857,
+ "only_A": 96,
+ "only_B": 85,
+ "neither": 4254,
+ "one_only": 181,
+ "found_any": 1038,
+ "one_only_of_found": 0.174373795761079,
+ "one_only_rate": 0.03420256991685563,
+ "one_only_ci": [
+  0.02717900656044986,
+  0.04191013499899254
+ ],
+ "top_both_matched": 515,
+ "top_switch": 23,
+ "top_switch_rate": 0.04466019417475728,
+ "top_both_matched_multi_instance": 206,
+ "top_switch_multi_instance": 23
+}
+Of 5292 present instances (1469 pairs): found under both requests 857, only A 96, only B 85, neither 4254; found under just one: 181 (3.4%, CI 2.7%-4.2%). Top box passes and matches under both requests on 515 pairs; it switches to another instance of the class on 23 (4.5%; 23 of 206 multi-instance pairs).

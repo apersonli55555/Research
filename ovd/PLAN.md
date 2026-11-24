@@ -150,3 +150,24 @@ independent read-out; YOLO-World five-name request (raw and single-label), singl
 read-out. Reported: mAP50 (run-3h definition) with paired image-bootstrap CIs of fix − each condition, and detection
 flips against the single-class output at each model's deployment threshold. All conditions and all results are reported,
 whatever their direction. The criterion is the pre-registered (ii): the fix within 1 AP50 point of the better baseline.
+
+## Amendment G (24 Nov 2026, before any result): full-image LVIS evaluation, instance-level request effects, tiny diagnosis
+Prompted by an external review asking whether the bank's sampled-pair result holds under the standard benchmark protocol.
+**G1 Full-image LVIS (GPU, `bank/full_image.py` part I).** 1,000 LVIS v1 val images never used before (manifest
+`bank/full_image_manifest.json`: images with ≥ 1 annotation, excluding the 2,700 images of every earlier set, ordered by
+sha256('full-image-v1/'+file name)). Grounding DINO base scores all 1,203 classes per image with (a) the canonical
+256-token chunks — this is also the standard full-vocabulary inference, since the full list in canonical order *is* the
+chunks — and (b) the fixed class bank (frozen, as in run 3h). Per class the top 50 boxes with score ≥ 0.02 are kept;
+raw = the top 300 (box, class, score) per image; Soft-NMS = class-wise Gaussian Soft-NMS (σ 0.5, threshold 0.02, top 50
+per class, as frozen in run 3h) then the top 300 per image. Scored with the official LVIS evaluator (lvis-api; federated
+pos/neg sets, not-exhaustive ignore, 300 detections per image) on these images. Primary: AP and AP50 of bank + Soft-NMS −
+chunks + Soft-NMS, paired image bootstrap (95% CI). Also reported: raw variants, APr/c/f, APs/m/l, seconds per image
+(model passes to score tensors) and peak GPU memory. Non-inferiority margin for the bank: −1 AP50 point (as before).
+All results reported whatever their direction; the bank, Soft-NMS and thresholds are not changed after seeing results.
+**G2 Instance-level effect of the request (CPU, saved run-3j outputs).** For every present ground-truth instance and the
+two image-independent requests A/B: is it matched (IoU ≥ 0.5, greedy by score, detections with score ≥ 0.35) under both,
+only one, or neither; and how often the top-scoring box moves to a different instance of the same class.
+**G3 Why the bank fails on tiny (GPU, part H; diagnostic only, nothing is selected with it).** On the 600 confirmation
+images, for each present target instance, base and tiny, standard five-class prompt and bank: candidate recall (does
+any of the 900 boxes reach IoU ≥ 0.5) and the score rank of the best matching box. Lower recall points to the boxes;
+equal recall with worse ranks points to the scores.

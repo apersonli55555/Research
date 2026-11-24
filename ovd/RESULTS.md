@@ -598,3 +598,12 @@ standard-prompt detection flips between the two image-independent requests, orde
   counts while changing individual decisions.
 - The revised PDF in the package was built from an earlier source and omits two later statements (on grounding-dino-tiny
   no invariant method meets the 1-point criterion); those statements are kept. Only the page-3 text edits were adopted.
+
+## Run 3k (G2) — what a change of request does to individual objects, saved run-3j outputs, CPU, 24 Nov 2026
+`python ovd/bank/instance_effects.py --data results/bank/followup_t4_v1/followup_v1_data.zip` → `results/bank/instance_effects.{json,txt}`.
+Grounding DINO base, standard five-class prompt, the two image-independent requests A/B, 1,469 present pairs with 5,292
+ground-truth instances; detections ≥ 0.35 greedily matched at IoU ≥ 0.5. Found under both requests 857, only A 96, only B
+85, neither 4,254. 181 instances (3.4% of all, image-bootstrap CI 2.7–4.2%; 17.4% of the 1,038 found under either) are
+found under just one request. Where the top box passes 0.35 and matches under both requests (515 pairs), it switches to a
+different instance of the class in 23 (4.5%; 23 of 206 multi-instance pairs). A change of request therefore mostly decides
+*whether* an object is found, rarely *which* correct box ranks first.

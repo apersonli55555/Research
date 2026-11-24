@@ -141,7 +141,9 @@ non-inferiority is established against the unmodified prompt only; without Soft-
 independently of the image gives 0.614 for the standard prompt (0.634 with Soft-NMS). The bank leads by 3.6 points
 [1.6, 4.3], or 1.6 [$-$0.07, 2.5] with matched Soft-NMS. At threshold 0.35, 67 present pairs trigger only for request A
 and 65 only for B: a net difference of two, yet 132/1{,}469 decisions change (9.0\%, CI 7.5--10.6\%; 14/1{,}200 = 1.2\%
-on verified-absent targets), so interference largely cancels in aggregate counts. Figure~\ref{fig:qual} also checks
+on verified-absent targets), so interference largely cancels in aggregate counts. Per object, 181 of the 1{,}038
+instances found under either request (17.4\%) are found under only one, whereas the top box moves to another instance of
+the class in only 23 of 515 pairs: the request decides \emph{whether} an object is found. Figure~\ref{fig:qual} also checks
 location. (ii) A class vector does not depend on the other names (identical to $1.8{\times}10^{-6}$ when built in other orders
 or alone), but which classes the bank holds shifts mAP50 by about one point (two random halves, neither significant):
 the bank removes dependence on the request, not on the chosen dictionary. (iii) Mean pooling with the identity mask
