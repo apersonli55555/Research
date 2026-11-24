@@ -637,3 +637,34 @@ base: standard 0.845 / bank 0.842, median rank of the best match 5 / 5, its medi
 tiny: standard 0.845 / bank 0.797, median rank 5 / 6, median score 0.290 / 0.157. On base the bank keeps the boxes and
 their ranking but lowers the score scale; on tiny it also loses candidate boxes (−4.8 points recall), i.e. the bank's
 text input degrades the tiny model's box proposals, not only its scores.
+
+## Run 3m (Amendment H) — bank-proposed context ("hybrid"): development stage, CPU, 24 Nov 2026
+`bank/hybrid.py --mode dev` (124 development images = 24 pilot + 100 validation; CPU, ≈ 38 s/image for all three K);
+analysis `bank/hybrid_analysis.py` (official LVIS evaluator, 300 dets/image). Outputs `results/bank/hybrid/dev_outputs.zip`,
+`dev_analysis.json`.
+
+| method (Soft-NMS) | AP | AP50 | APr | APc | APf |
+|---|---|---|---|---|---|
+| bank | 0.4720 | 0.5932 | 0.1334 | 0.3004 | 0.4916 |
+| hybrid K=10 | 0.4663 | 0.5894 | 0.1334 | 0.3012 | 0.4852 |
+| hybrid K=25 | 0.4544 | 0.5890 | 0.0852 | 0.3121 | 0.4718 |
+| hybrid K=50 | 0.4375 | 0.5752 | 0.1411 | 0.3146 | 0.4522 |
+
+Pre-registered rule (best development AP with Soft-NMS; ties → smaller K) selects **K = 10**, frozen for the test. Note:
+no K beats the bank alone on the development images; AP falls as K grows (1 extra prompt pass in all cases: mean 10.0 /
+25.0 / 47.7 candidates). The plan has no stop rule, so the frozen 1,000-image test runs as registered (CPU, started
+24 Nov 2026 20:4x, ≈ 20 s/image).
+
+**Exploratory diagnosis (written after the development result, before any test result).**
+(a) `bank/hybrid_diag.py` on the development images (`dev_diag_k10.json`, `dev_diag_k50.json`): the short candidate prompt
+raises the scores of candidate rows, for present and absent classes alike (median top score, K=10: present 0.405 → 0.553,
+absent 0.308 → 0.435), so candidates take more of the 300 slots (23.0% → 28.8%; K=50: 72.1% → 83.5%). Classes that were
+never candidates lose AP (K=10 summed change −1.06 over 121 classes; K=50 −3.33 over 55), and the candidate classes
+themselves do not gain (K=10 mean per-class AP 0.6264 → 0.6236, 43 up / 59 down; K=50 0.5831 → 0.5559).
+(b) `bank/hybrid_ceiling.py` on the run-3l outputs only (`ceiling_run3l.txt`; 1,000 images, 520 classes with ground
+truth): the chunks − bank gap of +0.0203 mean per-class AP comes from common (+0.0169) and rare (+0.0028) classes, and
+almost all of it from classes that are among the bank's own top-K classes in fewer than half of the images where they are
+present (K=10: +0.0202 of +0.0203; K=50: +0.0201). Present classes are bank top-10 candidates in 47% of (image, class)
+pairs (rare 25%, common 21%, frequent 37% per class on average). So the bank's full-image loss is a failure to
+*propose* the right common/rare classes, which a bank-proposed shortlist cannot repair by construction; the hybrid is
+expected to stay near the bank on the test. Both analyses are exploratory and not used to change the frozen test.
