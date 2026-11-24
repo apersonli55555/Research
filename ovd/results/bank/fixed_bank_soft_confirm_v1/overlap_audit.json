@@ -1,0 +1,10 @@
+{
+  "development_unique": 124,
+  "confirmation_unique": 600,
+  "pilot_vs_validation": [],
+  "confirmation_vs_pilot": [],
+  "confirmation_vs_validation": [],
+  "confirmation_vs_all_development_count": 0,
+  "raw_bank_mAP50": 0.5942436638286133,
+  "raw_fixed_mAP50": 0.5942387795894745
+}

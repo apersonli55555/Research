@@ -420,7 +420,7 @@ container's LVIS plan (identical images/targets/ground truth, fingerprint-checke
 467 pairs are in the plan. Pilot (`fixed_bank_1795484911264138629.json`, 100 records): bank 0.764969 recomputed = reported.
 
 ## OVD run 3h — fixed class bank + classwise Gaussian Soft-NMS, 600-image "confirmation" (owner's expert), reported 28 Nov 2026
-**Status: REPORTED, NOT YET VERIFIED — not used in the paper until checked.** Source to import:
+**Status: VERIFIED 28 Nov 2026 (see below).** Source to import:
 `MyDrive/ovd/fixed_bank_soft_confirm_v1/{summary.json, manifest.json, per_image/}` (+ the code that produced it).
 Reported (2,669 LVIS image–class pairs, five-class requests, `full_analysis.APTable` independent mode, NVIDIA L4):
 | method | mAP50 | s/image |
@@ -438,3 +438,28 @@ re-scored excluding them (and the data used to choose Soft-NMS and its parameter
 (2) raw bank and raw chunks identical to five decimals (0.59424) is implausible for different methods (they differed on
 the 100-image validation: 0.661 vs 0.644) — check for duplicated detections; (3) standard five-class on this set is 0.631
 vs 0.713 on the 100-image validation — explain (different images/requests?); (4) independent recomputation.
+
+### Independent verification of run 3h (28 Nov 2026)
+Files imported: `ovd/results/bank/fixed_bank_soft_confirm_v1/` (summary, manifest, overlap_audit, 600 per-image files;
+the notebook that produced them was not included). Checks with separately written code and ground truth rebuilt from the
+official `lvis_v1_val.json` (log: `independent_verification.log`):
+- The 600 images are all LVIS v1 val images, disjoint from the 24 pilot images, the 100 validation images and the
+  original 600-image plan (0 overlap each) — fresh test images. Soft-NMS settings in the manifest: σ 0.5, score
+  threshold 0.02, top 50.
+- All 2,669 targets: "present" flags agree with the LVIS annotations and every absent target is a verified negative (0
+  mismatches).
+- Open check (2) resolved: raw bank and raw chunks have identical detection lists for 933 pairs — all of them empty; all
+  1,448 pairs where both have detections differ in top score. The 0.5942437 vs 0.5942388 near-tie is a coincidence.
+- All six mAP50 values recomputed exactly (difference 0.0): bank 0.594244, bank_soft 0.650106, stock5 0.631216,
+  stock5_soft 0.650080, fixed 0.594239, fixed_soft 0.617486.
+- Paired image bootstrap (200 resamples, own code): bank_soft − stock5 [−0.0014, +0.0250] (reported [−0.0007, +0.0266]);
+  − fixed_soft [+0.0178, +0.0434] (reported [+0.0167, +0.0450]); − stock5_soft [−0.0174, +0.0095] (reported
+  [−0.0178, +0.0091]).
+- Open check (3): the standard prompt's lower score here (0.631 vs 0.713 on the 100-image validation) reflects a
+  different image sample; on both, the comparison is paired on identical images and requests.
+**Conclusion:** bank + classwise Soft-NMS is non-inferior (−1-point margin) to the unmodified standard five-class prompt
+(+1.89, CI lower bound −0.07 / −0.14), significantly better than fixed chunks + Soft-NMS (+3.26), list-invariant by
+construction, at 1.81× standard latency. Against standard + Soft-NMS it is equal in point estimate (+0.003) but
+non-inferiority is not established (CI lower −1.78). Open: provenance of the Soft-NMS settings (chosen on development
+data?) and the producing notebook — to be added from the expert.
+Derived: fixed_soft / bank_soft latency = 1.3991 / 0.6499 = 2.15× (bank faster).

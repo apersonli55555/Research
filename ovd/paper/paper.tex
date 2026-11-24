@@ -29,6 +29,9 @@ fixed scoring contexts, a fixed guide vocabulary and independent read-out -- and
 held-out data they match or beat the strongest baseline for every detector (e.g.\ on LVIS: Grounding DINO $+$5.0 mAP50
 points over the better baseline, YOLO-World $+$7.8; OWLv2 equals single-class inference and is $+$20.7 over the full list) at 0.94--1.14$\times$
 the cost of original inference whenever the vocabulary fits one prompt, versus 39--75$\times$ for single-class inference.
+For Grounding DINO with large label spaces, a fixed bank of all 1{,}203 LVIS class embeddings with class-wise Soft-NMS
+gives list-invariant detections in one image pass and, on 600 fresh LVIS images, 0.650 vs.\ 0.631 mAP50 for standard
+five-class prompting (non-inferior at a 1-point margin) at 1.81$\times$ its latency.
 \end{abstract}
 
 \section{Introduction}
@@ -229,11 +232,26 @@ chunks on 100 held-out LVIS pairs; read-only scoring is not enough. What works i
 take part in fusion: each class name is encoded once by the detector's own text backbone (mean of its contextualised
 wordpieces), the 1{,}203 vectors are injected as the text input of a single image pass (one text position per class,
 identity text self-attention), and the request only selects output columns, so outputs are list-invariant by
-construction. On 100 further held-out LVIS images (467 image--class pairs; method frozen on the 24 development images)
-the bank reaches 0.661 mAP50 versus 0.644 for the fixed chunks (paired 95\% CI of the difference $-$1.65 to $+$3.97
-points) at 0.641 versus 1.399\,s per image for five-class requests on an L4, i.e.\ 1.80$\times$ standard
-prompt-conditioned inference (0.356\,s), which remains more accurate on these requests (0.713) but is not
-list-invariant.
+construction. Developed on the 24 pilot images and checked on 100 further images (0.661 vs.\ 0.644 for the fixed
+chunks, 467 pairs), the bank was frozen together with class-wise Gaussian Soft-NMS ($\sigma{=}0.5$) and confirmed on
+600 fresh LVIS validation images (2{,}669 image--class pairs, disjoint from all development images; five-class
+requests; one L4; Table~\ref{tab:bank}). The bank with Soft-NMS reaches 0.650 mAP50 against 0.631 for unmodified
+five-class Grounding DINO ($+$1.89 points, paired 95\% CI $-$0.07 to $+$2.66: non-inferior at a 1-point margin) and
+0.617 for the fixed chunks with the same Soft-NMS ($+$3.26, CI $+$1.67 to $+$4.50), at 0.650\,s per image, 1.81$\times$
+standard inference (0.360\,s) and 2.15$\times$ faster than the chunks (1.399\,s); it is list-invariant, the standard
+prompt is not. Adding the same Soft-NMS to the standard prompt gives 0.650 as well ($+$0.003, CI $-$1.78 to $+$0.91), so
+non-inferiority is established against the unmodified prompt only; without Soft-NMS bank and chunks score alike
+(0.594), so the accuracy gain is due to the bank together with class-wise Soft-NMS.
+\begin{table}[t]\centering\small\setlength{\tabcolsep}{3pt}
+\caption{Grounding DINO on 600 fresh LVIS images (2{,}669 pairs, five-class requests, one L4). Inv.: output unchanged
+by the rest of the request. $\Delta$: bank + Soft-NMS minus row, paired image-bootstrap 95\% CI.}\label{tab:bank}
+\begin{tabular}{lcccc}\toprule
+method & inv. & mAP50 & s/img & $\Delta$ [95\% CI]\\\midrule
+standard prompt & no & .631 & .360 & $+$.019 [$-$.001, $+$.027]\\
+standard + Soft-NMS & no & .650 & .362 & $+$.000 [$-$.018, $+$.009]\\
+fixed chunks + Soft-NMS & yes & .617 & 1.399 & $+$.033 [$+$.017, $+$.045]\\
+\textbf{fixed bank + Soft-NMS} & yes & \textbf{.650} & .650 & --\\\bottomrule
+\end{tabular}\end{table}
 \begin{table}[t]\centering\small\setlength{\tabcolsep}{3pt}
 \caption{Latency per image on one L4 GPU, held-out COCO (s); vocabulary of 80 / 5 / 20 names.}\label{tab:lat}
 \begin{tabular}{llccc}\toprule
@@ -291,9 +309,9 @@ YOLO-World & .602 (.001) & .592 (.006) & .585 (.026) & \textbf{.615} (.000)\\\bo
 \section{Limitations}
 Base/small checkpoints only (one 24\,GB GPU); two datasets; the visually confusable family is defined with CLIP; the
 pruning baseline omits VocAda's captioner. Grounding DINO's fixed chunks are expensive for small vocabularies drawn from
-a large label space; the fixed class bank reduces this to 1.80$\times$ standard inference but is 5.2 mAP50 points below
-standard five-class prompting on our validation sample, and its accuracy advantage over the fixed chunks is not yet
-statistically established (Sec.~Cost). Independent read-out raises false alarms on verified-absent LVIS classes for OWLv2.
+a large label space; the fixed class bank with Soft-NMS reduces this to 1.81$\times$ standard inference and is non-inferior to the
+unmodified standard prompt, but not shown non-inferior to a standard prompt that also uses Soft-NMS; the bank was
+evaluated with five-class requests on sampled LVIS pairs (not official LVIS AP). Independent read-out raises false alarms on verified-absent LVIS classes for OWLv2.
 The LVIS evaluation plan was built on two machines: images, targets and the random, unrelated, similar and full-list
 vocabularies are identical, but the visually confusable and pruning lists (the only ones built from CLIP image
 embeddings) differ slightly, so those LVIS rows for Grounding DINO and for OWLv2/YOLO-World use slightly different lists

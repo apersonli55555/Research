@@ -82,3 +82,11 @@ Main reviewer risks remain "known/obvious" (mitigated by the controlled protocol
 A training-free fixed bank of 1,203 class embeddings gives list-invariant Grounding DINO detections in one pass:
 0.661 vs 0.644 mAP50 for fixed chunks on 100 fresh LVIS images (CI −1.65 to +3.97; non-inferiority not established),
 0.641 s vs 1.399 s (1.80× standard five-class inference, 0.356 s / 0.713 mAP50). Imported and independently recomputed (exact match; see RESULTS.md).
+
+### Update 28 Nov 2026 — 600-image confirmation (run 3h, independently verified)
+Fixed class bank + class-wise Soft-NMS on 600 fresh LVIS images: 0.650 vs 0.631 mAP50 for unmodified standard five-class
+Grounding DINO (+1.89, CI −0.07 to +2.66 → non-inferior at −1), +3.26 over fixed chunks + Soft-NMS, 1.81× standard latency,
+list-invariant. Pre-registered criteria for Grounding DINO on LVIS with small vocabularies: (i) interference 0 — met;
+(ii) within 1 AP of the unmodified standard prompt — met (non-inferiority); vs. standard + Soft-NMS not established;
+(iii) cost < 2× — met (1.81×). Remaining before submission: Soft-NMS provenance + producing notebook from the expert;
+human read; ICCV 2027 template/rules.
