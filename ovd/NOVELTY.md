@@ -62,7 +62,7 @@ full is marked [VERIFY]. This file will be updated after the pilot and the full 
 | goal 1: interference ≥ 3 AP or > 10% flips | **met** (COCO 9.8 AP k1 vs ours; 27.8% instances flip) | **met** (LVIS 18.1% flip; 11.5 AP k1 vs full) | **met** on LVIS (20.7 AP, 19.0% flips); COCO 2.3 AP / 3.1% (below) |
 | (i) interference reduced ≥ 80% | **met** (100%, by construction) | **met** (100%) | **met** (100%) |
 | (ii) mAP within 1 point of the better baseline | **met** (+1.3 COCO, +5.0 LVIS) | **met** (+2.0, +7.8) | **met** (= k1 on both) |
-| (iii) cost < 2× original | **met** on COCO (1.01–1.14×) and the full LVIS list (1.00×); fixed chunks **not met** for 5–200-name LVIS vocabularies (4.3–10.6×); **fixed class bank (expert, run 3g, files pending import): 1.80× standard five-class inference, met** — but 5.2 AP below standard five-class on that sample | **met** (0.94–1.14×) | **met** (1.0×) |
+| (iii) cost < 2× original | **met** on COCO (1.01–1.14×) and the full LVIS list (1.00×); fixed chunks **not met** for 5–200-name LVIS vocabularies (4.3–10.6×); **fixed class bank (expert, run 3g, independently verified): 1.80× standard five-class inference, met** — but 5.2 AP below standard five-class on that sample | **met** (0.94–1.14×) | **met** (1.0×) |
 | goal 5: replication | 3 architectures × 2 held-out datasets (COCO 1,000 images, LVIS 600) | | |
 Independent verification: `independent_check.py` 6/6 GPU headline mAPs + 90/90 table values (all groups) on the CPU-run files, max diff 2.2e-16; `check_numbers.py`
 214/214 manuscript numbers traced; pilot reproduced GPU vs. CPU to ≤ 0.001.
@@ -81,5 +81,4 @@ Main reviewer risks remain "known/obvious" (mitigated by the controlled protocol
 ### Update 27 Nov 2026 — fixed class bank (owner's expert, run 3g)
 A training-free fixed bank of 1,203 class embeddings gives list-invariant Grounding DINO detections in one pass:
 0.661 vs 0.644 mAP50 for fixed chunks on 100 fresh LVIS images (CI −1.65 to +3.97; non-inferiority not established),
-0.641 s vs 1.399 s (1.80× standard five-class inference, 0.356 s / 0.713 mAP50). Before submission: import the expert's
-notebooks and result files into the repo and re-run `independent_check.py`-style recomputation on `per_image.jsonl`.
+0.641 s vs 1.399 s (1.80× standard five-class inference, 0.356 s / 0.713 mAP50). Imported and independently recomputed (exact match; see RESULTS.md).

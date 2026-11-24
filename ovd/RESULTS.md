@@ -383,8 +383,8 @@ anchored context (−4 AP, 58–66% interference cut), image shortlist (0.516), 
 tokens (0.664), + decoder re-run (0.630) vs fixed chunks 0.756. No one-pass invariant variant reaches the fixed chunks.
 
 ## OVD run 3g — training-free FIXED CLASS BANK for Grounding DINO (implemented and run by the owner's expert), reported 27 Nov 2026
-**Status: reported by the expert; source files are on the owner's Drive and NOT yet in this repository; independent
-re-computation pending.** Method: the 1,203 LVIS names encoded once by Grounding DINO's own BERT backbone in canonical
+**Status: VERIFIED (27 Nov 2026).** Source code (notebook cells, verbatim): `ovd/bank/fixed_bank_pilot_cells.py`,
+`ovd/bank/validate_fixed_bank_cells.py`. Result files: `ovd/results/bank/`. Method: the 1,203 LVIS names encoded once by Grounding DINO's own BERT backbone in canonical
 256-token chunks; per class, the mean of its name's contextualised wordpiece states → one cached vector per class;
 at inference the 1,203-vector bank is injected at the text-backbone output (before text projection and the multimodal
 encoder; text-length limit extended; identity text self-attention mask; zero text position ids). One encoder + query
@@ -411,3 +411,10 @@ logits (atol = rtol = 1e-5); one class alone vs. inside a reversed 200-class lis
 - Reading against the pre-registered criteria: interference 0 (by construction); accuracy vs. the better baseline — on
   this validation the standard (uncorrected) five-class request is the better baseline and the bank is 5.2 AP below it,
   so criterion (ii) is NOT met there, while it is +1.7 vs. the previous invariant method; cost 1.80× standard (< 2×, met).
+
+### Independent verification of run 3g (27 Nov 2026)
+Separately written IoU/matching/AP code (`independent_check.py` functions) on `ovd/results/bank/…/per_image.jsonl` with the
+container's LVIS plan (identical images/targets/ground truth, fingerprint-checked): bank 0.660563, stock5 0.712894, fixed
+0.643725 — identical to `summary.json` (difference 0.0). Paired image bootstrap (300 resamples, own code) for bank − fixed:
+[−0.0163, +0.0387] vs. reported [−0.0165, +0.0397]. The 100 validation images do not overlap the 24 pilot images; all
+467 pairs are in the plan. Pilot (`fixed_bank_1795484911264138629.json`, 100 records): bank 0.764969 recomputed = reported.
