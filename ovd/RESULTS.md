@@ -488,3 +488,25 @@ file). Full output: `results/bank/bank_analysis_v1.txt`.
   4,754 (16.4%; 1,646) and raw stock5 5,551 (8.6%; 1,696). Soft-NMS removes 91% of the bank's duplicates (to 1,145; 334
   outranking a TP). This explains why Soft-NMS adds +5.59 to the bank but +2.32 to fixed chunks: the bank produces many
   more duplicate boxes, and Soft-NMS removes them.
+
+## Run 3h scored with the official LVIS evaluator (expert improvement #1), 24 Nov 2026
+`python ovd/bank/official_lvis_eval.py --lvis lvis_v1_val.json --boot 100` (lvis-api 0.5.3, `LVISEval`, bbox, 300
+detections per image; the only change to the package is restoring the `np.float` alias removed in NumPy 1.24). The
+official ground truth is restricted to the evaluated pairs with LVIS's own fields (600 images, 5,292 boxes of the
+present targets, 1,200 verified-negative pairs as `neg_category_ids`, `not_exhaustive_category_ids` restricted to the
+targets). Output: `results/bank/official_lvis_eval.{json,log}`.
+
+| method | official AP50 | study mAP50 | official AP | APr | APc | APf |
+|---|---|---|---|---|---|---|
+| standard five-class | 0.6314 | 0.6312 | 0.4933 | 0.3307 | 0.5289 | 0.4893 |
+| standard + Soft-NMS | 0.6502 | 0.6501 | 0.4982 | 0.3376 | 0.5295 | 0.4950 |
+| fixed chunks | 0.5946 | 0.5942 | 0.4760 | 0.2833 | 0.5221 | 0.4704 |
+| fixed chunks + Soft-NMS | 0.6176 | 0.6175 | 0.4831 | 0.2833 | 0.5202 | 0.4795 |
+| fixed bank | 0.5947 | 0.5942 | 0.4712 | 0.3750 | 0.5101 | 0.4652 |
+| fixed bank + Soft-NMS | 0.6502 | 0.6501 | 0.5012 | 0.3750 | 0.5145 | 0.5009 |
+
+Official AP50 differences (paired image bootstrap, 100 resamples, duplicated images re-indexed): bank + Soft-NMS −
+standard +0.0188 [−0.0005, +0.0279]; − standard + Soft-NMS +0.0000 [−0.0173, +0.0102]; − chunks + Soft-NMS +0.0326
+[+0.0160, +0.0469]. All conclusions of run 3h are unchanged under the official evaluator (values within 0.0005 of the
+study's own; the official one uses 101-point interpolation). Over IoU 0.5:0.95 (official AP) bank + Soft-NMS is also
+the highest (0.501 vs 0.493 standard, 0.498 standard + Soft-NMS).

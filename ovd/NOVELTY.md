@@ -90,3 +90,11 @@ list-invariant. Pre-registered criteria for Grounding DINO on LVIS with small vo
 (ii) within 1 AP of the unmodified standard prompt — met (non-inferiority); vs. standard + Soft-NMS not established;
 (iii) cost < 2× — met (1.81×). Remaining before submission: Soft-NMS provenance + producing notebook from the expert;
 human read; ICCV 2027 template/rules.
+
+### Update 24 Nov 2026 — expert improvements
+Done from saved outputs: #1 official LVIS evaluator (same AP50 to within 0.0005; all CIs and conclusions unchanged);
+#2 duplicate boxes explain the Soft-NMS gain; #8 gain not driven by single-image classes (+2.78 without them), largest
+on small objects; #10 one-command Table 1 reproduction. Shown by construction and checked: class vectors do not depend on
+the other names (identical to 3e-6 for other orders / names alone). Running on the owner's GPU (notebook
+`bank/followup_bank.ipynb`): #3 image-independent requests, #4 half-dictionary banks, #5 cost 1–1,203 names, #6 pooling and
+mask ablations, #7 grounding-dino-tiny, #9 qualitative figure.
