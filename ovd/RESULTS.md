@@ -359,3 +359,17 @@ container restart). Anchors: 40 fixed non-COCO LVIS names (first by MD5). Compar
 Interference reduced by 66% (score) and 58% (flips), below the pre-set 80%; best mAP50 0.780 vs. 0.820 (−4 points), below
 the pre-set accuracy criterion. **Not adopted; not run on held-out data.** The cost problem for small vocabularies from
 large label spaces (run 4e) remains open.
+
+## OVD run 3e — expert idea 1: image-selected shortlist (PLAN amendment D), held-out LVIS, CPU, 27 Nov 2026 — NEGATIVE
+`shortlist.py rank` (CLIP ranking of all 1,203 names for each of the 600 images; mean shortlist 93.3 names) then
+`replay` on the saved fixed-chunk outputs of the first 100 pairs (run 2h): instance survival 0.455 (small 0.310, medium
+0.429, large 0.850); mAP50 fixed chunks 0.7558 → replay 0.5114. Real one-pass run on the same 100 pairs (24 images):
+mAP50 k1 0.7002, all (order 0) 0.7688, fixed chunks 0.7558, **shortlist 0.5159**; target in shortlist for 0.380 of pairs.
+Not adopted: whole-image CLIP ranking misses most small objects.
+
+## OVD run 3f — expert idea 2, variant A (PLAN amendment E), same 100 LVIS pairs, CPU — NEGATIVE (scoring), boxes OK
+`shared_readout.py --variant A`: (a) class-agnostic box recall of ground truth (n = 189) among the fixed prompt's 900
+boxes vs. the target's canonical chunk: IoU 0.5 0.799 vs 0.852; IoU 0.75 0.683 vs 0.672. (b) mAP50 with raw projected
+text tokens 0.3819 vs fixed chunks 0.7558. The shared boxes are nearly sufficient; raw text tokens are not.
+Variant B (`read_only_text.py`): replay of the fixed prompt's own text through the encoder text side reproduces the
+model's encoder text output exactly (max abs difference 0.0). Result pending.

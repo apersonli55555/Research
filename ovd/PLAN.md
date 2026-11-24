@@ -113,3 +113,27 @@ mAP50 not lower than original's best condition minus 1 point. Only if it passes 
 Clarification (before any result; the first attempt crashed after 13 runs on an over-long prompt): if A ∪ V exceeds
 256 tokens, V is split in order into consecutive pieces that each fit together with A, and the piece holding the target
 is run (the same rule as standard chunking, with A always included).
+
+## Amendment D (27 Nov 2026, before any result) — image-selected shortlist for Grounding DINO (suggested by the owner's expert)
+Method "shortlist": for each image, rank ALL names of the label space by CLIP ViT-B/32 (laion2b_s34b_b79k) similarity
+between the whole image and "a photo of a {name}" (the same CLIP model as the distractor families); pack the
+highest-ranked names, in rank order, into ONE Grounding DINO prompt within the 256-token limit; run once; independent
+read-out; a requested class outside the shortlist returns no detection. The prompt depends only on the image, so the
+output is invariant to the requested vocabulary by construction. No free parameters (shortlist length = what fits).
+Evaluation: (1) replay diagnostic on saved fixed-chunk outputs (drop omitted classes; instance survival rate by
+object size; AP); (2) the real one-pass run on the held-out LVIS images, compared with k1 / full list / fixed chunks on
+the same pairs; (3) latency = one pass + CLIP. Success = the run-3 criteria: interference 0, mAP within 1 point of the
+better baseline, cost < 2× original.
+
+## Amendment E (27 Nov 2026, before any result) — shared fixed-prompt boxes + independent class readout (expert idea 2)
+One Grounding DINO pass with a FIXED prompt F (the 80 COCO names, canonical order) gives the 900 decoder boxes and
+last-layer query embeddings. Each requested class c is scored independently: s_c(q) = sigmoid(max over c's tokens of
+q · t), where t are c's projected text tokens from the text backbone run on "c ." alone (cacheable, image-independent).
+Invariant by construction; one pass + cheap text. Tests on the same 100 held-out LVIS pairs as run 2h: (a) class-agnostic
+box recall of ground truth at IoU 0.5 / 0.75 among F's 900 boxes vs. the target's canonical-chunk 900 boxes; (b) mAP50
+vs. fixed chunks. Adopt only if mAP50 is within 1 point of the fixed chunks (no tuning on these pairs).
+Amendment E2 (27 Nov 2026, after variant A's result, before any variant-B result): variant B scores class c with its
+text tokens obtained by replaying ONLY the text side of each encoder layer ("c ." alone) against the fixed pass's saved
+per-layer visual states (`read_only_text.py`; validated: replaying the fixed prompt's own text reproduces the model's
+encoder text output with max abs difference 0.0). Visual states, proposals and decoder queries come only from F.
+Same 100 pairs, same adoption rule (within 1 mAP50 point of the fixed chunks).
