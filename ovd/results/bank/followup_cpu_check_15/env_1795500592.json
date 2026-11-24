@@ -1,0 +1,13 @@
+{
+ "gpu": "cpu",
+ "torch": "2.15.0+cpu",
+ "transformers": "5.22.2",
+ "device": "cpu",
+ "parts": [
+  "B",
+  "C",
+  "F"
+ ],
+ "limit": 15,
+ "started": 1795500592.2003062
+}
