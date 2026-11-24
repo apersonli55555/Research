@@ -1,0 +1,33 @@
+{
+ "perm1": {
+  "max_abs_diff_to_canon": 1.3113021850585938e-06,
+  "cos_mean": 1.0,
+  "cos_min": 0.9999997615814209
+ },
+ "perm2": {
+  "max_abs_diff_to_canon": 1.430511474609375e-06,
+  "cos_mean": 1.0,
+  "cos_min": 0.9999997615814209
+ },
+ "solo": {
+  "max_abs_diff_to_canon": 1.8477439880371094e-06,
+  "cos_mean": 1.0,
+  "cos_min": 0.9999997615814209
+ },
+ "pool_first": {
+  "max_abs_diff_to_canon": 2.0733625888824463,
+  "cos_mean": 0.956091582775116,
+  "cos_min": 0.6631147861480713
+ },
+ "pool_last": {
+  "max_abs_diff_to_canon": 1.7393922805786133,
+  "cos_mean": 0.9559730291366577,
+  "cos_min": 0.7295653820037842
+ },
+ "dict_half_a": {
+  "classes": 601
+ },
+ "dict_half_b": {
+  "classes": 601
+ }
+}

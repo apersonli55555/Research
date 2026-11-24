@@ -64,28 +64,29 @@ def main():
     from matplotlib.patches import Rectangle
     from PIL import Image
     sizes = json.load(open(os.path.join(a.dir, "G_sizes.json")))
-    fig, ax = plt.subplots(len(show), 3, figsize=(6.8, 1.95 * len(show)), squeeze=False)
+    fig, ax = plt.subplots(len(show), 3, figsize=(3.35, 1.02 * len(show)), squeeze=False)   # one paper column
     for i, (f, c) in enumerate(show):
         im = Image.open(os.path.join(a.dir, "G", f)); W, H = sizes[f]; s = im.size[0] / W
-        cols = [("stock5_indA", "standard, request A"), ("stock5_indB", "standard, request B"), ("bank_soft", "fixed bank (any request)")]
+        cols = [("stock5_indA", "standard, request A"), ("stock5_indB", "standard, request B"), ("bank_soft", "bank, any request")]
         for j, (cond, title) in enumerate(cols):
             x = ax[i][j]; x.imshow(im); x.set_xticks([]); x.set_yticks([])
             r = by[(f, c)][cond]; d = r["dets"]
             if d:                                       # top box always drawn; dashed = below the 0.35 threshold
                 b = d[0]; ok = any(iou(b[1:], g) >= 0.5 for g in gt[(f, c)])
                 x.add_patch(Rectangle((b[1] * s, b[2] * s), (b[3] - b[1]) * s, (b[4] - b[2]) * s, fill=False,
-                                      lw=1.6, ls="-" if b[0] >= THR else "--", ec="#1b9e77" if ok else "#d95f02"))
-                lab = f"top score {b[0]:.2f}" + ("" if b[0] >= THR else " (below 0.35)")
+                                      lw=0.9, ls="-" if b[0] >= THR else "--", ec="#1b9e77" if ok else "#d95f02"))
+                lab = f"{b[0]:.3f}" + ("" if b[0] >= THR else " (<0.35)")
             else:
                 lab = "no box above 0.02"
             req = r.get("request")
-            sub = ("+ " + ", ".join(n for n in req if n != c)) if req else ""
-            x.set_title(f"{title}\n{lab}", fontsize=6.5, pad=2)
+            others = [n for n in req if n != c] if req else []
+            sub = ("+ " + ", ".join(others[:2]) + ",\n" + ", ".join(others[2:])) if others else ""
+            x.set_title(f"{title}: {lab}", fontsize=4.6, pad=1.5)
             if sub:
-                x.set_xlabel(sub, fontsize=5.2, labelpad=1)
+                x.set_xlabel(sub, fontsize=3.9, labelpad=0.8)
             if j == 0:
-                x.set_ylabel(f"“{c}”", fontsize=7)
-    fig.tight_layout(pad=0.3, h_pad=0.6, w_pad=0.2)
+                x.set_ylabel(f"“{c}”", fontsize=5.5, labelpad=1)
+    fig.tight_layout(pad=0.15, h_pad=0.35, w_pad=0.15)
     fig.savefig(a.out, dpi=300); print("saved", a.out, "pairs:", show)
 
 

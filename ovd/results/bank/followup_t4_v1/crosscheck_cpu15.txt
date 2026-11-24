@@ -1,0 +1,14 @@
+697 lists in both runs
+  B stock1         n=  62  top-score |diff| max 0.0004 median 0.00002  top-box max 0.01px  empty/non-empty mismatches 0
+  B stock5_indA    n=  62  top-score |diff| max 0.0003 median 0.00002  top-box max 0.01px  empty/non-empty mismatches 0
+  B stock5_indB    n=  62  top-score |diff| max 0.0002 median 0.00002  top-box max 0.01px  empty/non-empty mismatches 0
+  C canon          n=  62  top-score |diff| max 0.0021 median 0.00010  top-box max 11.95px  empty/non-empty mismatches 0
+  C dict_half_a    n=  38  top-score |diff| max 0.0012 median 0.00010  top-box max 0.05px  empty/non-empty mismatches 0
+  C dict_half_b    n=  39  top-score |diff| max 0.0019 median 0.00006  top-box max 0.03px  empty/non-empty mismatches 0
+  C mask_full      n=  62  top-score |diff| max 0.0053 median 0.00005  top-box max 0.03px  empty/non-empty mismatches 0
+  C pool_first     n=  62  top-score |diff| max 0.0026 median 0.00002  top-box max 0.01px  empty/non-empty mismatches 0
+  C pool_last      n=  62  top-score |diff| max 0.0019 median 0.00011  top-box max 0.02px  empty/non-empty mismatches 0
+  F bank           n=  62  top-score |diff| max 0.0009 median 0.00004  top-box max 0.01px  empty/non-empty mismatches 0
+  F fixed          n=  62  top-score |diff| max 0.0012 median 0.00002  top-box max 0.01px  empty/non-empty mismatches 0
+  F stock5         n=  62  top-score |diff| max 0.0007 median 0.00004  top-box max 0.02px  empty/non-empty mismatches 0
+largest top-score difference: 0.0053

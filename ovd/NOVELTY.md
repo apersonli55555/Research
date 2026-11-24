@@ -101,3 +101,19 @@ mask ablations, #7 grounding-dino-tiny, #9 qualitative figure.
 Run 3i (24 Nov 2026, Amendment F): on the 600 confirmation images the OWLv2 and YOLO-World corrections replicate on a
 third held-out sample (OWLv2 +1.5 [+0.6, +2.0] over single-label five-name output; YOLO-World fixed guide 0.490 vs
 0.424 request, +6.6 [+4.5, +7.9], and 0.379 single-class); official LVIS evaluator agrees within 0.001.
+
+### Update 24 Nov 2026 — run 3j (expert follow-ups on the owner's T4; cross-checked on CPU)
+- #3: with requests drawn without the image, the standard prompt drops to 0.614 and the bank + Soft-NMS leads by 3.6
+  [1.6, 4.3] (by 1.6 [−0.07, 2.5] when both use Soft-NMS); two random requests flip 9.0% of the standard prompt's
+  detections on fresh images. Strengthens the main claim.
+- #4/#6: class vectors are context-free; dictionary composition shifts mAP by about ±1 (n.s.); the expert's mean-pool +
+  identity-mask design is the best tested.
+- #5: bank cost is constant (1.16 s on T4, +1.2 GB); break-even with the standard prompt at ≈100 names, 6.3× faster at
+  1,203.
+- #7: **negative** — on grounding-dino-tiny the bank + Soft-NMS is 5.75 points below the standard prompt and 5.1 below
+  fixed chunks + Soft-NMS, at 2.00× cost. The paper now says the bank is checkpoint-specific; fixed chunks remain the
+  invariant method that holds on both checkpoints.
+- #9: qualitative figure with a pre-fixed selection rule and the totals in the caption.
+**Reviewer risk added:** "the bank only works for one checkpoint" (high; stated in abstract and limitations).
+**Readiness:** all ten expert items addressed with evidence. Remaining before submission: a human read, ICCV 2027
+template and rules, and the anonymous supplement rebuilt with the new scripts/results.

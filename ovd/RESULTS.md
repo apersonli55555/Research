@@ -542,3 +542,43 @@ Run 3i with the same class-wise Gaussian Soft-NMS on every condition (`results/b
 not a post-processing effect. COCO note: the 80 COCO names fit in one 256-token prompt, so for Grounding DINO on COCO the
 fixed context is already one full-list pass (1.01–1.14× cost, run 4b) and the bank — introduced for LVIS's 1,203 names —
 is not needed there.
+
+## Run 3j — fixed-bank follow-ups on the owner's Colab T4 (expert improvements #3–#7, #9), 24 Nov 2026
+Notebook `bank/followup_bank.ipynb` → `bank/followup.py` at commit e074876 (Tesla T4, torch 2.14.1, transformers 5.22.1);
+same 600 images / 2,669 pairs as run 3h. Raw outputs: `results/bank/followup_t4_v1/followup_v1_data.zip`; analysis
+(`bank/followup_analysis.py`, 1,000 paired image-bootstrap resamples, seed 0): `results/bank/followup_t4_v1/analysis.txt`.
+**Checks.** (A) Reproduction of the saved L4 run 3h on 20 images (166 lists): top-score |diff| median 0.0004, max 0.015;
+no empty/non-empty mismatch. Independent CPU runs of the same code: 15 images, parts B/C/F, 697 lists, max top-score
+diff 0.0053; 295 images of part F, 3,951 lists, max 0.0123, median 0.00003, no empty/non-empty mismatch (large top-box
+differences are swaps between near-tied boxes). `crosscheck_cpu15.txt`, `crosscheck_cpu295_tiny.txt`.
+
+**#3 Image-independent requests** (each pair: target + 4 names drawn from the 1,203 without the image, two draws A/B):
+standard prompt 0.6142 (A) / 0.6136 (B) vs 0.6312 with the run-3h requests (which were built from the image's own
+targets); with Soft-NMS 0.6342 / 0.6342. Bank + Soft-NMS 0.6501 (list-invariant, so unchanged): − request A +0.0359
+[+0.0162, +0.0432]; − request A + Soft-NMS +0.0159 [−0.0007, +0.0254] (B: +0.0159 [−0.0001, +0.0284]) — non-inferior at
+the 1-point margin and close to superior. Single class 0.5260 (+Soft-NMS 0.5491). Interference on fresh images: the two
+image-independent requests flip the standard prompt's detection (top score ≥ 0.35) for 132/1,469 present targets
+(9.0%) and move the top box for 148 (10.1%); single class vs request A: 578 (39.3%) flips.
+**#4 Dictionary.** Class vectors do not depend on the other names: rebuilt from two random orderings and from each name
+alone they equal the canonical bank to ≤ 1.8e-6 (cosine 1.0000). Which classes are in the bank does matter a little:
+banks with a fixed random half of the classes, on the pairs they contain (+Soft-NMS): half A 0.6597 vs full 0.6503
+(full − half −0.0094 [−0.0196, +0.0064]; 1,301 pairs), half B 0.6475 vs 0.6611 (+0.0137 [−0.0021, +0.0293]; 1,265
+pairs) — about ±1 point, neither significant. The bank removes dependence on the request, not on the chosen dictionary.
+**#6 Construction ablations** (+Soft-NMS; canonical = mean wordpiece, identity mask: 0.6494): first wordpiece 0.6400
+(canonical − variant +0.0094 [+0.0012, +0.0148]); last wordpiece 0.6430 (+0.0064 [−0.0018, +0.0133]); full text mask
+0.6409 (+0.0085 [−0.0009, +0.0204]); raw (no Soft-NMS): full mask −0.0134 [+0.0017, +0.0239] worse. The expert's
+choices are the best of those tested.
+**#5 Cost vs vocabulary size** (30 images, T4, median s/image; peak extra GPU memory): standard prompt 0.659 s (K=1),
+0.674 (5), 0.737 (50), 1.187 (100, 2 chunks), 1.713 (200), 2.745 (400), 5.206 (800), 7.306 s (1,203, 14 chunks), memory
+1.2–1.5 GB; fixed chunks 0.777 (1) to 7.30 s (≥ 50 names: all 14 chunks touched); bank 1.153–1.159 s for every K,
+2.7 GB. Crossover with the standard prompt at about K = 100 (1.156 vs 1.187 s); at 1,203 names the bank is 6.3× faster;
+at K = 5 it costs 1.71× (T4; 1.81× on the L4). One-time set-up: 0.29 s, 3.7 MB of class vectors.
+**#7 Second checkpoint (grounding-dino-tiny) — NEGATIVE for the bank.** Parity check passed. mAP50: standard five-class
+0.6848 (+Soft-NMS 0.6936), fixed chunks 0.6596 (+Soft-NMS 0.6783), bank 0.5651, bank + Soft-NMS 0.6273. Bank +
+Soft-NMS − standard −0.0575 [−0.0735, −0.0451]; − fixed chunks + Soft-NMS −0.0510 [−0.0622, −0.0370]. Time: bank 0.917 s,
+standard 0.458 s (2.00×), chunks 2.121 s. The bank does not transfer to the tiny checkpoint: there it is worse than both
+the standard prompt and the other invariant method (fixed chunks), and its cost reaches the 2× limit. Fixed chunks
+themselves are 2.52 points below the standard prompt on tiny (0.6596 vs 0.6848; with Soft-NMS 0.6783 vs 0.6936).
+**#9 Qualitative figure** (`paper/fig_qual.pdf`, `bank/make_qual_figure.py`): fixed selection rule (present pairs whose
+standard-prompt detection flips between the two image-independent requests, ordered by MD5): 100 of 1,469 pairs
+(6.8%) qualify; the bank + Soft-NMS detects 45 of them at ≥ 0.35 and has a correct top box on 91.

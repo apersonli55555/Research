@@ -1,0 +1,2 @@
+present pairs 1469; standard detection flips between the two requests 100 (6.8%); of these the bank + Soft-NMS detects 45 at >= 0.35 and has a correct top box (any score) on 91
+saved ovd/paper/fig_qual.pdf pairs: [('000000138248.jpg', 'bowl'), ('000000122118.jpg', 'clock'), ('000000274184.jpg', 'log'), ('000000480936.jpg', 'spectacles')]

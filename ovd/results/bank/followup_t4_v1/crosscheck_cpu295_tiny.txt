@@ -1,0 +1,5 @@
+3951 lists in both runs
+  F bank           n=1317  top-score |diff| max 0.0123 median 0.00003  top-box max 234.54px  empty/non-empty mismatches 0
+  F fixed          n=1317  top-score |diff| max 0.0038 median 0.00003  top-box max 126.34px  empty/non-empty mismatches 0
+  F stock5         n=1317  top-score |diff| max 0.0033 median 0.00003  top-box max 171.86px  empty/non-empty mismatches 0
+largest top-score difference: 0.0123

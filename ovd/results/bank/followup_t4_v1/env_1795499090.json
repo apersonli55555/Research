@@ -1,0 +1,16 @@
+{
+ "gpu": "Tesla T4",
+ "torch": "2.14.1+cu130",
+ "transformers": "5.22.1",
+ "device": "cuda",
+ "parts": [
+  "A",
+  "B",
+  "C",
+  "E",
+  "F",
+  "G"
+ ],
+ "limit": 0,
+ "started": 1795499090.7638922
+}
