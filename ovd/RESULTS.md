@@ -381,3 +381,33 @@ model's encoder text output exactly (max abs difference 0.0). Result pending.
 Summary of the cost search (all pre-registered, all on held-out-free or fixed-rule evaluations): batching (−2–4% time),
 anchored context (−4 AP, 58–66% interference cut), image shortlist (0.516), shared boxes + raw tokens (0.382), + read-only
 tokens (0.664), + decoder re-run (0.630) vs fixed chunks 0.756. No one-pass invariant variant reaches the fixed chunks.
+
+## OVD run 3g — training-free FIXED CLASS BANK for Grounding DINO (implemented and run by the owner's expert), reported 27 Nov 2026
+**Status: reported by the expert; source files are on the owner's Drive and NOT yet in this repository; independent
+re-computation pending.** Method: the 1,203 LVIS names encoded once by Grounding DINO's own BERT backbone in canonical
+256-token chunks; per class, the mean of its name's contextualised wordpiece states → one cached vector per class;
+at inference the 1,203-vector bank is injected at the text-backbone output (before text projection and the multimodal
+encoder; text-length limit extended; identity text self-attention mask; zero text position ids). One encoder + query
+selection + decoder pass per image with all classes in fusion; the request selects output columns only → list-invariant
+by construction. Controls (expert): re-injecting a five-class prompt's own cached text states reproduces native boxes and
+logits (atol = rtol = 1e-5); one class alone vs. inside a reversed 200-class list → identical outputs (1e-5).
+- **Development pilot** (the 24 images / 100 pairs of runs 3d–3f, Tesla T4): mAP50 bank 0.76497 vs fixed chunks 0.75574
+  (+0.92); latency bank 1.027 s vs standard five-class 0.609 s (1.685×).
+- **Fresh validation** (method frozen; 100 LVIS images not in the pilot, fixed hash order; 467 image–target pairs;
+  five-class requests = the image's planned targets, filled deterministically; one NVIDIA L4):
+  | method | mAP50 | mean s/image |
+  |---|---|---|
+  | standard five-class Grounding DINO | 0.712894 | 0.355950 |
+  | fixed bank (1,203 classes) | 0.660563 | 0.640633 |
+  | canonical fixed chunks needed for the request | 0.643725 | 1.398597 |
+  Bank − fixed chunks +1.68 AP (paired image-bootstrap 95% CI −1.65 to +3.97: observed pass of the −1-point margin;
+  non-inferiority NOT established); 2.18× faster than fixed chunks. Bank vs standard five-class: 1.80× latency, −5.23 AP.
+  Timing excludes disk I/O, export and one-time bank construction; latency measured for five-class requests only.
+  Evaluator: `full_analysis.APTable`, independent per-class mode, project-sampled LVIS pairs (not official LVIS AP).
+- Expert's additional negatives on the pilot: 2B shortlist with fixed-chunk substitution 0.6707 (43/53 present and 2/47
+  absent targets selected; 62.30 s/image serial all-class scoring); hard / soft NMS on 2B detections 0.6699 / 0.6693.
+- Files to import: `fixed_bank_l4.ipynb`, `validate_fixed_bank.ipynb`, `MyDrive/ovd/fixed_bank_1795484911264138629.json`,
+  `MyDrive/ovd/bank_validation_1795488385837158854/{manifest.json, per_image.jsonl, summary.json}`.
+- Reading against the pre-registered criteria: interference 0 (by construction); accuracy vs. the better baseline — on
+  this validation the standard (uncorrected) five-class request is the better baseline and the bank is 5.2 AP below it,
+  so criterion (ii) is NOT met there, while it is +1.7 vs. the previous invariant method; cost 1.80× standard (< 2×, met).

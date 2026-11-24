@@ -225,8 +225,15 @@ anchor names -- removes only 58--66\% of the interference and loses 4 mAP50 poin
 adopt it. Sharing one fixed-prompt pass across classes keeps most boxes (ground-truth recall at IoU 0.5: 0.799 vs.\
 0.852 for the canonical chunks) and is invariant by construction, but even when each class's tokens read the fixed pass's
 visual states through the encoder (an exact replay of the model's text path) mAP50 reaches 0.664 vs.\ 0.756 for the fixed
-chunks on 100 held-out LVIS pairs; the image features, already fused with the fixed prompt, appear to be the bottleneck. Cheap invariance for small vocabularies from large label spaces remains
-open for early-fusion detectors.
+chunks on 100 held-out LVIS pairs; read-only scoring is not enough. What works is letting a \emph{fixed bank} of all 1{,}203 class representations
+take part in fusion: each class name is encoded once by the detector's own text backbone (mean of its contextualised
+wordpieces), the 1{,}203 vectors are injected as the text input of a single image pass (one text position per class,
+identity text self-attention), and the request only selects output columns, so outputs are list-invariant by
+construction. On 100 further held-out LVIS images (467 image--class pairs; method frozen on the 24 development images)
+the bank reaches 0.661 mAP50 versus 0.644 for the fixed chunks (paired 95\% CI of the difference $-$1.65 to $+$3.97
+points) at 0.641 versus 1.399\,s per image for five-class requests on an L4, i.e.\ 1.80$\times$ standard
+prompt-conditioned inference (0.356\,s), which remains more accurate on these requests (0.713) but is not
+list-invariant. \textbf{[TODO: import the bank's result files and re-run the independent check before submission.]}
 \begin{table}[t]\centering\small\setlength{\tabcolsep}{3pt}
 \caption{Latency per image on one L4 GPU, held-out COCO (s); vocabulary of 80 / 5 / 20 names.}\label{tab:lat}
 \begin{tabular}{llccc}\toprule
@@ -283,8 +290,10 @@ YOLO-World & .602 (.001) & .592 (.006) & .585 (.026) & \textbf{.615} (.000)\\\bo
 
 \section{Limitations}
 Base/small checkpoints only (one 24\,GB GPU); two datasets; the visually confusable family is defined with CLIP; the
-pruning baseline omits VocAda's captioner. Grounding DINO's fixed context is expensive for small vocabularies drawn from
-a large label space (Sec.~Cost). Independent read-out raises false alarms on verified-absent LVIS classes for OWLv2.
+pruning baseline omits VocAda's captioner. Grounding DINO's fixed chunks are expensive for small vocabularies drawn from
+a large label space; the fixed class bank reduces this to 1.80$\times$ standard inference but is 5.2 mAP50 points below
+standard five-class prompting on our validation sample, and its accuracy advantage over the fixed chunks is not yet
+statistically established (Sec.~Cost). Independent read-out raises false alarms on verified-absent LVIS classes for OWLv2.
 The LVIS evaluation plan was built on two machines: images, targets and the random, unrelated, similar and full-list
 vocabularies are identical, but the visually confusable and pruning lists (the only ones built from CLIP image
 embeddings) differ slightly, so those LVIS rows for Grounding DINO and for OWLv2/YOLO-World use slightly different lists
