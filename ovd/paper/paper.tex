@@ -132,7 +132,7 @@ five-class Grounding DINO ($+$1.89 points, paired 95\% CI $-$0.07 to $+$2.66: no
 standard inference (0.360\,s) and 2.15$\times$ faster than the chunks (1.399\,s); it is list-invariant, the standard
 prompt is not. Adding the same Soft-NMS to the standard prompt gives 0.650 as well ($+$0.003, CI $-$1.78 to $+$0.91), so
 non-inferiority is established against the unmodified prompt only; without Soft-NMS bank and chunks score alike
-(0.594), so the accuracy gain is due to the bank together with class-wise Soft-NMS. The raw bank emits many duplicate boxes (24.9\% of its false positives fall on an already-matched object, vs.\ 16.4\% for chunks); Soft-NMS removes 91\% of them, which is why it adds 5.59 points to the bank but 2.32 to chunks. The gain over chunks is largest for small objects ($+$6.03) and persists without single-image classes ($+$2.78).
+(0.594), so the accuracy gain is due to the bank together with class-wise Soft-NMS. The raw bank emits more duplicate boxes (24.9\% of false positives vs.\ 16.4\% for chunks); Soft-NMS removes 91\% of them.
 \begin{table}[t]\centering\small\setlength{\tabcolsep}{3pt}
 \caption{Grounding DINO on 600 fresh LVIS images (2{,}669 pairs, five-class requests, one L4). Inv.: output unchanged
 by the rest of the request. $\Delta$: bank + Soft-NMS minus row, paired image-bootstrap 95\% CI.}\label{tab:bank}
