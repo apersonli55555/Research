@@ -20,7 +20,8 @@ removed or reordered? We build a counterfactual protocol that holds the target p
 weights fixed and varies only the rest of the vocabulary (1 to 1{,}203 classes; random, semantically similar, visually
 confusable and unrelated distractors; five orders), and apply it to Grounding DINO, YOLO-World and OWLv2 on COCO and
 LVIS. On a pre-registered pilot, Grounding DINO's mAP50 changes by 8.3 points (95\% CI [6.1, 9.5]) and 16.7\% of its
-detections flip between a single-class and an 80-class vocabulary, while reordering changes nothing. We trace the dependence to specific architectural steps: OWLv2's class
+detections flip between a single-class and an 80-class vocabulary; reordering the 80 names within one prompt flips
+no detection, while on LVIS reordering across chunk boundaries flips 3.6\%. We trace the dependence to specific architectural steps: OWLv2's class
 scores are invariant by construction and change only through top-1 label competition; YOLO-World's text guidance is a
 maximum over the vocabulary, which makes it exactly order-invariant but set-dependent; Grounding DINO's text encoder is
 masked per phrase, so its dependence arises in cross-modal fusion, query selection, label competition and, beyond 256
