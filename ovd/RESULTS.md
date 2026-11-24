@@ -582,3 +582,19 @@ themselves are 2.52 points below the standard prompt on tiny (0.6596 vs 0.6848; 
 **#9 Qualitative figure** (`paper/fig_qual.pdf`, `bank/make_qual_figure.py`): fixed selection rule (present pairs whose
 standard-prompt detection flips between the two image-independent requests, ordered by MD5): 100 of 1,469 pairs
 (6.8%) qualify; the bank + Soft-NMS detects 45 of them at ≥ 0.35 and has a correct top box on 91.
+
+## Expert revision package (24 Nov 2026) — imported after independent checks
+- **Producing notebook of run 3h** (`bank/fixed_bank_soft_confirm.ipynb`, previously missing). Its first cell states the
+  primary test before results (lower paired-bootstrap bound of bank + Soft-NMS − unmodified five-class prompt above −0.01
+  and time under 2×). Checked here against the saved run: its selection rules reproduce the manifest exactly — 600/600
+  images in its SHA-256 order, the targets of 600/600 images (3 present by MD5 order, 2 verified absent), and the
+  five-name requests of 600/600 images. Its Soft-NMS, export and image-bootstrap code match those verified earlier.
+- **Request sensitivity** (`results/bank/request_sensitivity/`: `request_audit.py`, `.json`, `.pdf`; exploratory, on the
+  saved run-3j outputs, 3,000 paired image resamples). Re-run here on our supplement: byte-identical output. At the 0.35
+  threshold the two image-independent requests trigger only for A on 67 present pairs and only for B on 65: a net
+  difference of two detections, but 132/1,469 decisions changed (9.0%, CI 7.5–10.6%). On verified-absent targets 14/1,200
+  change (1.2%, CI 0.6–1.8%). Our own recomputation (seed 0): 67 / 65 / 132, CI 7.5–10.5%; absent 6 / 8 / 14, CI 0.6–1.8%.
+  Across thresholds 0.20–0.50 the present-pair change rate is 5.6–10.1%. Interference largely cancels in aggregate
+  counts while changing individual decisions.
+- The revised PDF in the package was built from an earlier source and omits two later statements (on grounding-dino-tiny
+  no invariant method meets the 1-point criterion); those statements are kept. Only the page-3 text edits were adopted.

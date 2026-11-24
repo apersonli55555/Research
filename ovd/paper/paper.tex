@@ -135,12 +135,14 @@ five-class Grounding DINO ($+$1.89 points, paired 95\% CI $-$0.07 to $+$2.66: no
 standard inference (0.360\,s) and 2.15$\times$ faster than the chunks (1.399\,s); it is list-invariant, the standard
 prompt is not. Adding the same Soft-NMS to the standard prompt gives 0.650 as well ($+$0.003, CI $-$1.78 to $+$0.91), so
 non-inferiority is established against the unmodified prompt only; without Soft-NMS bank and chunks score alike
-(0.594), so the accuracy gain is due to the bank together with class-wise Soft-NMS. The raw bank emits more duplicate boxes (24.9\% of false positives vs.\ 16.4\% for chunks); Soft-NMS removes 91\% of them. The official LVIS evaluator agrees to within 0.0005 AP50.
-\textbf{Follow-up checks} (same 600 images, one T4). (i) The requests above were built from each image's own
-targets, which favours the standard prompt; with requests drawn without looking at the image it reaches 0.614 (0.634
-with Soft-NMS), so the bank leads by 3.6 points (CI $+$1.6 to $+$4.3), and by 1.6 (CI $-$0.07 to $+$2.5) when both use
-Soft-NMS; two such requests flip 9.0\% of the standard prompt's detections of present objects (Fig.~\ref{fig:qual}).
-(ii) A class vector does not depend on the other names (identical to $1.8{\times}10^{-6}$ when built in other orders
+(0.594), so the accuracy gain is due to the bank together with class-wise Soft-NMS. The raw bank emits more duplicate boxes (24.9\% of false positives vs.\ 16.4\% for chunks); Soft-NMS removes 91\% of them. On the sampled pairs, the official LVIS evaluator agrees within 0.0005 AP50.
+\textbf{Follow-up checks} (same 600 images, one T4).
+(i) Table~\ref{tab:bank} uses targets from the image. Holding the target fixed and sampling four distractors
+independently of the image gives 0.614 for the standard prompt (0.634 with Soft-NMS). The bank leads by 3.6 points
+[1.6, 4.3], or 1.6 [$-$0.07, 2.5] with matched Soft-NMS. At threshold 0.35, 67 present pairs trigger only for request A
+and 65 only for B: a net difference of two, yet 132/1{,}469 decisions change (9.0\%, CI 7.5--10.6\%; 14/1{,}200 = 1.2\%
+on verified-absent targets), so interference largely cancels in aggregate counts. Figure~\ref{fig:qual} also checks
+location. (ii) A class vector does not depend on the other names (identical to $1.8{\times}10^{-6}$ when built in other orders
 or alone), but which classes the bank holds shifts mAP50 by about one point (two random halves, neither significant):
 the bank removes dependence on the request, not on the chosen dictionary. (iii) Mean pooling with the identity mask
 beats first- or last-wordpiece pooling and a full mask (by 0.6 to 0.9 points). (iv) Its cost is constant (1.16\,s per
@@ -151,10 +153,10 @@ fixed chunks with Soft-NMS, at 2.00$\times$ standard cost. The bank is an approx
 fixed chunks are invariant on both, but on tiny they are 2.52 points below the standard prompt, so no invariant
 method meets our 1-point criterion there.
 \begin{figure}[t]\centering\includegraphics[width=\columnwidth]{fig_qual.pdf}
-\caption{Same image, same target, two requests drawn without looking at the image (Grounding DINO base). Rows: the
-first four (by hash) of the 100 present targets (6.8\%) whose standard-prompt detection flips between the two
-requests; the bank (right) is the same under any request; of the 100 it detects 45 at $\geq$ 0.35 and has a correct top box for 91. Top box drawn;
-solid: score $\geq$ 0.35, dashed: below; green: correct, orange: wrong.}\label{fig:qual}\end{figure}
+\caption{Grounding DINO base. Each request retains the target and draws four distractors independently of the image.
+Rows are the first four pairs by hash among 100/1{,}469 present pairs (6.8\%) whose top box passes both score and IoU
+cutoffs for just one request. The bank passes both on 45/100 and localizes 91/100 regardless of score. Solid boxes
+score at least 0.35, dashed boxes less. Green boxes match a target at IoU 0.5 or higher; orange boxes fall below it.}\label{fig:qual}\end{figure}
 \begin{table}[t]\centering\footnotesize\setlength{\tabcolsep}{2pt}
 \caption{Grounding DINO on 600 fresh LVIS images (2{,}669 pairs, five-class requests, one L4). Inv.: output unchanged
 by the rest of the request. $\Delta$: bank + Soft-NMS minus row, paired image-bootstrap 95\% CI.}\label{tab:bank}
