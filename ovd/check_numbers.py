@@ -26,8 +26,9 @@ def variants(x):
 
 def corpus():
     txt = open(os.path.join(HERE, "RESULTS.md")).read()
-    for p in glob.glob(os.path.join(HERE, "results", "*")):
-        txt += "\n" + open(p).read()
+    for p in glob.glob(os.path.join(HERE, "results", "**", "*"), recursive=True):
+        if os.path.isfile(p):
+            txt += "\n" + open(p).read()
     nums = set()
     for n in numbers_in(txt):
         nums |= variants(n)
