@@ -373,3 +373,11 @@ boxes vs. the target's canonical chunk: IoU 0.5 0.799 vs 0.852; IoU 0.75 0.683 v
 text tokens 0.3819 vs fixed chunks 0.7558. The shared boxes are nearly sufficient; raw text tokens are not.
 Variant B (`read_only_text.py`): replay of the fixed prompt's own text through the encoder text side reproduces the
 model's encoder text output exactly (max abs difference 0.0). Result pending.
+- Variant B (read-only class tokens on the fixed pass's visual states; exact-replay validated): **mAP50 0.6643** vs fixed
+  chunks 0.7558 (k1 0.7002, all 0.7688 on the same pairs). Invariant, one pass + cheap text replay. Not adopted (−9.2).
+- Variant C (B + per-class decoder re-run; decoder replay validated exact, 0.0): **mAP50 0.6302**; CPU timing fixed
+  pass 7.81 s/image, per-class decoder 1.406 s (≈ 18% of a pass). Not adopted; worse than B, so the residual gap is not
+  in the decoder but most likely in the encoder's image features, which were fused with the fixed prompt's words.
+Summary of the cost search (all pre-registered, all on held-out-free or fixed-rule evaluations): batching (−2–4% time),
+anchored context (−4 AP, 58–66% interference cut), image shortlist (0.516), shared boxes + raw tokens (0.382), + read-only
+tokens (0.664), + decoder re-run (0.630) vs fixed chunks 0.756. No one-pass invariant variant reaches the fixed chunks.

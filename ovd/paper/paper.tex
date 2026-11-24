@@ -222,7 +222,10 @@ requested class: for the full 1{,}203-name list it costs the same as original in
 inference (4.801\,s). Running the touched chunks as one batched forward pass saves only 2--4\% (e.g.\ 1.557 vs.\ 1.615\,s
 for 5 names), because the cost is per prompt. A cheaper approximation -- one prompt made of the vocabulary plus 40 fixed
 anchor names -- removes only 58--66\% of the interference and loses 4 mAP50 points on the development split, so we do not
-adopt it. Cheap invariance for small vocabularies from large label spaces remains
+adopt it. Sharing one fixed-prompt pass across classes keeps most boxes (ground-truth recall at IoU 0.5: 0.799 vs.\
+0.852 for the canonical chunks) and is invariant by construction, but even when each class's tokens read the fixed pass's
+visual states through the encoder (an exact replay of the model's text path) mAP50 reaches 0.664 vs.\ 0.756 for the fixed
+chunks on 100 held-out LVIS pairs; the image features, already fused with the fixed prompt, appear to be the bottleneck. Cheap invariance for small vocabularies from large label spaces remains
 open for early-fusion detectors.
 \begin{table}[t]\centering\small\setlength{\tabcolsep}{3pt}
 \caption{Latency per image on one L4 GPU, held-out COCO (s); vocabulary of 80 / 5 / 20 names.}\label{tab:lat}
