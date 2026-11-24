@@ -56,7 +56,7 @@ full is marked [VERIFY]. This file will be updated after the pilot and the full 
   object that the full captioner-based VocAda would prune better; running it is future work and is stated as a limitation.
 - **ICCV 2027 dates/policies** must be checked on the official site before submission; this file states none.
 
-## Pre-registered success criteria (PLAN.md), evaluated once on held-out data (26 Nov 2026)
+## Pre-registered success criteria (PLAN.md), evaluated once on held-out data (23 Nov 2026)
 | criterion | Grounding DINO | YOLO-World | OWLv2 |
 |---|---|---|---|
 | goal 1: interference ≥ 3 AP or > 10% flips | **met** (COCO 9.8 AP k1 vs ours; 27.8% instances flip) | **met** (LVIS 18.1% flip; 11.5 AP k1 vs full) | **met** on LVIS (20.7 AP, 19.0% flips); COCO 2.3 AP / 3.1% (below) |
@@ -67,7 +67,7 @@ full is marked [VERIFY]. This file will be updated after the pilot and the full 
 Independent verification: `independent_check.py` 6/6 GPU headline mAPs + 90/90 table values (all groups) on the CPU-run files, max diff 2.2e-16; `check_numbers.py`
 214/214 manuscript numbers traced; pilot reproduced GPU vs. CPU to ≤ 0.001.
 
-## Submission readiness (26 Nov 2026): COMPLETE AS A RESEARCH STUDY; NOT YET SUBMISSION-READY
+## Submission readiness (23 Nov 2026): COMPLETE AS A RESEARCH STUDY; NOT YET SUBMISSION-READY
 All planned experiments, corrections, ablations, statistics, figures and a 6-page draft with no open TODOs are done and
 traceable. Before an ICCV submission:
 1. ~~Resolve the LVIS plan difference~~ — resolved: images, targets and all text-ranked vocabularies identical; only the
@@ -78,12 +78,12 @@ traceable. Before an ICCV submission:
 Main reviewer risks remain "known/obvious" (mitigated by the controlled protocol and mechanism) and "the fix is simple"
 (mitigated by it matching or beating every baseline at ~1× cost, except the stated LVIS small-vocabulary case).
 
-### Update 27 Nov 2026 — fixed class bank (owner's expert, run 3g)
+### Update 24 Nov 2026 — fixed class bank (owner's expert, run 3g)
 A training-free fixed bank of 1,203 class embeddings gives list-invariant Grounding DINO detections in one pass:
 0.661 vs 0.644 mAP50 for fixed chunks on 100 fresh LVIS images (CI −1.65 to +3.97; non-inferiority not established),
 0.641 s vs 1.399 s (1.80× standard five-class inference, 0.356 s / 0.713 mAP50). Imported and independently recomputed (exact match; see RESULTS.md).
 
-### Update 28 Nov 2026 — 600-image confirmation (run 3h, independently verified)
+### Update 24 Nov 2026 — 600-image confirmation (run 3h, independently verified)
 Fixed class bank + class-wise Soft-NMS on 600 fresh LVIS images: 0.650 vs 0.631 mAP50 for unmodified standard five-class
 Grounding DINO (+1.89, CI −0.07 to +2.66 → non-inferior at −1), +3.26 over fixed chunks + Soft-NMS, 1.81× standard latency,
 list-invariant. Pre-registered criteria for Grounding DINO on LVIS with small vocabularies: (i) interference 0 — met;

@@ -1,6 +1,6 @@
 # Fixed class bank for Grounding DINO — FRESH-IMAGE VALIDATION (100 non-pilot LVIS images, 467 pairs, NVIDIA L4).
 # Notebook cells as provided by the owner's expert (validate_fixed_bank.ipynb), copied from the owner's message of
-# 27 Nov 2026. Colab export: '%' lines are IPython magics. Results: ovd/results/bank/bank_validation_1795488385837158854/.
+# 24 Nov 2026. Colab export: '%' lines are IPython magics. Results: ovd/results/bank/bank_validation_1795488385837158854/.
 # Cell 1 (markdown): Run all cells on an L4. Uses your existing Drive plan and ZIP. The first 100 non-pilot images in a
 # fixed hash ordering form the validation set (or all available if fewer). All planned targets are kept. Times exclude
 # file I/O, detection export, and one-time bank setup. Results include the original independent target-score metric

@@ -1,6 +1,6 @@
 # Fixed class bank for Grounding DINO — DEVELOPMENT PILOT (24 images / 100 pairs).
 # Notebook cells as provided by the owner's expert (fixed_bank_l4.ipynb), copied verbatim from the owner's message
-# of 27 Nov 2026. Colab notebook export: lines starting with '%' are IPython magics. Result file:
+# of 24 Nov 2026. Colab notebook export: lines starting with '%' are IPython magics. Result file:
 # ovd/results/bank/fixed_bank_1795484911264138629.json (run on a Tesla T4).
 #
 # Cell 1 (markdown): One fixed visual encoder pass over 1,203 class embeddings. Use the same L4 and Drive as the previous

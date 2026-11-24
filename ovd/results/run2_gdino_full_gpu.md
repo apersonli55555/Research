@@ -1,4 +1,4 @@
-# Owner's Colab L4 output, pasted 26 Nov 2026 (code 0f8a9af / 668d666). Verbatim tables from full_summary.md.
+# Owner's Colab L4 output, pasted 23 Nov 2026 (code 0f8a9af / 668d666). Verbatim tables from full_summary.md.
 ## coco / gdino: 1000 images, 5013 pairs, 120312 runs
 
 | group | mAP50 dep | mAP50 indep | ΔmAP vs k1 95% CI | mean |Δs| | mean Δs | det flips | loc flips | FA dep | chunk |

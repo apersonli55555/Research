@@ -3,6 +3,10 @@
 Every run is recorded here, including failed ones, with its date and the exact command. Paper numbers come only
 from this file.
 
+> **Date correction (24 Nov 2026).** Headings in this log, `PLAN.md` and `NOVELTY.md` written on 23–24 Nov 2026 had been labelled with
+> later dates (25–28 Nov). Each was corrected to the date its line was committed (from `git blame`); the order of
+> entries, and so every "before any result" statement, is unchanged and can be checked in the git history.
+
 ## Smoke tests (CPU, 3 COCO images — code checks only, not results)
 - 22 Nov 2026: `data --n-images 3`, then `run` for each model on a few pairs. OWLv2 fast path vs full forward:
   max |difference| 3.6e-7 over 36 runs (so `--owl-fast` is exact up to float error). The analysis runs end to end.
@@ -251,7 +255,7 @@ numbers. Table: `ovd/results/run2g_coco_gdino_sub200_cpu.md`. Still provisional 
 - **Query-selection probe** (314 instances): mean |score change| k1 → all_0: 0.116 full vs. 0.117 target-only query
   selection; k1 → rand20_0: 0.093 vs. 0.094. Confirms run 2e: the effect is not query-slot competition.
 
-## OVD run 2h — Grounding DINO on held-out LVIS, CPU SUBSAMPLE extended to the first 100 pairs, 24–25 Nov 2026
+## OVD run 2h — Grounding DINO on held-out LVIS, CPU SUBSAMPLE extended to the first 100 pairs, 23 Nov 2026
 Same command as run 2f with `--limit 100` (resumed; 3,100 runs). Supersedes run 2f. Table:
 `ovd/results/run2h_lvis_gdino_sub100_cpu.md`. Provisional relative to the full GPU run.
 - **Chunking order effect (confirms 2f):** among the 5 orders of all 1,203 names (≈ 14 chunks of ~87 names),
@@ -263,7 +267,7 @@ Same command as run 2f with `--limit 100` (resumed; 3,100 runs). Supersedes run 
 - **FIX (fixed canonical chunks):** 0.756, interference 0; FIX − k1 +0.056 [−0.013, +0.113]; FIX − all +0.005
   [−0.022, +0.029]; FIX − prune +0.368 [+0.233, +0.467]. Not significant vs. k1 or all at n = 100 pairs.
 
-## OVD run 4b — latency on the owner's Colab L4 GPU, held-out COCO, 25 Nov 2026
+## OVD run 4b — latency on the owner's Colab L4 GPU, held-out COCO, 23 Nov 2026
 Command: `vocab_full.py bench --dataset coco --model {gdino,yoloworld,owlv2}` (30 images after 3 warm-up, CUDA-synchronised,
 s/image). Code version 668d666 (research repo).
 | model | method | full 80 | random 5 | random 20 |
@@ -289,7 +293,7 @@ floating-point differences in CLIP embeddings reordering near-tied neighbours am
 matched). `ovd/plan_fingerprint.py` hashes each part (images, pairs, each distractor family) to locate it. Consequence: Grounding DINO LVIS (Colab) and
 OWLv2 / YOLO-World LVIS (container) are each internally consistent but may not use identical distractor lists.
 
-## OVD runs 2i/2j/4c — FULL held-out Grounding DINO on the owner's L4 (COCO 1,000 images; LVIS 600 images) + LVIS latency, 26 Nov 2026
+## OVD runs 2i/2j/4c — FULL held-out Grounding DINO on the owner's L4 (COCO 1,000 images; LVIS 600 images) + LVIS latency, 23 Nov 2026
 Commands: `vocab_full.py run --model {gdino_qs,gdino}` for coco and lvis (LVIS resumed after a disconnect and a GPU
 usage limit; plan file unchanged, md5 22114501…), `bench --dataset lvis`, `full_analysis.py --boot 1000`,
 `independent_check.py` (6/6 headline values agree, max diff 1.1e-16). Verbatim output: `ovd/results/run2_gdino_full_gpu.md`.
@@ -309,7 +313,7 @@ These supersede the CPU subsamples 2e–2h (which agree in direction).
   **Criterion (iii) not met for Grounding DINO's fixed context on LVIS with small vocabularies**: it must run every
   canonical chunk that contains a requested class (up to 14 chunks). It is met for the full list and on COCO.
 
-## Final verification (26 Nov 2026)
+## Final verification (23 Nov 2026)
 Paper: 0 TODOs; `check_numbers.py` → 214/214 traced. Figures redrawn from `ovd/results/figure_data_heldout.json`
 (analysis summaries; Grounding DINO rows parsed from `run2_gdino_full_gpu.md`). Success criteria: see NOVELTY.md.
 `independent_check.py --all-groups` (every table row, not only k1/all/FIX) on all raw files held in the container:
@@ -317,14 +321,14 @@ COCO OWLv2+YOLO-World 24 values, LVIS OWLv2+YOLO-World 36, Grounding DINO COCO s
 90/90 agree, largest absolute difference 2.2e-16. Output: `ovd/results/independent_check_allgroups.txt`. (The full
 Grounding DINO GPU files are on the owner's Drive; their headline values were checked on Colab, 6/6.)
 
-## OVD run 4d — batched fixed context for Grounding DINO (engineering for criterion iii), 26 Nov 2026
+## OVD run 4d — batched fixed context for Grounding DINO (engineering for criterion iii), 23 Nov 2026
 `GDino.batch(img, chunks)`: all canonical chunks touched by a vocabulary in one forward pass (prompts padded to the
 longest; image backbone computed once and expanded). Equivalence vs. per-chunk passes (CPU, 3 LVIS chunks, one image):
 max |score difference| 3.3e-05, max box difference 0.9 px, identical top-20 boxes in every chunk. CPU time 28.7 s vs.
 28.4 s (no CPU gain, as expected for a compute-bound CPU; a 12-chunk batch exceeded the container's 15 GB RAM).
 GPU latency pending (`bench --dataset lvis --model gdino`, new method `fixctx_batch`, batches of ≤ 8 chunks).
 
-## LVIS plan identity — RESOLVED (owner's Colab, code c00cb88, 26 Nov 2026)
+## LVIS plan identity — RESOLVED (owner's Colab, code c00cb88, 23 Nov 2026)
 `plan_fingerprint.py` on the Colab plan vs. the container plan: names 5df393fa6e, images 6c0fb871bf, gt 1255111891,
 pairs e8e7bb9f47, all ce7c7c30da, far cc79b599f5, k 6657b21726, near 3576012995, rand d9f380a5c1 — **identical**.
 Different: prune (Colab d921807c72 vs. 712e3f5d61) and vis (cfd5a3bf25 vs. 6065fe809a) — the only two lists built from
@@ -332,7 +336,7 @@ CLIP *image* embeddings, which differ slightly between machines. So all three de
 targets and random/unrelated/similar/full-list vocabularies; only the vis* and prune rows of Grounding DINO (Colab plan)
 vs. OWLv2/YOLO-World (container plan) are built from slightly different lists.
 
-## OVD run 4e — batched fixed context on the L4 (LVIS, s/image), 26 Nov 2026 — NEGATIVE
+## OVD run 4e — batched fixed context on the L4 (LVIS, s/image), 23 Nov 2026 — NEGATIVE
 | vocabulary | original | fixed context | fixed context, batched (≤ 8 chunks) | single-class |
 |---|---|---|---|---|
 | full 1,203 | 4.210 | 4.301 | 4.178 | — |
@@ -348,7 +352,7 @@ and for every COCO vocabulary. Repeated original/fixed-context timings agree wit
 (COCO 12 + LVIS 18 groups) agree, largest absolute difference 1.1e-16. Independent verification is now complete for every
 reported mAP: 6/6 + 30/30 (GPU) and 90/90 (CPU).
 
-## OVD run 3d — anchored context for Grounding DINO (PLAN amendment C), DEVELOPMENT split, 27 Nov 2026 — NEGATIVE
+## OVD run 3d — anchored context for Grounding DINO (PLAN amendment C), DEVELOPMENT split, 23 Nov 2026 — NEGATIVE
 Command: `anchor_dev.py --pilot <pilot> --lvis-plan <plan_lvis.json> --pairs 40` (720 runs, CPU; resumed once after a
 container restart). Anchors: 40 fixed non-COCO LVIS names (first by MD5). Compared with original inference on the same
 40 pairs (run 1d file).
@@ -360,7 +364,7 @@ Interference reduced by 66% (score) and 58% (flips), below the pre-set 80%; best
 the pre-set accuracy criterion. **Not adopted; not run on held-out data.** The cost problem for small vocabularies from
 large label spaces (run 4e) remains open.
 
-## OVD run 3e — expert idea 1: image-selected shortlist (PLAN amendment D), held-out LVIS, CPU, 27 Nov 2026 — NEGATIVE
+## OVD run 3e — expert idea 1: image-selected shortlist (PLAN amendment D), held-out LVIS, CPU, 24 Nov 2026 — NEGATIVE
 `shortlist.py rank` (CLIP ranking of all 1,203 names for each of the 600 images; mean shortlist 93.3 names) then
 `replay` on the saved fixed-chunk outputs of the first 100 pairs (run 2h): instance survival 0.455 (small 0.310, medium
 0.429, large 0.850); mAP50 fixed chunks 0.7558 → replay 0.5114. Real one-pass run on the same 100 pairs (24 images):
@@ -382,8 +386,8 @@ Summary of the cost search (all pre-registered, all on held-out-free or fixed-ru
 anchored context (−4 AP, 58–66% interference cut), image shortlist (0.516), shared boxes + raw tokens (0.382), + read-only
 tokens (0.664), + decoder re-run (0.630) vs fixed chunks 0.756. No one-pass invariant variant reaches the fixed chunks.
 
-## OVD run 3g — training-free FIXED CLASS BANK for Grounding DINO (implemented and run by the owner's expert), reported 27 Nov 2026
-**Status: VERIFIED (27 Nov 2026).** Source code (notebook cells, verbatim): `ovd/bank/fixed_bank_pilot_cells.py`,
+## OVD run 3g — training-free FIXED CLASS BANK for Grounding DINO (implemented and run by the owner's expert), reported 24 Nov 2026
+**Status: VERIFIED (24 Nov 2026).** Source code (notebook cells, verbatim): `ovd/bank/fixed_bank_pilot_cells.py`,
 `ovd/bank/validate_fixed_bank_cells.py`. Result files: `ovd/results/bank/`. Method: the 1,203 LVIS names encoded once by Grounding DINO's own BERT backbone in canonical
 256-token chunks; per class, the mean of its name's contextualised wordpiece states → one cached vector per class;
 at inference the 1,203-vector bank is injected at the text-backbone output (before text projection and the multimodal
@@ -412,15 +416,15 @@ logits (atol = rtol = 1e-5); one class alone vs. inside a reversed 200-class lis
   this validation the standard (uncorrected) five-class request is the better baseline and the bank is 5.2 AP below it,
   so criterion (ii) is NOT met there, while it is +1.7 vs. the previous invariant method; cost 1.80× standard (< 2×, met).
 
-### Independent verification of run 3g (27 Nov 2026)
+### Independent verification of run 3g (24 Nov 2026)
 Separately written IoU/matching/AP code (`independent_check.py` functions) on `ovd/results/bank/…/per_image.jsonl` with the
 container's LVIS plan (identical images/targets/ground truth, fingerprint-checked): bank 0.660563, stock5 0.712894, fixed
 0.643725 — identical to `summary.json` (difference 0.0). Paired image bootstrap (300 resamples, own code) for bank − fixed:
 [−0.0163, +0.0387] vs. reported [−0.0165, +0.0397]. The 100 validation images do not overlap the 24 pilot images; all
 467 pairs are in the plan. Pilot (`fixed_bank_1795484911264138629.json`, 100 records): bank 0.764969 recomputed = reported.
 
-## OVD run 3h — fixed class bank + classwise Gaussian Soft-NMS, 600-image "confirmation" (owner's expert), reported 28 Nov 2026
-**Status: VERIFIED 28 Nov 2026 (see below).** Source to import:
+## OVD run 3h — fixed class bank + classwise Gaussian Soft-NMS, 600-image "confirmation" (owner's expert), reported 24 Nov 2026
+**Status: VERIFIED 24 Nov 2026 (see below).** Source to import:
 `MyDrive/ovd/fixed_bank_soft_confirm_v1/{summary.json, manifest.json, per_image/}` (+ the code that produced it).
 Reported (2,669 LVIS image–class pairs, five-class requests, `full_analysis.APTable` independent mode, NVIDIA L4):
 | method | mAP50 | s/image |
@@ -439,7 +443,7 @@ re-scored excluding them (and the data used to choose Soft-NMS and its parameter
 the 100-image validation: 0.661 vs 0.644) — check for duplicated detections; (3) standard five-class on this set is 0.631
 vs 0.713 on the 100-image validation — explain (different images/requests?); (4) independent recomputation.
 
-### Independent verification of run 3h (28 Nov 2026)
+### Independent verification of run 3h (24 Nov 2026)
 Files imported: `ovd/results/bank/fixed_bank_soft_confirm_v1/` (summary, manifest, overlap_audit, 600 per-image files;
 the notebook that produced them was not included). Checks with separately written code and ground truth rebuilt from the
 official `lvis_v1_val.json` (log: `independent_verification.log`):
@@ -464,7 +468,7 @@ non-inferiority is not established (CI lower −1.78). Open: provenance of the S
 data?) and the producing notebook — to be added from the expert.
 Derived: fixed_soft / bank_soft latency = 1.3991 / 0.6499 = 2.15× (bank faster).
 
-## Expert review of the draft (28 Nov 2026) — actions
+## Expert review of the draft (24 Nov 2026) — actions
 - Soft-NMS provenance (stated by the owner's expert): class-wise Gaussian Soft-NMS (σ 0.5, threshold 0.02, top 50) was
   selected on the 24-image pilot before the 600-image confirmation. The producing notebook is still to be added.
 - Confirmation-set coverage (recomputed from `manifest.json`): 374 classes with a positive target; 126 of them on one
@@ -474,7 +478,7 @@ Derived: fixed_soft / bank_soft latency = 1.3991 / 0.6499 = 2.15× (bank faster)
   prompted objects, attention-sink tokens; now cited and contrasted. SL-Ground (Li, Yang, Jui, Lu; arXiv 2610.24814) and
   MM-Grounding-DINO (Zhao, Chen, Xu, Li, Wang, et al.; arXiv 2401.02361) verified from arXiv pages.
 
-## Run 3h follow-up analyses from saved outputs (expert improvements #10, #8, #2), 28 Nov 2026
+## Run 3h follow-up analyses from saved outputs (expert improvements #10, #8, #2), 24 Nov 2026
 `python ovd/bank_analysis.py --lvis lvis_v1_val.json` (no inference; ground truth rebuilt from the official LVIS v1 val
 file). Full output: `results/bank/bank_analysis_v1.txt`.
 - **#10 Table 1 reproduction.** Point estimates reproduce exactly (stock5 0.6312, stock5_soft 0.6501, fixed 0.5942,
