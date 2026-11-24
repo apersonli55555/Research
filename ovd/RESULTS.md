@@ -463,3 +463,13 @@ construction, at 1.81× standard latency. Against standard + Soft-NMS it is equa
 non-inferiority is not established (CI lower −1.78). Open: provenance of the Soft-NMS settings (chosen on development
 data?) and the producing notebook — to be added from the expert.
 Derived: fixed_soft / bank_soft latency = 1.3991 / 0.6499 = 2.15× (bank faster).
+
+## Expert review of the draft (28 Nov 2026) — actions
+- Soft-NMS provenance (stated by the owner's expert): class-wise Gaussian Soft-NMS (σ 0.5, threshold 0.02, top 50) was
+  selected on the 24-image pilot before the 600-image confirmation. The producing notebook is still to be added.
+- Confirmation-set coverage (recomputed from `manifest.json`): 374 classes with a positive target; 126 of them on one
+  image only.
+- Related work: Ruis, Burghouts & Kuijf, "Fantastic Tractor-Dogs and How Not to Find Them with Open-Vocabulary
+  Detectors", ICLR 2026 (title/authors read from the proceedings PDF) — early-fusion false positives on images without
+  prompted objects, attention-sink tokens; now cited and contrasted. SL-Ground (Li, Yang, Jui, Lu; arXiv 2610.24814) and
+  MM-Grounding-DINO (Zhao, Chen, Xu, Li, Wang, et al.; arXiv 2401.02361) verified from arXiv pages.
