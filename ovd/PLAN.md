@@ -142,3 +142,11 @@ read-only class tokens, plus a re-run of ONLY the decoder per class (same querie
 fixed pass; the decoder cross-attends only to the class's tokens); boxes and scores from the model's own heads.
 Validated: replaying the decoder with the fixed prompt's own text reproduces the model's boxes and logits exactly (0.0).
 Invariant by construction. Same 100 pairs, same adoption rule; cost reported as fixed pass + per-class decoder time.
+
+## Amendment F (24 Nov 2026, before any result): OWLv2 / YOLO-World corrections on the 600-image confirmation set
+Replication of the two non-Grounding-DINO corrections on a third held-out sample (the run-3h images, targets and
+five-name requests; `bank/replicate_owl_yolo.py`; CPU). Conditions: OWLv2 five-name request with single-label output vs
+independent read-out; YOLO-World five-name request (raw and single-label), single class, fixed guide + independent
+read-out. Reported: mAP50 (run-3h definition) with paired image-bootstrap CIs of fix − each condition, and detection
+flips against the single-class output at each model's deployment threshold. All conditions and all results are reported,
+whatever their direction. The criterion is the pre-registered (ii): the fix within 1 AP50 point of the better baseline.
