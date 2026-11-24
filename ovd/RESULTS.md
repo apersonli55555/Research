@@ -607,3 +607,33 @@ ground-truth instances; detections ≥ 0.35 greedily matched at IoU ≥ 0.5. Fou
 found under just one request. Where the top box passes 0.35 and matches under both requests (515 pairs), it switches to a
 different instance of the class in 23 (4.5%; 23 of 206 multi-instance pairs). A change of request therefore mostly decides
 *whether* an object is found, rarely *which* correct box ranks first.
+
+## Run 3l — Amendment G1/G3: full-image LVIS test and tiny diagnosis, owner's Colab L4, 24 Nov 2026
+`bank/full_image_bank.ipynb` → `bank/full_image.py` (commit 6520d59; NVIDIA L4, torch 2.14.1, transformers 5.22.1).
+Outputs: `results/bank/full_image_v1/full_image_v1_outputs.zip`; analysis (`bank/full_image_analysis.py`, lvis-api,
+200 paired image resamples on 4 workers): `results/bank/full_image_v1/analysis.{txt,json}`.
+**Checks.** Part H reproduces the saved run-3h top scores exactly on the same GPU type (5,177 stock5 and 5,066 bank lists,
+max |diff| 0.0000). Part I vs the CPU smoke run on the same 2 images: sorted top-300 scores within 0.007; the
+differences are rank swaps between near-tied classes.
+**G1 — standard full-image LVIS protocol (1,000 fresh images, 13,073 boxes, all 1,203 classes, 300 dets/image):**
+
+| method | AP | AP50 | AP75 | APr | APc | APf | APs | APm | APl |
+|---|---|---|---|---|---|---|---|---|---|
+| chunks + Soft-NMS | 0.3982 | 0.5066 | 0.4186 | 0.3376 | 0.4048 | 0.3985 | 0.2251 | 0.5308 | 0.6901 |
+| bank + Soft-NMS | 0.3779 | 0.4941 | 0.3953 | 0.2478 | 0.3379 | 0.3975 | 0.2341 | 0.4957 | 0.6382 |
+| chunks (raw) | 0.3848 | 0.4770 | 0.4073 | 0.3538 | 0.4042 | 0.3794 | 0.2093 | 0.5230 | 0.6717 |
+| bank (raw) | 0.3437 | 0.4344 | 0.3626 | 0.2503 | 0.3125 | 0.3587 | 0.2242 | 0.4613 | 0.5929 |
+
+Bank + Soft-NMS − chunks + Soft-NMS: AP −0.0203 [−0.0256, −0.0053]; AP50 −0.0126 [−0.0163, +0.0052]. **NEGATIVE for the
+bank under the standard protocol**: significantly lower AP; on AP50 non-inferiority at −1 point is not established
+(lower bound −1.63). The loss is in common and rare classes (APc −6.7, APr −9.0 points); frequent classes are equal (APf
+−0.1). Time: bank 0.632 s/image vs chunks 4.215 s (6.67× faster); median peak extra GPU memory 2,452 vs 1,376 MB.
+The run-3h sampled-pair advantage (+3.26 mAP50 over chunks) therefore does not carry over to the full-image protocol.
+Budget check (`budget_use.txt`): the bank does not spend more of the 300 detections on verified-absent classes (0.6% for
+both) and covers more present frequent classes (85% vs 78% with ≥ 1 detection) but fewer common (60% vs 67%) and rare
+(38% vs 44%; only 16 instances) ones — so the loss is not budget crowding by false alarms (our first hypothesis, rejected).
+**G3 — tiny diagnosis** (600 confirmation images, 5,292 present instances; candidate recall = any of 900 boxes at IoU ≥ 0.5):
+base: standard 0.845 / bank 0.842, median rank of the best match 5 / 5, its median score 0.208 / 0.143;
+tiny: standard 0.845 / bank 0.797, median rank 5 / 6, median score 0.290 / 0.157. On base the bank keeps the boxes and
+their ranking but lowers the score scale; on tiny it also loses candidate boxes (−4.8 points recall), i.e. the bank's
+text input degrades the tiny model's box proposals, not only its scores.

@@ -1,0 +1,4 @@
+soft chunks dets/img 298 (images at the 300 cap: 969); share on present classes 0.058, verified-absent 0.006, unlabelled 0.937; present classes with >=1 det in the 300: c 0.667 (165), f 0.779 (3369), r 0.438 (16)
+soft bank   dets/img 299 (images at the 300 cap: 983); share on present classes 0.060, verified-absent 0.006, unlabelled 0.934; present classes with >=1 det in the 300: c 0.600 (165), f 0.849 (3369), r 0.375 (16)
+raw  chunks dets/img 300 (images at the 300 cap: 992); share on present classes 0.074, verified-absent 0.006, unlabelled 0.920; present classes with >=1 det in the 300: c 0.636 (165), f 0.740 (3369), r 0.438 (16)
+raw  bank   dets/img 300 (images at the 300 cap: 1000); share on present classes 0.092, verified-absent 0.006, unlabelled 0.902; present classes with >=1 det in the 300: c 0.558 (165), f 0.806 (3369), r 0.375 (16)

@@ -122,3 +122,14 @@ template and rules, and the anonymous supplement rebuilt with the new scripts/re
 - ICCV 2027 rules (checked 24 Nov 2026): no official call for papers or author kit is published yet; third-party trackers
   only estimate an early-to-mid March 2027 deadline. The draft follows the previous ICCV review format (8 pages
   excluding references; this draft has 7). It must be re-checked against the official kit at iccv.thecvf.com when published.
+
+### Update 24 Nov 2026 — run 3l (Amendment G): full-image LVIS protocol — NEGATIVE for the bank
+Bank + Soft-NMS vs fixed chunks + Soft-NMS on 1,000 fresh images, official evaluator: AP −2.0 [−2.56, −0.53], AP50 −1.26
+[−1.63, +0.52] (non-inferiority not established), 6.67× faster. Loss on common/rare classes; frequent classes equal.
+**Revised claim:** the paper's contribution is the controlled measurement + mechanism + per-object evidence that
+averages hide interference (9.0% decisions flip at near-equal counts; 17.4% of found objects depend on the request),
+with invariant inference for each family: YOLO-World's fixed guide is the clear accuracy win; OWLv2's independent
+read-out fixes deployment-style outputs; for Grounding DINO exact chunking is the accurate invariant option and the bank
+a 6.7× faster approximation that costs 2 AP. **Reviewer risk raised:** "no accurate *and* fast invariant method for
+early-fusion detectors" (high; stated plainly). A better Grounding DINO method is open work (prompt prepared for the
+owner's expert).

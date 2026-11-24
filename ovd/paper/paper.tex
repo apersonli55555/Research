@@ -27,12 +27,15 @@ maximum over the vocabulary, which makes it exactly order-invariant but set-depe
 masked per phrase, so its dependence arises in cross-modal fusion, query selection, label competition and, beyond 256
 tokens, chunking. These causes call for different fixes, and we give a training-free, vocabulary-invariant one for
 each detector: independent read-out (OWLv2), a fixed guide vocabulary (YOLO-World) and, for Grounding DINO, a fixed bank
-of all 1{,}203 LVIS class embeddings that takes part in fusion in a single image pass. On 600 fresh LVIS images, the bank
-with class-wise Soft-NMS is 3.26 mAP50 points more accurate (95\% CI 1.67 to 4.50) and 2.15$\times$ faster than the
+of all 1{,}203 LVIS class embeddings that takes part in fusion in a single image pass. On 600 fresh LVIS images scored as sampled
+image--class pairs with five-class requests, the bank with class-wise Soft-NMS is 3.26 mAP50 points more accurate (95\% CI 1.67 to 4.50) and 2.15$\times$ faster than the
 previous invariant method (fixed canonical prompt chunks) under identical post-processing, and non-inferior at a 1-point
 margin to unmodified five-class prompting (0.650 vs.\ 0.631) at 1.81$\times$ its latency; with requests chosen without
-looking at the image its lead grows to 3.6 points. The bank does not transfer to the smaller Grounding DINO checkpoint,
-where fixed chunks remain the invariant choice. For YOLO-World and OWLv2 the
+looking at the image its lead grows to 3.6 points. Under the standard full-image LVIS protocol, however, the bank is
+2.0 AP below the fixed chunks (rare and common classes; frequent classes equal) while 6.7$\times$ faster, and it does not
+transfer to the smaller checkpoint: it trades accuracy for speed rather than dominating. Two random five-name requests
+leave aggregate counts nearly unchanged yet flip 9.0\% of decisions on present objects, so benchmark averages hide the
+effect. For YOLO-World and OWLv2 the
 corrections cost 0.94--1.14$\times$ original inference and match or exceed the better of single-class and full-list
 inference on held-out data (e.g.\ $+$7.8 and $+$20.7 mAP50 points on LVIS).
 \end{abstract}
@@ -60,8 +63,8 @@ to 28\% of target instances change detection status with the vocabulary alone wh
 NMS and chunking.
 (3) Training-free, vocabulary-invariant inference for each detector family -- including a fixed class bank that makes
 early-fusion Grounding DINO list-invariant in one image pass -- with accuracy and latency against original, single-class,
-fixed-chunk and vocabulary-pruning baselines, confirmed on fresh images, with a negative result for the bank on a
-second checkpoint.
+fixed-chunk and vocabulary-pruning baselines, confirmed on fresh images, with their limits: under the standard full-image
+LVIS protocol the bank trades 2.0 AP for a 6.7$\times$ speed-up over exact chunking, and it fails on a second checkpoint.
 
 \section{Related work}
 \paragraph{Open-vocabulary detection.} Grounding DINO~\cite{gdino} fuses image and text early and grounds phrases;
@@ -151,16 +154,30 @@ beats first- or last-wordpiece pooling and a full mask (by 0.6 to 0.9 points). (
 image on the T4 for 1 to 1{,}203 names, 1.2\,GB more peak memory, 0.29\,s set-up): it matches the standard prompt at
 about 100 names and is 6.3$\times$ faster at 1{,}203. (v) \emph{It does not transfer to grounding-dino-tiny}: there
 bank + Soft-NMS scores 0.627 against 0.685 for the standard prompt (difference CI $-$7.35 to $-$4.51) and 0.678 for
-fixed chunks with Soft-NMS, at 2.00$\times$ standard cost. The bank is an approximation that suits the base checkpoint;
+fixed chunks with Soft-NMS, at 2.00$\times$ standard cost. The bank is an approximation;
 fixed chunks are invariant on both, but on tiny they are 2.52 points below the standard prompt, so no invariant
-method meets our 1-point criterion there.
+method meets our 1-point criterion there. On tiny the bank also loses candidate boxes (any of the 900 boxes at IoU
+$\geq$ 0.5: 79.7\% of instances vs.\ 84.5\%), whereas on base it keeps them (84.2\% vs.\ 84.5\%, same median rank) and only
+lowers the score scale. (vi) \emph{Standard full-image protocol} (Table~\ref{tab:full}; 1{,}000 further fresh LVIS images,
+all 1{,}203 classes per image, official evaluator, 300 detections per image): the bank with Soft-NMS is 2.0 AP below the
+fixed chunks (CI $-$2.56 to $-$0.53; AP50 $-$1.26, CI $-$1.63 to $+$0.52, so non-inferiority is not established) while
+6.67$\times$ faster. The loss is in common and rare classes (APf equal); it is not crowding of the 300 detections by false
+alarms (verified-absent classes take 0.6\% for both). The sampled-pair advantage above therefore does not carry over.
+\begin{table}[t]\centering\footnotesize\setlength{\tabcolsep}{2.5pt}
+\caption{Standard full-image LVIS protocol: 1{,}000 fresh val images, all 1{,}203 classes, official evaluator, class-wise
+Soft-NMS for both, one L4. Fixed chunks are also the standard full-vocabulary inference.}\label{tab:full}
+\begin{tabular}{lcccccc}\toprule
+method & AP & AP50 & APr & APc & APf & s/img\\\midrule
+fixed chunks & \textbf{.398} & \textbf{.507} & \textbf{.338} & \textbf{.405} & \textbf{.399} & 4.215\\
+fixed bank & .378 & .494 & .248 & .338 & .398 & \textbf{.632}\\\bottomrule
+\end{tabular}\end{table}
 \begin{figure}[t]\centering\includegraphics[width=\columnwidth]{fig_qual.pdf}
 \caption{Grounding DINO base. Each request retains the target and draws four distractors independently of the image.
 Rows are the first four pairs by hash among 100/1{,}469 present pairs (6.8\%) whose top box passes both score and IoU
 cutoffs for just one request. The bank passes both on 45/100 and localizes 91/100 regardless of score. Solid boxes
 score at least 0.35, dashed boxes less. Green boxes match a target at IoU 0.5 or higher; orange boxes fall below it.}\label{fig:qual}\end{figure}
 \begin{table}[t]\centering\footnotesize\setlength{\tabcolsep}{2pt}
-\caption{Grounding DINO on 600 fresh LVIS images (2{,}669 pairs, five-class requests, one L4). Inv.: output unchanged
+\caption{Grounding DINO on 600 fresh LVIS images, sampled image--class pairs (2{,}669 pairs, five-class requests, one L4); the full-image protocol is in Table~\ref{tab:full}. Inv.: output unchanged
 by the rest of the request. $\Delta$: bank + Soft-NMS minus row, paired image-bootstrap 95\% CI.}\label{tab:bank}
 \begin{tabular}{lcccc}\toprule
 method & inv. & mAP50 & s/img & $\Delta$ [95\% CI]\\\midrule
@@ -343,7 +360,9 @@ YOLO-World & .602 (.001) & .592 (.006) & .585 (.026) & \textbf{.615} (.000)\\\bo
 
 \section{Limitations}
 Base/small checkpoints only (one 24\,GB GPU); two datasets; the visually confusable family is defined with CLIP; the
-pruning baseline omits VocAda's captioner. Grounding DINO's fixed chunks are expensive for small vocabularies from a large label space; the fixed bank with Soft-NMS costs 1.81$\times$ standard inference and is non-inferior to the unmodified prompt, but not shown non-inferior to a prompt that also uses Soft-NMS. The bank was tested with five-class requests on sampled LVIS pairs (the official LVIS evaluator, restricted to these pairs, agrees), not on the full-image LVIS protocol; 126 of the 374 positive classes occur on one image, so per-class APs are coarse.
+pruning baseline omits VocAda's captioner. Grounding DINO's fixed chunks are expensive for small vocabularies from a large label space; the fixed bank with Soft-NMS costs 1.81$\times$ standard inference and is non-inferior to the unmodified prompt, but not shown non-inferior to a prompt that also uses Soft-NMS. On sampled pairs (five-class requests) the bank leads the chunks, but under the full-image LVIS protocol it is 2.0 AP
+below them, losing on common and rare classes; on sampled pairs 126 of the 374 positive classes occur on one image, so
+those per-class APs are coarse.
 The bank fails on grounding-dino-tiny ($-$5.75 points against the standard prompt), so it should be validated per
 checkpoint; on tiny no invariant method we tested is within one point of the standard prompt. Independent read-out raises false alarms on verified-absent LVIS classes for OWLv2.
 The LVIS evaluation plan was built on two machines: images, targets and the random, unrelated, similar and full-list
