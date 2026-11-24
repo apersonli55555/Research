@@ -418,3 +418,23 @@ container's LVIS plan (identical images/targets/ground truth, fingerprint-checke
 0.643725 — identical to `summary.json` (difference 0.0). Paired image bootstrap (300 resamples, own code) for bank − fixed:
 [−0.0163, +0.0387] vs. reported [−0.0165, +0.0397]. The 100 validation images do not overlap the 24 pilot images; all
 467 pairs are in the plan. Pilot (`fixed_bank_1795484911264138629.json`, 100 records): bank 0.764969 recomputed = reported.
+
+## OVD run 3h — fixed class bank + classwise Gaussian Soft-NMS, 600-image "confirmation" (owner's expert), reported 28 Nov 2026
+**Status: REPORTED, NOT YET VERIFIED — not used in the paper until checked.** Source to import:
+`MyDrive/ovd/fixed_bank_soft_confirm_v1/{summary.json, manifest.json, per_image/}` (+ the code that produced it).
+Reported (2,669 LVIS image–class pairs, five-class requests, `full_analysis.APTable` independent mode, NVIDIA L4):
+| method | mAP50 | s/image |
+|---|---|---|
+| fixed bank + classwise Gaussian Soft-NMS | 0.65011 | 0.650 |
+| standard five-class Grounding DINO (unmodified) | 0.63122 | 0.360 |
+| standard five-class + Soft-NMS | 0.65008 | — |
+| fixed chunks + Soft-NMS | 0.61749 | 1.399 |
+| raw bank / raw chunks | 0.59424 / 0.59424 | — |
+Reported: bank+Soft-NMS − standard +1.89 [−0.07, +2.66] (non-inferiority at −1 vs the unmodified standard prompt);
+vs standard+Soft-NMS CI [−1.78, +0.91] (non-inferiority NOT established); vs chunks+Soft-NMS +3.26 [+1.67, +4.50]; 1.807×.
+**Open checks before use:** (1) the LVIS plan has exactly 600 images / 2,689 pairs, so a 600-image set very likely
+includes the 24 pilot + 100 validation images used to develop the bank and choose Soft-NMS — the confirmation must be
+re-scored excluding them (and the data used to choose Soft-NMS and its parameters must be documented);
+(2) raw bank and raw chunks identical to five decimals (0.59424) is implausible for different methods (they differed on
+the 100-image validation: 0.661 vs 0.644) — check for duplicated detections; (3) standard five-class on this set is 0.631
+vs 0.713 on the 100-image validation — explain (different images/requests?); (4) independent recomputation.
