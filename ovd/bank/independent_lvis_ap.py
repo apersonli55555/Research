@@ -2,7 +2,7 @@
 """Independent re-implementation of LVIS v1 box AP (does not import lvis-api), used to check the full-image results.
 
   python ovd/bank/independent_lvis_ap.py --lvis lvis_v1_val.json --zip results/bank/full_image_v1/full_image_v1_outputs.zip
-         [--hybrid results/bank/hybrid/test_outputs.zip]
+         [--hybrid results/bank/hybrid/test_outputs.zip] [--calib DIR/test]
 
 Written from the LVIS paper / evaluation rules: federated per-class evaluation over images whose positive set (has
 ground truth of the class) or negative set (neg_category_ids) contains the class; detections of a class on other images
@@ -99,7 +99,8 @@ def evaluate(L, dets, img_ids):
 
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument("--lvis", required=True); ap.add_argument("--zip", required=True)
-    ap.add_argument("--hybrid"); ap.add_argument("--out")
+    ap.add_argument("--hybrid"); ap.add_argument("--calib", help="directory of bank_calib.py test outputs (maps none/shift/z)")
+    ap.add_argument("--out")
     a = ap.parse_args()
     L = json.load(open(a.lvis)); cat_ids = sorted(c["id"] for c in L["categories"])
     fid = {im["coco_url"].split("/")[-1]: im["id"] for im in L["images"]}
@@ -113,9 +114,15 @@ def main():
                 r = json.loads(z.read(n)); recs.setdefault(r["image"], {})
                 for k in keys:
                     recs[r["image"]][k] = r["soft"][k]
+    if a.calib:
+        import glob, os
+        for p in sorted(glob.glob(os.path.join(a.calib, "*.json"))):
+            r = json.load(open(p)); recs.setdefault(r["image"], {})
+            for k, v in r["soft"].items():
+                recs[r["image"]]["calib_" + k] = v
     files = [f for f in recs if all(k in recs[f] for k in ("bank", "chunks"))]
     ids = {fid[f] for f in files}; res = {}
-    for m in ("chunks", "bank", "hybrid10"):
+    for m in ("chunks", "bank", "hybrid10", "calib_none", "calib_shift", "calib_z"):
         if not all(m in recs[f] for f in files):
             continue
         dets = [dict(image_id=fid[f], category_id=cat_ids[c], bbox=[x1, y1, x2 - x1, y2 - y1], score=s)
