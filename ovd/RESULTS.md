@@ -774,3 +774,12 @@ reduction of flips 100% at every threshold (0 of 171; rule-of-three 95% upper bo
 On this 40-image subset the standard prompt's flip rate is lower than in run 3j's 1,469 present pairs (9.0% at 0.35,
 where a decision also required a ground-truth match), so the before/after contrast here is small in absolute terms; the
 corrected method's interference is nevertheless measured as exactly zero, not only argued.
+
+## Reference-set sensitivity of the class-wise shift (alternative explanation), development images, CPU, 25 Nov 2026
+Exploratory (development split only; no model passes): `bank/calib_ref_sensitivity.py` re-estimates μ_c from other
+reference sets using the saved per-image reference max-logits and applies the shift to the saved uncapped Soft-NMS lists
+of the 124 development images (top 300, official evaluator) → `results/bank/calib/ref_sensitivity_dev.json`.
+No map 0.4720; all 300 reference images 0.4889 (reproduces run 3n development exactly); three disjoint thirds (100 images
+each) 0.4882–0.4895; five bootstrap resamples of the 300 0.4864–0.4917; ten disjoint tenths (30 images each)
+0.4817–0.4920 (smallest gain over no map +0.98 AP). The gain does not hinge on the particular reference images; 100
+unlabelled images suffice to within ±0.1 AP of the 300-image result on development.

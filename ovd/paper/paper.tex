@@ -183,7 +183,8 @@ reaches 0.405 AP ($+$2.78 over the bank; APr $+$11.9, APc $+$6.1, APf $+$1.2) ag
 (CI $-$0.23 to $+$2.05) and $+$2.18 AP50 (CI $+$1.09 to $+$3.88). Non-inferiority at 1 AP is met; superiority holds
 for AP50 only. An independent re-implementation of the LVIS evaluator reproduces every number. Measured end to end on 171 image--target pairs with two
 independent five-class requests each, the shifted bank's target outputs are bitwise identical (0 flips at thresholds
-0.2 to 0.5), whereas the standard prompt's top score changes by 0.033 on average (up to 0.168; 13 flips at 0.2). Because the gain acts
+0.2 to 0.5), whereas the standard prompt's top score changes by 0.033 on average (up to 0.168; 13 flips at 0.2). Re-estimating
+$\mu_c$ from any third of the reference images (100) changes development AP by at most 0.07 points (0.4882--0.4895). Because the gain acts
 through the per-image budget, it would vanish under a per-class budget~\cite{devil}, and the chunks may gain from the
 same shift; that pre-registered comparison is pending.
 \begin{table}[t]\centering\footnotesize\setlength{\tabcolsep}{2.5pt}
