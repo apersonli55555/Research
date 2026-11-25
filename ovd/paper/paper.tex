@@ -163,13 +163,19 @@ all 1{,}203 classes per image, official evaluator, 300 detections per image): th
 fixed chunks (CI $-$2.56 to $-$0.53; AP50 $-$1.26, CI $-$1.63 to $+$0.52, so non-inferiority is not established) while
 6.67$\times$ faster. The loss is in common and rare classes (APf equal); it is not crowding of the 300 detections by false
 alarms (verified-absent classes take 0.6\% for both). The sampled-pair advantage above therefore does not carry over.
+(vii) \emph{Bank-proposed context} (pre-registered; $K$ chosen on 124 development images): one bank pass proposes
+the 10 classes it scores highest, one standard pass re-scores them, the rest keep bank scores (2 passes). On the same
+1{,}000 images it is 2.2 AP below the chunks (CI $-$2.71 to $-$0.74), at the bank's level. The gap lies entirely in
+classes the bank does not propose (per-class AP 0.219 bank vs.\ 0.269 chunks; on proposed classes 0.528 vs.\ 0.520),
+and the short prompt raises the scores of proposed but absent classes (median top score 0.30 to 0.42; exploratory).
 \begin{table}[t]\centering\footnotesize\setlength{\tabcolsep}{2.5pt}
 \caption{Standard full-image LVIS protocol: 1{,}000 fresh val images, all 1{,}203 classes, official evaluator, class-wise
-Soft-NMS for both, one L4. Fixed chunks are also the standard full-vocabulary inference.}\label{tab:full}
+Soft-NMS for all, one L4 (bank-proposed: CPU; 14 passes for chunks, 1 for the bank). Fixed chunks are also the standard full-vocabulary inference.}\label{tab:full}
 \begin{tabular}{lcccccc}\toprule
 method & AP & AP50 & APr & APc & APf & s/img\\\midrule
 fixed chunks & \textbf{.398} & \textbf{.507} & \textbf{.338} & \textbf{.405} & \textbf{.399} & 4.215\\
-fixed bank & .378 & .494 & .248 & .338 & .398 & \textbf{.632}\\\bottomrule
+fixed bank & .378 & .494 & .248 & .338 & .398 & \textbf{.632}\\
+bank-proposed ($K{=}10$) & .376 & .493 & .213 & .339 & .396 & 2 passes\\\bottomrule
 \end{tabular}\end{table}
 \begin{figure}[t]\centering\includegraphics[width=\columnwidth]{fig_qual.pdf}
 \caption{Grounding DINO base. Each request retains the target and draws four distractors independently of the image.
@@ -361,7 +367,7 @@ YOLO-World & .602 (.001) & .592 (.006) & .585 (.026) & \textbf{.615} (.000)\\\bo
 \section{Limitations}
 Base/small checkpoints only (one 24\,GB GPU); two datasets; the visually confusable family is defined with CLIP; the
 pruning baseline omits VocAda's captioner. Grounding DINO's fixed chunks are expensive for small vocabularies from a large label space; the fixed bank with Soft-NMS costs 1.81$\times$ standard inference and is non-inferior to the unmodified prompt, but not shown non-inferior to a prompt that also uses Soft-NMS. On sampled pairs (five-class requests) the bank leads the chunks, but under the full-image LVIS protocol it is 2.0 AP
-below them, losing on common and rare classes; on sampled pairs 126 of the 374 positive classes occur on one image, so
+below them, losing on common and rare classes it fails to propose (re-scoring its own top-10 classes with the standard prompt does not help); on sampled pairs 126 of the 374 positive classes occur on one image, so
 those per-class APs are coarse.
 The bank fails on grounding-dino-tiny ($-$5.75 points against the standard prompt), so it should be validated per
 checkpoint; on tiny no invariant method we tested is within one point of the standard prompt. Independent read-out raises false alarms on verified-absent LVIS classes for OWLv2.

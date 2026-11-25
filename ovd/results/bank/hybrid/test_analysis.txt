@@ -1,0 +1,12 @@
+== 1000 images, 13073 boxes; official LVIS evaluator, 300 dets/image
+  bank_L4_soft     AP 0.3779  AP50 0.4941  APr 0.2478  APc 0.3379  APf 0.3975
+  bank_soft        AP 0.3774  AP50 0.4930  APr 0.2509  APc 0.3376  APf 0.3968
+  chunks_soft      AP 0.3982  AP50 0.5066  APr 0.3376  APc 0.4048  APf 0.3985
+  hybrid10_soft    AP 0.3758  AP50 0.4927  APr 0.2126  APc 0.3392  APf 0.3957
+  bank_L4_raw      AP 0.3437  AP50 0.4344  APr 0.2503  APc 0.3125  APf 0.3587
+  bank_raw         AP 0.3424  AP50 0.4325  APr 0.2376  APc 0.3088  APf 0.3588
+  chunks_raw       AP 0.3848  AP50 0.4770  APr 0.3538  APc 0.4042  APf 0.3794
+  hybrid10_raw     AP 0.3432  AP50 0.4370  APr 0.2019  APc 0.3001  APf 0.3644
+  K=10: mean candidates 10.0, mean prompt passes 1.00
+  hybrid10_soft − chunks_soft AP: -0.0224 [-0.0271, -0.0074] (200 image resamples)
+  hybrid10_soft − chunks_soft AP50: -0.0139 [-0.0174, +0.0042] (200 image resamples)

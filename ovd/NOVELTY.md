@@ -121,7 +121,7 @@ template and rules, and the anonymous supplement rebuilt with the new scripts/re
   −2.52, bank + Soft-NMS −5.75); stated in the paper's results and limitations.
 - ICCV 2027 rules (checked 24 Nov 2026): no official call for papers or author kit is published yet; third-party trackers
   only estimate an early-to-mid March 2027 deadline. The draft follows the previous ICCV review format (8 pages
-  excluding references; this draft has 7). It must be re-checked against the official kit at iccv.thecvf.com when published.
+  excluding references; this draft's body ends on page 7). It must be re-checked against the official kit at iccv.thecvf.com when published.
 
 ### Update 24 Nov 2026 — run 3l (Amendment G): full-image LVIS protocol — NEGATIVE for the bank
 Bank + Soft-NMS vs fixed chunks + Soft-NMS on 1,000 fresh images, official evaluator: AP −2.0 [−2.56, −0.53], AP50 −1.26
@@ -133,3 +133,12 @@ read-out fixes deployment-style outputs; for Grounding DINO exact chunking is th
 a 6.7× faster approximation that costs 2 AP. **Reviewer risk raised:** "no accurate *and* fast invariant method for
 early-fusion detectors" (high; stated plainly). A better Grounding DINO method is open work (prompt prepared for the
 owner's expert).
+
+### Update 25 Nov 2026 — run 3m (Amendment H): bank-proposed context — NEGATIVE
+Pre-registered training-free attempt to close the gap (bank proposes its top-10 classes, one standard pass re-scores
+them; 2 passes): −2.24 AP [−2.71, −0.74] vs chunks on the same 1,000 images, at the bank's level. Exploratory
+mechanism (confirmed on the test images): the bank's whole full-image deficit is in classes it does not propose
+(per-class AP 0.219 vs chunks 0.269; on proposed classes 0.528 vs 0.520), so any bank-proposed shortlist is capped;
+short focused prompts additionally inflate scores of plausible-but-absent classes. Novelty assessment unchanged: no
+accurate *and* fast invariant method for Grounding DINO is shown; the negative result and its mechanism are reported.
+Paper now 8 pages including references (body ends on page 7).

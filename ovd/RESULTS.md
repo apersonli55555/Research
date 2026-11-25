@@ -668,3 +668,29 @@ present (K=10: +0.0202 of +0.0203; K=50: +0.0201). Present classes are bank top-
 pairs (rare 25%, common 21%, frequent 37% per class on average). So the bank's full-image loss is a failure to
 *propose* the right common/rare classes, which a bank-proposed shortlist cannot repair by construction; the hybrid is
 expected to stay near the bank on the test. Both analyses are exploratory and not used to change the frozen test.
+
+## Run 3m (Amendment H) — frozen test, 1,000 run-3l images, K = 10, CPU, 25 Nov 2026
+`bank/hybrid.py --mode test --k 10` (CPU; interrupted once by a container restart after 291 images and resumed — each
+image is computed and saved independently, so the outputs are unaffected; log `results/bank/hybrid/test_run.log`).
+Analysis `bank/hybrid_analysis.py --k 10 --boot 200` → `results/bank/hybrid/test_analysis.{txt,json}`; outputs
+`test_outputs.zip`. Comparator: the run-3l chunks outputs (L4) for the same images.
+
+| method (Soft-NMS) | AP | AP50 | APr | APc | APf | passes/image |
+|---|---|---|---|---|---|---|
+| chunks (run 3l, L4) | 0.3982 | 0.5066 | 0.3376 | 0.4048 | 0.3985 | 14 |
+| bank (recomputed here, CPU) | 0.3774 | 0.4930 | 0.2509 | 0.3376 | 0.3968 | 1 |
+| bank (run 3l, L4) | 0.3779 | 0.4941 | 0.2478 | 0.3379 | 0.3975 | 1 |
+| **hybrid K=10** | 0.3758 | 0.4927 | 0.2126 | 0.3392 | 0.3957 | 2 |
+
+Primary: hybrid10 − chunks AP **−0.0224 [−0.0271, −0.0074]**, AP50 −0.0139 [−0.0174, +0.0042] (200 paired image
+resamples). **NEGATIVE**: the hybrid does not close the gap; it is at the bank's level (−0.16 AP vs the CPU bank). Cost: 1
+bank + 1 prompt pass for all 1,000 images (10 candidates); CPU 18.6 s/image (no GPU timing; run 3l: chunks 4.215 s, bank
+0.632 s on an L4). The CPU bank reproduces the L4 bank to 0.0005 AP (check of the CPU path).
+**Exploratory** (`bank/hybrid_diag.py --test`, `test_diag_k10.json`; per-class AP over IoU 0.5:0.95, 520 classes): on
+the 267 classes that were a bank top-10 candidate in at least one image where present, bank 0.5275, hybrid 0.5255 and
+chunks 0.5204 — chunks are *not* better there; on the 253 classes that never were, bank 0.2191, hybrid 0.2179, chunks
+0.2692 — the whole bank-vs-chunks gap. The short prompt inflates candidate scores (median top score, present 0.399 →
+0.545, absent 0.301 → 0.421; chunks 0.385 / 0.183) and gives candidates 31.6% of the 300 slots (bank 24.7%, chunks
+18.8%). This confirms on the test images the development-time diagnosis: the bank's full-image loss is a failure to
+propose common/rare classes, which no bank-proposed shortlist can fix, and short focused prompts raise the scores of
+absent but plausible classes (the interference this paper measures).
