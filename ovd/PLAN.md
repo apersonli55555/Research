@@ -206,3 +206,11 @@ that list. Test: the chosen map on the 1,000 run-3l images against run-3l chunks
 difference, 200 paired image resamples; "within 1 AP" = CI lower bound above −0.01); the other maps reported as
 secondary. CPU inference. All results reported whatever their direction. If the ceiling (a) shows that removing the cap
 recovers < 0.5 AP on development, the test is still run but the expected outcome is recorded as negative beforehand.
+
+## Amendment I2 (25 Nov 2026, after the Amendment I development result, before any test result): fairness baseline
+The cap ceiling (+6.8 AP for the bank on development) implies the standard chunked inference is also limited by its
+cross-class score scale. Secondary, fairness comparison: the same normalization applied to chunks with its own reference
+statistics (same 300 reference images; `bank/calib_chunks.ipynb`, GPU), on the same 1,000 test images: chunks+shift
+(the map frozen for the bank) vs chunks (none), and bank+shift vs chunks+shift (paired image bootstrap, 200). If the
+normalization helps chunks as much as the bank, the paper reports it as a general post-hoc fix of the score scale and
+not as a bank-specific gain. Reported whatever the direction; if the GPU run is unavailable, this is stated as a limitation.

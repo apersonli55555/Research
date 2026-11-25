@@ -5,6 +5,7 @@ Resumable; CPU or GPU.
   python ovd/bank/bank_calib.py --mode ref  --out DIR                       # 300 reference images -> DIR/ref_stats.json
   python ovd/bank/bank_calib.py --mode dev  --out DIR --lvis lvis_v1_val.json   # 124 development images
   python ovd/bank/bank_calib.py --mode test --out DIR                       # the 1,000 run-3l images
+  add --method chunks for standard full-vocabulary inference (14 passes; GPU advised) -> DIR/chunks/...
 
 Per image: bank pass -> per class top 50 >= 0.02 -> class-wise Gaussian Soft-NMS on raw scores (= run-3l bank lists)
 -> per-class monotone map (none / shift / z, PLAN Amendment I) -> top 300. Dev mode also saves every kept detection
@@ -54,6 +55,7 @@ def main():
     ap = argparse.ArgumentParser(); ap.add_argument("--mode", choices=["ref", "dev", "test"], required=True)
     ap.add_argument("--out", required=True); ap.add_argument("--lvis", default=None); ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--images", default=None); ap.add_argument("--n-ref", type=int, default=300)
+    ap.add_argument("--method", choices=["bank", "chunks"], default="bank", help="chunks = standard full-vocabulary inference")
     a = ap.parse_args()
     import torch
     dev = "cuda" if torch.cuda.is_available() else "cpu"
@@ -67,6 +69,8 @@ def main():
         files = dev_images()
     files = files[: a.limit or None]
     E = Engine(dev, names); E.parity(imgs.load(files[0], urls[files[0]])); bank = E.build_bank()
+    chunk_idx = [[E.index[c] for c in ch] for ch in E.chunks]
+    out = out / a.method if a.method != "bank" else out
     d = out / a.mode; d.mkdir(parents=True, exist_ok=True)
     if a.mode != "ref":
         R = json.loads((out / "ref_stats.json").read_text())
@@ -75,11 +79,20 @@ def main():
     for j, f in enumerate(left):
         im = imgs.load(f, urls[f])
         with torch.inference_mode():
-            boxes, sc = E.bank_call(im, bank)
-            if a.mode == "ref":
-                rec = dict(image=f, max_logit=[round(float(x), 5) for x in logit(sc.float().amax(0)).tolist()])
+            if a.method == "bank":
+                boxes, sc = E.bank_call(im, bank); bl, sl, cl = [boxes], [sc.float()], [list(range(len(names)))]
             else:
-                S, B = candidates([px(E, im, boxes)], [sc.float()], [list(range(len(names)))], len(names), E.dev)
+                bl, sl = [], []
+                for ch in E.chunks:
+                    b_, s_ = E.decode_prompt(im, ch); bl.append(b_); sl.append(s_.float())
+                cl = chunk_idx
+            if a.mode == "ref":
+                mx = torch.full((len(names),), 0.0, device=E.dev)
+                for s_, c_ in zip(sl, cl):
+                    mx[c_] = s_.amax(0)
+                rec = dict(image=f, max_logit=[round(float(x), 5) for x in logit(mx).tolist()])
+            else:
+                S, B = candidates([px(E, im, b_) for b_ in bl], sl, cl, len(names), E.dev)
                 Ss, Bs = soft_nms_batched(S, B)
                 rec = dict(image=f, soft={m: top_list(apply_map(m, Ss, st), Bs, PER_IMAGE) for m in MAPS})
                 if a.mode == "dev":
