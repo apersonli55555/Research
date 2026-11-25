@@ -757,3 +757,20 @@ mapping then selecting any requested subset equals selecting then mapping (reque
 class's reference level to the same value; top-300 selection is capped and sorted.
 **Amendment I2 status (25 Nov 11:30):** CPU fallback run at ≈ 36 images/h on 4 cores (72/1,300 after 2 h, ≈ 34 h left);
 analysis `bank/calib_i2_analysis.py` chained to start when it ends.
+
+## Run 3o (Amendment J) — measured request interference of the corrected method, CPU, 25 Nov 2026
+`bank/calib_interference.py --n 40` → `results/bank/calib/interference.json`. 171 (image, target) pairs on confirmation
+images 301–340 (not used for the reference statistics), each with the two run-3j image-independent five-class requests;
+the deployed pipeline (bank pass → Soft-NMS → class-wise shift → requested classes → top 300) run from scratch for each
+request. Standard five-class prompt = saved run-3j outputs for the same requests (T4).
+
+| | mean |Δ target top score| | max | flips @0.2 | @0.3 | @0.35 | @0.5 |
+|---|---|---|---|---|---|---|
+| standard five-class prompt | 0.0333 | 0.1677 | 13 (7.6%) | 4 | 5 (2.9%) | 3 |
+| **bank + class-wise shift** | **0** | **0** | **0** | **0** | **0** | **0** |
+
+All 171 target detection lists of the corrected method are bitwise identical between the two requests; measured
+reduction of flips 100% at every threshold (0 of 171; rule-of-three 95% upper bound on the corrected flip rate 1.8%).
+On this 40-image subset the standard prompt's flip rate is lower than in run 3j's 1,469 present pairs (9.0% at 0.35,
+where a decision also required a ground-truth match), so the before/after contrast here is small in absolute terms; the
+corrected method's interference is nevertheless measured as exactly zero, not only argued.

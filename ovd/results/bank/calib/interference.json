@@ -1,0 +1,2256 @@
+{
+ "n_images": 40,
+ "n_pairs": 171,
+ "std": {
+  "mean_abs_top_score_change": 0.03332479005847953,
+  "max_abs_top_score_change": 0.1677414,
+  "flips": {
+   "0.2": 13,
+   "0.3": 4,
+   "0.35": 5,
+   "0.5": 3
+  }
+ },
+ "corr": {
+  "mean_abs_top_score_change": 0.0,
+  "max_abs_top_score_change": 0.0,
+  "flips": {
+   "0.2": 0,
+   "0.3": 0,
+   "0.35": 0,
+   "0.5": 0
+  }
+ },
+ "corr_lists_bitwise_identical": 171,
+ "reduction_of_flips": {
+  "0.2": 1.0,
+  "0.3": 1.0,
+  "0.35": 1.0,
+  "0.5": 1.0
+ },
+ "pairs": [
+  {
+   "image": "000000290293.jpg",
+   "target": "clock",
+   "std": [
+    0.0988668,
+    0.0809779
+   ],
+   "corr": [
+    0.03544186,
+    0.03544186
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000290293.jpg",
+   "target": "eraser",
+   "std": [
+    0.0227307,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000290293.jpg",
+   "target": "tow truck",
+   "std": [
+    0.1487865,
+    0.122734
+   ],
+   "corr": [
+    0.01373176,
+    0.01373176
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000290293.jpg",
+   "target": "train",
+   "std": [
+    0.5275301,
+    0.5224145
+   ],
+   "corr": [
+    0.35836545,
+    0.35836545
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000294698.jpg",
+   "target": "bull",
+   "std": [
+    0.0,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000294698.jpg",
+   "target": "crow",
+   "std": [
+    0.0280647,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000294698.jpg",
+   "target": "glass",
+   "std": [
+    0.3424812,
+    0.1983731
+   ],
+   "corr": [
+    0.11104054,
+    0.11104054
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000294698.jpg",
+   "target": "handbag",
+   "std": [
+    0.2589262,
+    0.3105012
+   ],
+   "corr": [
+    0.16642791,
+    0.16642791
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000294698.jpg",
+   "target": "napkin",
+   "std": [
+    0.0,
+    0.0268736
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000295473.jpg",
+   "target": "bolt",
+   "std": [
+    0.1526885,
+    0.2225022
+   ],
+   "corr": [
+    0.05011768,
+    0.05011768
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000295473.jpg",
+   "target": "doughnut",
+   "std": [
+    0.0625921,
+    0.0785168
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000295473.jpg",
+   "target": "guitar",
+   "std": [
+    0.0,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000295473.jpg",
+   "target": "jumpsuit",
+   "std": [
+    0.0356823,
+    0.0407275
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000298395.jpg",
+   "target": "carton",
+   "std": [
+    0.0401238,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000298395.jpg",
+   "target": "handle",
+   "std": [
+    0.19421,
+    0.2097292
+   ],
+   "corr": [
+    0.08294466,
+    0.08294466
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000298395.jpg",
+   "target": "legging",
+   "std": [
+    0.2105817,
+    0.0984424
+   ],
+   "corr": [
+    0.00749258,
+    0.00749258
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000298395.jpg",
+   "target": "toilet",
+   "std": [
+    0.721427,
+    0.5740901
+   ],
+   "corr": [
+    0.67585057,
+    0.67585057
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000298395.jpg",
+   "target": "toilet tissue",
+   "std": [
+    0.4490414,
+    0.4307942
+   ],
+   "corr": [
+    0.55880708,
+    0.55880708
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000298578.jpg",
+   "target": "deadbolt",
+   "std": [
+    0.1228713,
+    0.2177555
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000298578.jpg",
+   "target": "short pants",
+   "std": [
+    0.2700781,
+    0.2455124
+   ],
+   "corr": [
+    0.02992413,
+    0.02992413
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000298578.jpg",
+   "target": "tape",
+   "std": [
+    0.0,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000298578.jpg",
+   "target": "tennis racket",
+   "std": [
+    0.5339808,
+    0.5086181
+   ],
+   "corr": [
+    0.53932643,
+    0.53932643
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000300086.jpg",
+   "target": "bird",
+   "std": [
+    0.5153056,
+    0.5417368
+   ],
+   "corr": [
+    0.41347414,
+    0.41347414
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000300086.jpg",
+   "target": "clock tower",
+   "std": [
+    0.6085702,
+    0.6783498
+   ],
+   "corr": [
+    0.3783375,
+    0.3783375
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000300086.jpg",
+   "target": "diary",
+   "std": [
+    0.0235046,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000300086.jpg",
+   "target": "figurine",
+   "std": [
+    0.065097,
+    0.073382
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000300353.jpg",
+   "target": "award",
+   "std": [
+    0.0364072,
+    0.035855
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000300353.jpg",
+   "target": "book",
+   "std": [
+    0.0246175,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000300353.jpg",
+   "target": "button",
+   "std": [
+    0.1329294,
+    0.2158198
+   ],
+   "corr": [
+    0.01439548,
+    0.01439548
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000300353.jpg",
+   "target": "green onion",
+   "std": [
+    0.0,
+    0.0254846
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000300353.jpg",
+   "target": "shirt",
+   "std": [
+    0.2553599,
+    0.2291507
+   ],
+   "corr": [
+    0.12962028,
+    0.12962028
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000301649.jpg",
+   "target": "book",
+   "std": [
+    0.2243852,
+    0.2294275
+   ],
+   "corr": [
+    0.16494785,
+    0.16494785
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000301649.jpg",
+   "target": "cleat",
+   "std": [
+    0.0992044,
+    0.0360168
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000301649.jpg",
+   "target": "fork",
+   "std": [
+    0.3457761,
+    0.375482
+   ],
+   "corr": [
+    0.61739486,
+    0.61739486
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000301649.jpg",
+   "target": "sword",
+   "std": [
+    0.0285474,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000301649.jpg",
+   "target": "vase",
+   "std": [
+    0.2337697,
+    0.2694831
+   ],
+   "corr": [
+    0.44385099,
+    0.44385099
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000302030.jpg",
+   "target": "calculator",
+   "std": [
+    0.2834449,
+    0.1742887
+   ],
+   "corr": [
+    0.21947283,
+    0.21947283
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000302030.jpg",
+   "target": "computer keyboard",
+   "std": [
+    0.1856256,
+    0.1503594
+   ],
+   "corr": [
+    0.59280509,
+    0.59280509
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000302030.jpg",
+   "target": "lamp",
+   "std": [
+    0.3982553,
+    0.3143155
+   ],
+   "corr": [
+    0.29737902,
+    0.29737902
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000302030.jpg",
+   "target": "stove",
+   "std": [
+    0.0,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000302030.jpg",
+   "target": "wind chime",
+   "std": [
+    0.0651501,
+    0.1816058
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000302990.jpg",
+   "target": "easel",
+   "std": [
+    0.0908789,
+    0.0869216
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000302990.jpg",
+   "target": "mitten",
+   "std": [
+    0.0471715,
+    0.0350179
+   ],
+   "corr": [
+    0.02168569,
+    0.02168569
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000302990.jpg",
+   "target": "surfboard",
+   "std": [
+    0.5096592,
+    0.499804
+   ],
+   "corr": [
+    0.77282375,
+    0.77282375
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000302990.jpg",
+   "target": "wet suit",
+   "std": [
+    0.3260338,
+    0.3588233
+   ],
+   "corr": [
+    0.0457369,
+    0.0457369
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000303267.jpg",
+   "target": "chinaware",
+   "std": [
+    0.0,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000303267.jpg",
+   "target": "horse",
+   "std": [
+    0.7721641,
+    0.7308781
+   ],
+   "corr": [
+    0.49194312,
+    0.49194312
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000303267.jpg",
+   "target": "sweat pants",
+   "std": [
+    0.1481879,
+    0.0700584
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000305677.jpg",
+   "target": "armband",
+   "std": [
+    0.0940248,
+    0.1068179
+   ],
+   "corr": [
+    0.03238296,
+    0.03238296
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000305677.jpg",
+   "target": "road map",
+   "std": [
+    0.023726,
+    0.1894966
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000305677.jpg",
+   "target": "surfboard",
+   "std": [
+    0.3158732,
+    0.2928579
+   ],
+   "corr": [
+    0.44204438,
+    0.44204438
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000308119.jpg",
+   "target": "backpack",
+   "std": [
+    0.5529622,
+    0.6133881
+   ],
+   "corr": [
+    0.33785525,
+    0.33785525
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000308119.jpg",
+   "target": "duffel bag",
+   "std": [
+    0.4922172,
+    0.5629802
+   ],
+   "corr": [
+    0.17297536,
+    0.17297536
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000308119.jpg",
+   "target": "sausage",
+   "std": [
+    0.0,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000308119.jpg",
+   "target": "tag",
+   "std": [
+    0.068539,
+    0.0801196
+   ],
+   "corr": [
+    0.02757327,
+    0.02757327
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000308119.jpg",
+   "target": "walking stick",
+   "std": [
+    0.1081598,
+    0.0460136
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000310808.jpg",
+   "target": "bucket",
+   "std": [
+    0.0,
+    0.0228918
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000310808.jpg",
+   "target": "buoy",
+   "std": [
+    0.0,
+    0.0
+   ],
+   "corr": [
+    0.04978755,
+    0.04978755
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000310808.jpg",
+   "target": "chandelier",
+   "std": [
+    0.0,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000310808.jpg",
+   "target": "octopus (animal)",
+   "std": [
+    0.0,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000311081.jpg",
+   "target": "bathtub",
+   "std": [
+    0.6775897,
+    0.646873
+   ],
+   "corr": [
+    0.78746957,
+    0.78746957
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000311081.jpg",
+   "target": "doorknob",
+   "std": [
+    0.511106,
+    0.4852007
+   ],
+   "corr": [
+    0.43647039,
+    0.43647039
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000311081.jpg",
+   "target": "dress",
+   "std": [
+    0.0713304,
+    0.1144242
+   ],
+   "corr": [
+    0.01604084,
+    0.01604084
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000311081.jpg",
+   "target": "shower head",
+   "std": [
+    0.2215174,
+    0.2197967
+   ],
+   "corr": [
+    0.02240767,
+    0.02240767
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000311081.jpg",
+   "target": "toaster oven",
+   "std": [
+    0.0,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000311190.jpg",
+   "target": "dog",
+   "std": [
+    0.5423276,
+    0.611079
+   ],
+   "corr": [
+    0.4043293,
+    0.4043293
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000311190.jpg",
+   "target": "suitcase",
+   "std": [
+    0.0,
+    0.0208041
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000311190.jpg",
+   "target": "wedding cake",
+   "std": [
+    0.0595785,
+    0.0803394
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000311868.jpg",
+   "target": "bath mat",
+   "std": [
+    0.0757077,
+    0.079884
+   ],
+   "corr": [
+    0.02044962,
+    0.02044962
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000311868.jpg",
+   "target": "bathtub",
+   "std": [
+    0.389465,
+    0.4045473
+   ],
+   "corr": [
+    0.42747408,
+    0.42747408
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000311868.jpg",
+   "target": "cistern",
+   "std": [
+    0.0953786,
+    0.0778079
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000311868.jpg",
+   "target": "doorknob",
+   "std": [
+    0.4327172,
+    0.393842
+   ],
+   "corr": [
+    0.27453959,
+    0.27453959
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000311868.jpg",
+   "target": "measuring cup",
+   "std": [
+    0.0214595,
+    0.0249699
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000312017.jpg",
+   "target": "jean",
+   "std": [
+    0.0336283,
+    0.0273085
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000312017.jpg",
+   "target": "mushroom",
+   "std": [
+    0.2382045,
+    0.2228731
+   ],
+   "corr": [
+    0.26954135,
+    0.26954135
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000312017.jpg",
+   "target": "pizza",
+   "std": [
+    0.75804,
+    0.7584956
+   ],
+   "corr": [
+    0.71845698,
+    0.71845698
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000312017.jpg",
+   "target": "silo",
+   "std": [
+    0.0251113,
+    0.0359675
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000312033.jpg",
+   "target": "baseball glove",
+   "std": [
+    0.5929938,
+    0.5192858
+   ],
+   "corr": [
+    0.82733977,
+    0.82733977
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000312033.jpg",
+   "target": "gameboard",
+   "std": [
+    0.035522,
+    0.0280239
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000312033.jpg",
+   "target": "highchair",
+   "std": [
+    0.1489849,
+    0.076595
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000312033.jpg",
+   "target": "knee pad",
+   "std": [
+    0.4740087,
+    0.3670719
+   ],
+   "corr": [
+    0.07987473,
+    0.07987473
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000312033.jpg",
+   "target": "sock",
+   "std": [
+    0.0837741,
+    0.2185398
+   ],
+   "corr": [
+    0.15746897,
+    0.15746897
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000312524.jpg",
+   "target": "cupcake",
+   "std": [
+    0.3002237,
+    0.3490238
+   ],
+   "corr": [
+    0.39208233,
+    0.39208233
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000312524.jpg",
+   "target": "kennel",
+   "std": [
+    0.0469127,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000312524.jpg",
+   "target": "knife",
+   "std": [
+    0.2611584,
+    0.237623
+   ],
+   "corr": [
+    0.36969867,
+    0.36969867
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000312524.jpg",
+   "target": "lightbulb",
+   "std": [
+    0.0,
+    0.0
+   ],
+   "corr": [
+    0.01730095,
+    0.01730095
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000312524.jpg",
+   "target": "vase",
+   "std": [
+    0.1743191,
+    0.2173193
+   ],
+   "corr": [
+    0.50987488,
+    0.50987488
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000313644.jpg",
+   "target": "butterfly",
+   "std": [
+    0.0,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000313644.jpg",
+   "target": "thermos bottle",
+   "std": [
+    0.0,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000313644.jpg",
+   "target": "traffic light",
+   "std": [
+    0.7619485,
+    0.8196339
+   ],
+   "corr": [
+    0.66407043,
+    0.66407043
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000314023.jpg",
+   "target": "baseball glove",
+   "std": [
+    0.0,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000314023.jpg",
+   "target": "belt",
+   "std": [
+    0.3960924,
+    0.3566322
+   ],
+   "corr": [
+    0.34984618,
+    0.34984618
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000314023.jpg",
+   "target": "headboard",
+   "std": [
+    0.3119842,
+    0.3628588
+   ],
+   "corr": [
+    0.10027503,
+    0.10027503
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000314023.jpg",
+   "target": "lamp",
+   "std": [
+    0.2175006,
+    0.1619135
+   ],
+   "corr": [
+    0.16827333,
+    0.16827333
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000314023.jpg",
+   "target": "sugar bowl",
+   "std": [
+    0.0204675,
+    0.0301678
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000314294.jpg",
+   "target": "elephant",
+   "std": [
+    0.9010813,
+    0.8522199
+   ],
+   "corr": [
+    0.68962747,
+    0.68962747
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000314294.jpg",
+   "target": "hot sauce",
+   "std": [
+    0.153839,
+    0.1444264
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000314294.jpg",
+   "target": "ladybug",
+   "std": [
+    0.1723919,
+    0.0558018
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000315991.jpg",
+   "target": "shepherd dog",
+   "std": [
+    0.0,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000315991.jpg",
+   "target": "stool",
+   "std": [
+    0.0,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000315991.jpg",
+   "target": "surfboard",
+   "std": [
+    0.4869477,
+    0.4645499
+   ],
+   "corr": [
+    0.47250658,
+    0.47250658
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000316807.jpg",
+   "target": "canoe",
+   "std": [
+    0.0,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000316807.jpg",
+   "target": "tank top",
+   "std": [
+    0.4144177,
+    0.3832519
+   ],
+   "corr": [
+    0.07323848,
+    0.07323848
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000316807.jpg",
+   "target": "tennis ball",
+   "std": [
+    0.4158994,
+    0.4514032
+   ],
+   "corr": [
+    0.82396847,
+    0.82396847
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000316807.jpg",
+   "target": "vat",
+   "std": [
+    0.0602518,
+    0.1221261
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000316807.jpg",
+   "target": "wristband",
+   "std": [
+    0.4155943,
+    0.4977924
+   ],
+   "corr": [
+    0.1328557,
+    0.1328557
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000317838.jpg",
+   "target": "bench",
+   "std": [
+    0.4714647,
+    0.4814977
+   ],
+   "corr": [
+    0.18433842,
+    0.18433842
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000317838.jpg",
+   "target": "platter",
+   "std": [
+    0.0,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000317838.jpg",
+   "target": "vacuum cleaner",
+   "std": [
+    0.0447803,
+    0.0574035
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000317911.jpg",
+   "target": "bicycle",
+   "std": [
+    0.4818194,
+    0.4448648
+   ],
+   "corr": [
+    0.47704384,
+    0.47704384
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000317911.jpg",
+   "target": "camcorder",
+   "std": [
+    0.0382762,
+    0.0343537
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000317911.jpg",
+   "target": "pocket watch",
+   "std": [
+    0.0480752,
+    0.0419946
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000317911.jpg",
+   "target": "rearview mirror",
+   "std": [
+    0.4352511,
+    0.4132742
+   ],
+   "corr": [
+    0.08510254,
+    0.08510254
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000317911.jpg",
+   "target": "signboard",
+   "std": [
+    0.0680246,
+    0.0561543
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000320171.jpg",
+   "target": "beret",
+   "std": [
+    0.081805,
+    0.196855
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000320171.jpg",
+   "target": "car",
+   "std": [
+    0.6145311,
+    0.6512623
+   ],
+   "corr": [
+    0.11121435,
+    0.11121435
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000320171.jpg",
+   "target": "fireplug",
+   "std": [
+    0.0,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000320171.jpg",
+   "target": "sweet potato",
+   "std": [
+    0.0317489,
+    0.0362861
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000321867.jpg",
+   "target": "bracelet",
+   "std": [
+    0.4020231,
+    0.3871784
+   ],
+   "corr": [
+    0.07329415,
+    0.07329415
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000321867.jpg",
+   "target": "corset",
+   "std": [
+    0.0641936,
+    0.1198847
+   ],
+   "corr": [
+    0.02274997,
+    0.02274997
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000321867.jpg",
+   "target": "microwave oven",
+   "std": [
+    0.0421789,
+    0.0488449
+   ],
+   "corr": [
+    0.0329312,
+    0.0329312
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000321867.jpg",
+   "target": "trousers",
+   "std": [
+    0.1965983,
+    0.200735
+   ],
+   "corr": [
+    0.05360397,
+    0.05360397
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000321867.jpg",
+   "target": "watch",
+   "std": [
+    0.4038509,
+    0.3670521
+   ],
+   "corr": [
+    0.14249289,
+    0.14249289
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000321903.jpg",
+   "target": "chessboard",
+   "std": [
+    0.0273078,
+    0.0572692
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000321903.jpg",
+   "target": "dispenser",
+   "std": [
+    0.0,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000321903.jpg",
+   "target": "frisbee",
+   "std": [
+    0.4692801,
+    0.4561408
+   ],
+   "corr": [
+    0.80064046,
+    0.80064046
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000322968.jpg",
+   "target": "clock tower",
+   "std": [
+    0.6014989,
+    0.5868329
+   ],
+   "corr": [
+    0.30069083,
+    0.30069083
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000322968.jpg",
+   "target": "flag",
+   "std": [
+    0.191332,
+    0.1577951
+   ],
+   "corr": [
+    0.3124752,
+    0.3124752
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000322968.jpg",
+   "target": "flowerpot",
+   "std": [
+    0.2982958,
+    0.1305544
+   ],
+   "corr": [
+    0.29407656,
+    0.29407656
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000322968.jpg",
+   "target": "prawn",
+   "std": [
+    0.0286268,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000322968.jpg",
+   "target": "saddle blanket",
+   "std": [
+    0.0213772,
+    0.0209027
+   ],
+   "corr": [
+    0.02592922,
+    0.02592922
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000323626.jpg",
+   "target": "ladybug",
+   "std": [
+    0.0493064,
+    0.0453203
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000323626.jpg",
+   "target": "lamp",
+   "std": [
+    0.1627055,
+    0.1120216
+   ],
+   "corr": [
+    0.25346783,
+    0.25346783
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000323626.jpg",
+   "target": "necklace",
+   "std": [
+    0.1867585,
+    0.1121572
+   ],
+   "corr": [
+    0.12181947,
+    0.12181947
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000323626.jpg",
+   "target": "sweater",
+   "std": [
+    0.1072432,
+    0.1310282
+   ],
+   "corr": [
+    0.06565572,
+    0.06565572
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000323626.jpg",
+   "target": "toothpick",
+   "std": [
+    0.0,
+    0.030657
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000325008.jpg",
+   "target": "beer can",
+   "std": [
+    0.0,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000325008.jpg",
+   "target": "skateboard",
+   "std": [
+    0.6233844,
+    0.7437755
+   ],
+   "corr": [
+    0.69443309,
+    0.69443309
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000325008.jpg",
+   "target": "streetlight",
+   "std": [
+    0.0,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000325078.jpg",
+   "target": "bath mat",
+   "std": [
+    0.2205435,
+    0.20683
+   ],
+   "corr": [
+    0.28290772,
+    0.28290772
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000325078.jpg",
+   "target": "cistern",
+   "std": [
+    0.124122,
+    0.1476917
+   ],
+   "corr": [
+    0.038606,
+    0.038606
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000325078.jpg",
+   "target": "salmon (food)",
+   "std": [
+    0.0432119,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000325078.jpg",
+   "target": "shower curtain",
+   "std": [
+    0.5603558,
+    0.6480159
+   ],
+   "corr": [
+    0.40371907,
+    0.40371907
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000325078.jpg",
+   "target": "wristband",
+   "std": [
+    0.0216043,
+    0.0361702
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000326517.jpg",
+   "target": "airplane",
+   "std": [
+    0.3635269,
+    0.3286744
+   ],
+   "corr": [
+    0.28883144,
+    0.28883144
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000326517.jpg",
+   "target": "hippopotamus",
+   "std": [
+    0.0296178,
+    0.067996
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000326517.jpg",
+   "target": "timer",
+   "std": [
+    0.0840192,
+    0.1127614
+   ],
+   "corr": [
+    0.08497305,
+    0.08497305
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000326517.jpg",
+   "target": "truck",
+   "std": [
+    0.4021361,
+    0.423157
+   ],
+   "corr": [
+    0.21854152,
+    0.21854152
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000327448.jpg",
+   "target": "antenna",
+   "std": [
+    0.1252947,
+    0.2005757
+   ],
+   "corr": [
+    0.08666192,
+    0.08666192
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000327448.jpg",
+   "target": "cleat",
+   "std": [
+    0.0,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000327448.jpg",
+   "target": "lamppost",
+   "std": [
+    0.4166617,
+    0.4119293
+   ],
+   "corr": [
+    0.27086467,
+    0.27086467
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000327448.jpg",
+   "target": "street sign",
+   "std": [
+    0.430365,
+    0.4109659
+   ],
+   "corr": [
+    0.46170193,
+    0.46170193
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000327448.jpg",
+   "target": "teakettle",
+   "std": [
+    0.0,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000331613.jpg",
+   "target": "checkbook",
+   "std": [
+    0.105612,
+    0.039986
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000331613.jpg",
+   "target": "octopus (food)",
+   "std": [
+    0.0,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000331613.jpg",
+   "target": "strap",
+   "std": [
+    0.0453657,
+    0.0235245
+   ],
+   "corr": [
+    0.01380658,
+    0.01380658
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000331613.jpg",
+   "target": "surfboard",
+   "std": [
+    0.6158096,
+    0.623
+   ],
+   "corr": [
+    0.87584531,
+    0.87584531
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000333267.jpg",
+   "target": "diving board",
+   "std": [
+    0.0,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000333267.jpg",
+   "target": "dog",
+   "std": [
+    0.1107111,
+    0.1452954
+   ],
+   "corr": [
+    0.05766176,
+    0.05766176
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000333267.jpg",
+   "target": "log",
+   "std": [
+    0.0,
+    0.0217588
+   ],
+   "corr": [
+    0.03826912,
+    0.03826912
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000333267.jpg",
+   "target": "sheep",
+   "std": [
+    0.5953435,
+    0.6476778
+   ],
+   "corr": [
+    0.56595045,
+    0.56595045
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000333406.jpg",
+   "target": "baseball glove",
+   "std": [
+    0.0,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000333406.jpg",
+   "target": "cat",
+   "std": [
+    0.6652239,
+    0.6325473
+   ],
+   "corr": [
+    0.32208157,
+    0.32208157
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000333406.jpg",
+   "target": "earring",
+   "std": [
+    0.1476679,
+    0.1850894
+   ],
+   "corr": [
+    0.07242269,
+    0.07242269
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000333406.jpg",
+   "target": "rolling pin",
+   "std": [
+    0.0,
+    0.0229765
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000333406.jpg",
+   "target": "sweater",
+   "std": [
+    0.0589803,
+    0.0807132
+   ],
+   "corr": [
+    0.01382273,
+    0.01382273
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000334555.jpg",
+   "target": "birdcage",
+   "std": [
+    0.0273383,
+    0.0342108
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000334555.jpg",
+   "target": "cow",
+   "std": [
+    0.5995606,
+    0.6783289
+   ],
+   "corr": [
+    0.78195834,
+    0.78195834
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000334555.jpg",
+   "target": "jacket",
+   "std": [
+    0.0863984,
+    0.129162
+   ],
+   "corr": [
+    0.07977473,
+    0.07977473
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000334555.jpg",
+   "target": "pole",
+   "std": [
+    0.3063156,
+    0.2745364
+   ],
+   "corr": [
+    0.13023947,
+    0.13023947
+   ],
+   "corr_identical": true
+  },
+  {
+   "image": "000000334555.jpg",
+   "target": "sawhorse",
+   "std": [
+    0.0484308,
+    0.0
+   ],
+   "corr": [
+    0.0,
+    0.0
+   ],
+   "corr_identical": true
+  }
+ ]
+}
