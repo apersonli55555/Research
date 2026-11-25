@@ -214,3 +214,12 @@ statistics (same 300 reference images; `bank/calib_chunks.ipynb`, GPU), on the s
 (the map frozen for the bank) vs chunks (none), and bank+shift vs chunks+shift (paired image bootstrap, 200). If the
 normalization helps chunks as much as the bank, the paper reports it as a general post-hoc fix of the score scale and
 not as a bank-specific gain. Reported whatever the direction; if the GPU run is unavailable, this is stated as a limitation.
+
+## Amendment J (25 Nov 2026, before running it): measured request interference of the corrected method
+Invariance of bank + class-wise shift is by construction; this measures it end to end. Pairs: the run-3j
+image-independent request pairs (target + four distractors drawn independently per request), on confirmation images
+301–340 in the run-3h order (not used for the reference statistics). For each request the deployed pipeline is run from
+scratch (bank pass → Soft-NMS → shift → requested classes → top 300; CPU). Reported against the saved standard five-class
+prompt outputs for the same requests (run 3j, T4): mean and max |Δ target top score| and decision flips at thresholds
+0.2 / 0.3 / 0.35 / 0.5; reduction = 1 − flips(corrected) / flips(standard). Reported whatever the outcome. Script
+`bank/calib_interference.py --n 40`.
