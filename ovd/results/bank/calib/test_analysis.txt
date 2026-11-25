@@ -1,0 +1,8 @@
+== 1000 images, 13073 boxes; official LVIS evaluator, 300 dets/image, Soft-NMS
+  bank_L4  AP 0.3779  AP50 0.4941  APr 0.2478  APc 0.3379  APf 0.3975
+  chunks   AP 0.3982  AP50 0.5066  APr 0.3376  APc 0.4048  APf 0.3985
+  none     AP 0.3774  AP50 0.4930  APr 0.2509  APc 0.3376  APf 0.3968
+  shift    AP 0.4052  AP50 0.5285  APr 0.3696  APc 0.3983  APf 0.4091
+  z        AP 0.3971  AP50 0.5153  APr 0.4437  APc 0.3987  APf 0.3945
+  shift − chunks AP: +0.0070 [-0.0023, +0.0205] (200 image resamples)
+  shift − chunks AP50: +0.0218 [+0.0109, +0.0388] (200 image resamples)

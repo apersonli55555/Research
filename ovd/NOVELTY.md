@@ -121,7 +121,7 @@ template and rules, and the anonymous supplement rebuilt with the new scripts/re
   −2.52, bank + Soft-NMS −5.75); stated in the paper's results and limitations.
 - ICCV 2027 rules (checked 24 Nov 2026): no official call for papers or author kit is published yet; third-party trackers
   only estimate an early-to-mid March 2027 deadline. The draft follows the previous ICCV review format (8 pages
-  excluding references; this draft's body ends on page 7). It must be re-checked against the official kit at iccv.thecvf.com when published.
+  excluding references; this draft's body ends on page 8). It must be re-checked against the official kit at iccv.thecvf.com when published.
 
 ### Update 24 Nov 2026 — run 3l (Amendment G): full-image LVIS protocol — NEGATIVE for the bank
 Bank + Soft-NMS vs fixed chunks + Soft-NMS on 1,000 fresh images, official evaluator: AP −2.0 [−2.56, −0.53], AP50 −1.26
@@ -142,3 +142,23 @@ mechanism (confirmed on the test images): the bank's whole full-image deficit is
 short focused prompts additionally inflate scores of plausible-but-absent classes. Novelty assessment unchanged: no
 accurate *and* fast invariant method for Grounding DINO is shown; the negative result and its mechanism are reported.
 Paper now 8 pages including references (body ends on page 7).
+
+### Update 25 Nov 2026 — run 3n (Amendment I): class-wise score shift — PRIMARY CRITERION MET (with a pending fairness check)
+Pre-registered (map chosen on 124 development images, frozen before the test): a fixed per-class logit shift of the bank's
+Soft-NMS scores, estimated without labels on 300 disjoint reference images. On the same 1,000 full-image test images:
+0.4052 AP vs 0.3982 for standard 14-pass inference, **+0.70 AP [−0.23, +2.05]** (non-inferior at 1 AP),
+**+2.18 AP50 [+1.09, +3.88]** (superior); one pass, 6.67× faster on the L4, list-invariant by construction; the map adds
+8.6 ms/image. Reproduced at four decimals by an independent LVIS evaluator (no lvis-api). This meets the goal's Grounding
+DINO criterion (invariant, within 1 AP of the strongest baseline, < 2× cost) under the standard LVIS protocol.
+**Novelty, honestly scoped.** The shift itself is not new as an idea: Dave et al. (arXiv:2102.01066, 2021) showed that the
+per-image detection cap makes LVIS AP sensitive to cross-class calibration and that calibration raises pooled AP. What is
+new here is (a) the diagnosis that the fixed bank's full-image deficit is a cross-class *score-scale* problem, not missing
+boxes or false-alarm crowding (runs 3l/3m), and (b) that a label-free, request-independent per-class constant restores
+parity with exact chunking in one pass while keeping list invariance.
+**Reviewer risks (new).** (1) "The gain is a protocol artifact of the 300 cap": partly true — under a per-class budget
+(AP-fixed) the map changes nothing; the paper says so. The bank's uncapped AP on development (0.5397) shows the cap binds.
+(2) "Apply the same shift to chunks": pre-registered as Amendment I2; needs the owner's GPU (`bank/calib_chunks.ipynb`,
+≈ 1.5 h on an L4) or a ≈ 40 h CPU fallback run (started 25 Nov 09:30). If chunks + shift gains as much, the paper must
+present the shift as a general post-hoc fix and the bank's claim reverts to "6.7× faster at equal calibration".
+(3) Single checkpoint (base); the bank still fails on tiny.
+Paper: 8 pages; the body now ends on page 8 (references start on page 8); 312 of 312 numbers traced.

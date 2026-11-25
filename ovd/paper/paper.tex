@@ -31,9 +31,12 @@ of all 1{,}203 LVIS class embeddings that takes part in fusion in a single image
 image--class pairs with five-class requests, the bank with class-wise Soft-NMS is 3.26 mAP50 points more accurate (95\% CI 1.67 to 4.50) and 2.15$\times$ faster than the
 previous invariant method (fixed canonical prompt chunks) under identical post-processing, and non-inferior at a 1-point
 margin to unmodified five-class prompting (0.650 vs.\ 0.631) at 1.81$\times$ its latency; with requests chosen without
-looking at the image its lead grows to 3.6 points. Under the standard full-image LVIS protocol, however, the bank is
-2.0 AP below the fixed chunks (rare and common classes; frequent classes equal) while 6.7$\times$ faster, and it does not
-transfer to the smaller checkpoint: it trades accuracy for speed rather than dominating. Two random five-name requests
+looking at the image its lead grows to 3.6 points. Under the standard full-image LVIS protocol (300 detections per
+image) the raw bank is 2.0 AP below the fixed chunks because its score scale differs between classes; a fixed,
+label-free per-class logit shift, estimated once on 300 unlabelled images, removes the gap: on 1{,}000 held-out images
+the bank reaches 0.405 AP against 0.398 for standard 14-pass inference ($+$0.70, 95\% CI $-$0.23 to $+$2.05;
+pre-registered non-inferiority at 1 AP met) in a single pass, 6.7$\times$ faster. The bank does not transfer to the
+smaller checkpoint. Two random five-name requests
 leave aggregate counts nearly unchanged yet flip 9.0\% of decisions on present objects, so benchmark averages hide the
 effect. For YOLO-World and OWLv2 the
 corrections cost 0.94--1.14$\times$ original inference and match or exceed the better of single-class and full-list
@@ -64,7 +67,8 @@ NMS and chunking.
 (3) Training-free, vocabulary-invariant inference for each detector family -- including a fixed class bank that makes
 early-fusion Grounding DINO list-invariant in one image pass -- with accuracy and latency against original, single-class,
 fixed-chunk and vocabulary-pruning baselines, confirmed on fresh images, with their limits: under the standard full-image
-LVIS protocol the bank trades 2.0 AP for a 6.7$\times$ speed-up over exact chunking, and it fails on a second checkpoint.
+LVIS protocol the bank needs a fixed per-class score shift to match exact chunking (then within 1 AP, 6.7$\times$
+faster), and it fails on a second checkpoint.
 
 \section{Related work}
 \paragraph{Open-vocabulary detection.} Grounding DINO~\cite{gdino} fuses image and text early and grounds phrases;
@@ -168,14 +172,27 @@ the 10 classes it scores highest, one standard pass re-scores them, the rest kee
 1{,}000 images it is 2.2 AP below the chunks (CI $-$2.71 to $-$0.74), at the bank's level. The gap lies entirely in
 classes the bank does not propose (per-class AP 0.219 bank vs.\ 0.269 chunks; on proposed classes 0.528 vs.\ 0.520),
 and the short prompt raises the scores of proposed but absent classes (median top score 0.30 to 0.42; exploratory).
+(viii) \emph{Class-wise score shift} (pre-registered; map chosen among none, shift and $z$-score on the 124 development
+images). Per-class AP depends only on the order of a class's own detections, so a per-class increasing map changes AP
+only through the 300-detection per-image budget, which makes LVIS AP sensitive to cross-class calibration~\cite{devil}.
+On 300 unlabelled reference images (disjoint from development and test) we record, per class $c$, the logit of the
+bank's highest score in each image; its mean $\mu_c$ ranges from $-$5.80 to $-$1.65 (global mean $\mu_g$). After
+Soft-NMS each kept score $s$ becomes $\sigma(\mathrm{logit}\,s-\mu_c+\mu_g)$. The map is fixed and per class, so the
+bank stays list-invariant, and it adds 8.6\,ms per image on one CPU core. On the same 1{,}000 images the shifted bank
+reaches 0.405 AP ($+$2.78 over the bank; APr $+$11.9, APc $+$6.1, APf $+$1.2) against 0.398 for the chunks: $+$0.70 AP
+(CI $-$0.23 to $+$2.05) and $+$2.18 AP50 (CI $+$1.09 to $+$3.88). Non-inferiority at 1 AP is met; superiority holds
+for AP50 only. An independent re-implementation of the LVIS evaluator reproduces every number. Because the gain acts
+through the per-image budget, it would vanish under a per-class budget~\cite{devil}, and the chunks may gain from the
+same shift; that pre-registered comparison is pending.
 \begin{table}[t]\centering\footnotesize\setlength{\tabcolsep}{2.5pt}
 \caption{Standard full-image LVIS protocol: 1{,}000 fresh val images, all 1{,}203 classes, official evaluator, class-wise
-Soft-NMS for all, one L4 (bank-proposed: CPU; 14 passes for chunks, 1 for the bank). Fixed chunks are also the standard full-vocabulary inference.}\label{tab:full}
+Soft-NMS for all, one L4 (bank-proposed and shifted bank: CPU; 14 passes for chunks, 1 for the bank). Fixed chunks are also the standard full-vocabulary inference.}\label{tab:full}
 \begin{tabular}{lcccccc}\toprule
 method & AP & AP50 & APr & APc & APf & s/img\\\midrule
-fixed chunks & \textbf{.398} & \textbf{.507} & \textbf{.338} & \textbf{.405} & \textbf{.399} & 4.215\\
+fixed chunks & .398 & .507 & .338 & \textbf{.405} & .399 & 4.215\\
 fixed bank & .378 & .494 & .248 & .338 & .398 & \textbf{.632}\\
-bank-proposed ($K{=}10$) & .376 & .493 & .213 & .339 & .396 & 2 passes\\\bottomrule
+bank-proposed ($K{=}10$) & .376 & .493 & .213 & .339 & .396 & 2 passes\\
+\textbf{bank + class-wise shift} & \textbf{.405} & \textbf{.529} & \textbf{.370} & .398 & \textbf{.409} & 1 pass\\\bottomrule
 \end{tabular}\end{table}
 \begin{figure}[t]\centering\includegraphics[width=\columnwidth]{fig_qual.pdf}
 \caption{Grounding DINO base. Each request retains the target and draws four distractors independently of the image.
@@ -366,8 +383,10 @@ YOLO-World & .602 (.001) & .592 (.006) & .585 (.026) & \textbf{.615} (.000)\\\bo
 
 \section{Limitations}
 Base/small checkpoints only (one 24\,GB GPU); two datasets; the visually confusable family is defined with CLIP; the
-pruning baseline omits VocAda's captioner. Grounding DINO's fixed chunks are expensive for small vocabularies from a large label space; the fixed bank with Soft-NMS costs 1.81$\times$ standard inference and is non-inferior to the unmodified prompt, but not shown non-inferior to a prompt that also uses Soft-NMS. On sampled pairs (five-class requests) the bank leads the chunks, but under the full-image LVIS protocol it is 2.0 AP
-below them, losing on common and rare classes it fails to propose (re-scoring its own top-10 classes with the standard prompt does not help); on sampled pairs 126 of the 374 positive classes occur on one image, so
+pruning baseline omits VocAda's captioner. Grounding DINO's fixed chunks are expensive for small vocabularies from a large label space; the fixed bank with Soft-NMS costs 1.81$\times$ standard inference and is non-inferior to the unmodified prompt, but not shown non-inferior to a prompt that also uses Soft-NMS. On sampled pairs (five-class requests) the bank leads the chunks, but under the full-image LVIS protocol the raw bank is 2.0 AP
+below them, losing on common and rare classes (re-scoring its own top-10 classes with the standard prompt does not help); the
+fixed per-class shift closes this gap only through the 300-detection per-image budget, and whether the same shift also raises
+the chunks is not yet measured; on sampled pairs 126 of the 374 positive classes occur on one image, so
 those per-class APs are coarse.
 The bank fails on grounding-dino-tiny ($-$5.75 points against the standard prompt), so it should be validated per
 checkpoint; on tiny no invariant method we tested is within one point of the standard prompt. Independent read-out raises false alarms on verified-absent LVIS classes for OWLv2.
@@ -401,6 +420,8 @@ computed on CPU and checked against GPU on the development split (agreement to $
 \bibitem{tractordogs} F. Ruis, G. J. Burghouts, H. Kuijf. Fantastic tractor-dogs and how not to find them with open-vocabulary detectors. In \emph{ICLR}, 2026.
 
 \bibitem{coco} T.-Y. Lin, M. Maire, S. Belongie, et al. Microsoft COCO: Common objects in context. In \emph{ECCV}, 2014.
+
+\bibitem{devil} A. Dave, P. Doll\'ar, D. Ramanan, A. Kirillov, R. Girshick. Evaluating large-vocabulary object detectors: The devil is in the details. arXiv:2102.01066, 2021.
 
 \bibitem{lvis} A. Gupta, P. Doll\'ar, R. Girshick. LVIS: A dataset for large vocabulary instance segmentation. In \emph{CVPR}, 2019.
 

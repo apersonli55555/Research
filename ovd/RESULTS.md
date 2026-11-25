@@ -717,4 +717,38 @@ the bank's score scale differs strongly between classes. `--mode dev` (124 devel
 
 The 300-detection cap costs the bank 6.8 AP on development, so the ceiling condition of Amendment I (≥ 0.5 AP) is met.
 Pre-registered rule selects **shift** (frozen). APr on development rests on very few rare instances (noisy). The
-1,000-image test (all three maps saved; shift primary) is running.
+1,000-image test (all three maps saved; shift primary) follows.
+
+## Run 3n (Amendment I) — frozen test, 1,000 run-3l images, map = shift, CPU, 25 Nov 2026 — PRIMARY CRITERION MET
+`bank/bank_calib.py --mode test` (resumable; one bank pass per image, CPU ≈ 15 s/image) → outputs
+`results/bank/calib/test_outputs.zip`; `bank/bank_calib_analysis.py --map shift --boot 200` →
+`results/bank/calib/test_analysis.{txt,json}`. Official LVIS evaluator, 300 dets/image, 13,073 boxes, all 1,203 classes:
+
+| method (Soft-NMS) | AP | AP50 | APr | APc | APf | passes/image |
+|---|---|---|---|---|---|---|
+| chunks (run 3l, L4) | 0.3982 | 0.5066 | 0.3376 | 0.4048 | 0.3985 | 14 |
+| bank (run 3l, L4) | 0.3779 | 0.4941 | 0.2478 | 0.3379 | 0.3975 | 1 |
+| bank, map none (this run, CPU) | 0.3774 | 0.4930 | 0.2509 | 0.3376 | 0.3968 | 1 |
+| **bank, map shift (frozen, primary)** | **0.4052** | **0.5285** | 0.3696 | 0.3983 | 0.4091 | 1 |
+| bank, map z (secondary) | 0.3971 | 0.5153 | 0.4437 | 0.3987 | 0.3945 | 1 |
+
+Primary (paired image bootstrap, 200): shift − chunks AP **+0.0070 [−0.0023, +0.0205]**; AP50 **+0.0218 [+0.0109, +0.0388]**.
+The pre-registered criterion ("within 1 AP" = CI lower bound above −0.01) is **met**: the normalized bank is not
+worse than standard full-vocabulary inference by 1 AP; its AP is not significantly higher (the CI includes 0); its AP50 is
+significantly higher. Versus the bank without the map: +2.78 AP (0.3774 → 0.4052), mostly in rare (+11.9) and common
+(+6.1) classes, frequent +1.2. map none on CPU reproduces the run-3l L4 bank to within 0.0011 on AP and AP50 (rank swaps among near ties).
+**Independent check:** `bank/independent_lvis_ap.py --calib` (no lvis-api) gives the same five numbers at four decimals for
+none / shift / z (`results/bank/calib/test_independent_lvis_ap.json`).
+**Cost:** the map is a per-class affine shift in logit space with 1,203 fixed constants (8.6 ms/image on a loaded CPU core;
+≈ 1.4 % of an L4 bank pass of 0.632 s); inference is the single bank pass (run 3l: 0.632 s vs chunks 4.215 s on the L4,
+i.e. ≈ 0.15× the cost of standard inference). **Request invariance** is unchanged: each class's detections are the bank's
+detections passed through a fixed, request-independent increasing function.
+**What the gain is and is not (alternative explanations).** A per-class monotone map leaves each class's ranking
+unchanged, so it changes AP only through the 300-detections-per-image cap: it reallocates the per-image budget from
+classes the bank over-scores to classes it under-scores. This is the cross-class calibration effect described for
+LVIS by Dave et al. (2021), who for that reason proposed a per-class (not per-image) detection budget. Consequences:
+(1) under a per-class budget (AP-fixed) the map would change nothing; (2) standard inference is also under the cap and may
+gain from the same normalization — Amendment I2 (chunks + shift, own reference statistics) tests this; its outputs are
+needed from the owner's GPU (`bank/calib_chunks.ipynb`) or from a ≈ 40 h CPU run started 25 Nov 09:30 as a fallback.
+Until I2 is in, the claim is limited to: **one request-invariant pass plus a fixed per-class shift matches standard
+14-pass inference under the standard LVIS protocol**, not that the bank's scores are intrinsically better than chunks'.
