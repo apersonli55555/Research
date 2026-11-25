@@ -162,3 +162,5 @@ parity with exact chunking in one pass while keeping list invariance.
 present the shift as a general post-hoc fix and the bank's claim reverts to "6.7× faster at equal calibration".
 (3) Single checkpoint (base); the bank still fails on tiny.
 Paper: 8 pages; the body now ends on page 8 (references start on page 8); 312 of 312 numbers traced.
+ICCV 2027 kit re-checked 25 Nov 2026: still no official call for papers or author kit (iccv.thecvf.com lists only the
+venue, Hong Kong, 2–8 Oct 2027); trackers project ≈ 8 Mar 2027. Formatting check against the kit remains outstanding.

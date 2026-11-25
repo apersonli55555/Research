@@ -752,3 +752,8 @@ gain from the same normalization — Amendment I2 (chunks + shift, own reference
 needed from the owner's GPU (`bank/calib_chunks.ipynb`) or from a ≈ 40 h CPU run started 25 Nov 09:30 as a fallback.
 Until I2 is in, the claim is limited to: **one request-invariant pass plus a fixed per-class shift matches standard
 14-pass inference under the standard LVIS protocol**, not that the bank's scores are intrinsically better than chunks'.
+**Tests** (`bank/test_calib.py`, 5 passed): empty slots stay empty; each class's ranking is unchanged by every map;
+mapping then selecting any requested subset equals selecting then mapping (request invariance); the shift sends every
+class's reference level to the same value; top-300 selection is capped and sorted.
+**Amendment I2 status (25 Nov 11:30):** CPU fallback run at ≈ 36 images/h on 4 cores (72/1,300 after 2 h, ≈ 34 h left);
+analysis `bank/calib_i2_analysis.py` chained to start when it ends.
