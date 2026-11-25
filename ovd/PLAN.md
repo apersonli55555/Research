@@ -187,3 +187,22 @@ against the run-3l chunks + Soft-NMS (primary: AP and AP50 difference, paired im
 Cost reported as forward passes (1 bank + ⌈candidate tokens/256⌉ prompt passes vs 14 for chunks) and, if a GPU run is
 available, seconds. Inference for this amendment runs on CPU (numerical differences to the L4 outputs ≤ 0.007 in score,
 run 3l check). All results reported whatever their direction.
+
+## Amendment I (25 Nov 2026, before any result): class-wise score normalization of the bank (fixed reference statistics)
+Motivation: run 3m — the bank's full-image deficit vs chunks lies in classes the bank does not rank highly. Per-class AP
+depends only on the order of a class's own detections, so a per-class monotone score map can change AP only through
+the 300-detections-per-image cap; it can move that budget from over-scored to under-scored (common/rare) classes. The goal
+lists class-wise normalization and fixed-reference calibration; this tests them for the bank.
+Method (training-free, no labels, request-invariant because the constants are fixed and per class):
+ 1. Reference statistics, label-free: bank pass on 300 reference images (the first 300 of the 600 run-3h confirmation
+    images in their SHA-256 order; disjoint from the development and test images); per class c, the logit of the
+    image's highest score for c; μ_c, σ_c = mean and std over the 300 images; μ_g, σ_g = means of μ_c and σ_c over classes.
+ 2. Per test image: bank pass → per class top 50 ≥ 0.02 → class-wise Gaussian Soft-NMS on the raw scores (identical to the
+    run-3l bank lists) → per-class monotone map of the kept scores → top 300 per image. Maps:
+    none: s; shift: σ(logit s − μ_c + μ_g); z: σ((logit s − μ_c)·σ_g/σ_c + μ_g).
+Development (124 images, as Amendment H): (a) diagnostic ceiling — official AP of the bank's Soft-NMS lists with no
+per-image cap (max 10,000) vs the 300 cap; (b) choose among none/shift/z by official AP (300 cap); ties → earlier in
+that list. Test: the chosen map on the 1,000 run-3l images against run-3l chunks + Soft-NMS (primary: AP and AP50
+difference, 200 paired image resamples; "within 1 AP" = CI lower bound above −0.01); the other maps reported as
+secondary. CPU inference. All results reported whatever their direction. If the ceiling (a) shows that removing the cap
+recovers < 0.5 AP on development, the test is still run but the expected outcome is recorded as negative beforehand.
