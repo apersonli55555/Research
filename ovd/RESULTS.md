@@ -701,3 +701,20 @@ absent but plausible classes (the interference this paper measures).
 interpolation). On the saved outputs (run 3l, run 3m test), `results/bank/independent_lvis_ap.json`:
 chunks AP 0.3982 / AP50 0.5066 / APr 0.3376 / APc 0.4048 / APf 0.3985; bank 0.3779 / 0.4941 / 0.2478 / 0.3379 / 0.3975;
 hybrid10 0.3758 / 0.4927 / 0.2126 / 0.3392 / 0.3957 — identical to lvis-api at four decimals for every entry.
+
+## Run 3n (Amendment I) — class-wise normalization of the bank: reference + development stage, CPU, 25 Nov 2026
+`bank/bank_calib.py --mode ref` (300 reference images, label-free) → `results/bank/calib/ref_stats.json`: per-class mean
+of the image-max logit ranges −5.80 to −1.65 (global mean −4.57, between-class SD 0.68; mean within-class SD 0.90), i.e.
+the bank's score scale differs strongly between classes. `--mode dev` (124 development images) → analysis
+`bank/bank_calib_analysis.py` → `results/bank/calib/dev_analysis.json` (outputs `ref_dev_outputs.zip`):
+
+| bank + Soft-NMS, map | AP | AP50 | APr | APc | APf |
+|---|---|---|---|---|---|
+| none (= run 3m dev bank, identical) | 0.4720 | 0.5932 | 0.1334 | 0.3004 | 0.4916 |
+| **shift** | **0.4889** | 0.6107 | 0.0185 | 0.3043 | 0.5113 |
+| z | 0.4736 | 0.5900 | 0.1017 | 0.3843 | 0.4864 |
+| ceiling: no 300-per-image cap (mean 2,369 dets/image) | 0.5397 | 0.6864 | 0.1555 | 0.4941 | 0.5488 |
+
+The 300-detection cap costs the bank 6.8 AP on development, so the ceiling condition of Amendment I (≥ 0.5 AP) is met.
+Pre-registered rule selects **shift** (frozen). APr on development rests on very few rare instances (noisy). The
+1,000-image test (all three maps saved; shift primary) is running.
