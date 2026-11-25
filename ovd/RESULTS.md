@@ -694,3 +694,10 @@ chunks 0.5204 — chunks are *not* better there; on the 253 classes that never w
 18.8%). This confirms on the test images the development-time diagnosis: the bank's full-image loss is a failure to
 propose common/rare classes, which no bank-proposed shortlist can fix, and short focused prompts raise the scores of
 absent but plausible classes (the interference this paper measures).
+
+## Independent evaluator check of the full-image results (25 Nov 2026)
+`bank/independent_lvis_ap.py` re-implements LVIS v1 box AP from the published rules without importing lvis-api
+(federated positive/negative image sets, not-exhaustive ignore, 300 dets/image, greedy IoU matching, 101-point
+interpolation). On the saved outputs (run 3l, run 3m test), `results/bank/independent_lvis_ap.json`:
+chunks AP 0.3982 / AP50 0.5066 / APr 0.3376 / APc 0.4048 / APf 0.3985; bank 0.3779 / 0.4941 / 0.2478 / 0.3379 / 0.3975;
+hybrid10 0.3758 / 0.4927 / 0.2126 / 0.3392 / 0.3957 — identical to lvis-api at four decimals for every entry.
