@@ -37,12 +37,21 @@ def main():
     csv_path = out / f"{a.run}.csv"
     if csv_path.exists():
         sys.exit(f"{csv_path} already exists. Choose a new --run name; never overwrite data.")
+    try:
+        ser = serial.Serial(a.port, a.baud, timeout=2)
+    except serial.SerialException as e:
+        from serial.tools import list_ports
+        ports = [f"  {p.device}  {p.description}" for p in list_ports.comports()]
+        sys.exit(f"Could not open {a.port}: {e}\n\nPorts found on this computer:\n"
+                 + ("\n".join(ports) if ports else "  (none: is the board plugged in with a data cable?)")
+                 + "\n\nThe ESP32 is usually the one mentioned as CH340 or USB-SERIAL. "
+                   "If the port is right, close the Arduino Serial Monitor and try again.")
     meta = dict(run=a.run, orientation=a.orientation, note=a.note, units=units, port=a.port,
                 started_utc=dt.datetime.now(dt.timezone.utc).isoformat(), simulated=False)
     (out / f"{a.run}.json").write_text(json.dumps(meta, indent=2))
 
     n, last = 0, 0.0
-    with serial.Serial(a.port, a.baud, timeout=2) as ser, open(csv_path, "w") as f:
+    with ser, open(csv_path, "w") as f:
         f.write("utc,run,unit,orientation," + HEADER + "\n")
         print(f"Recording to {csv_path}. Ctrl+C to stop.")
         try:
