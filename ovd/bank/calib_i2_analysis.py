@@ -26,6 +26,8 @@ def main():
     ap = argparse.ArgumentParser(); ap.add_argument("--bank", required=True); ap.add_argument("--chunks", required=True)
     ap.add_argument("--lvis", required=True); ap.add_argument("--boot", type=int, default=200)
     ap.add_argument("--workers", type=int, default=4); ap.add_argument("--out")
+    ap.add_argument("--pairs", default="chunks_shift:chunks_none,bank_shift:chunks_shift",
+                    help="comma-separated x:y pairs to bootstrap (default: the two pre-registered comparisons)")
     a = ap.parse_args()
     B, C = load(a.bank, "bank_"), load(a.chunks, "chunks_")
     files = sorted(set(B) & set(C))
@@ -49,7 +51,7 @@ def main():
         by[m] = defaultdict(list)
         for d in dets[m]:
             by[m][d["image_id"]].append(d)
-    for x, y in (("chunks_shift", "chunks_none"), ("bank_shift", "chunks_shift")):
+    for x, y in (q.split(":") for q in a.pairs.split(",")):
         g = {"bank_soft": by[x], "chunks_soft": by[y]}
         with Pool(a.workers) as pool:
             outs = pool.map(F.boot_one, [(s, imgs, g) for s in range(a.boot)])

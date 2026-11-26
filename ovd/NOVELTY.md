@@ -143,7 +143,7 @@ short focused prompts additionally inflate scores of plausible-but-absent classe
 accurate *and* fast invariant method for Grounding DINO is shown; the negative result and its mechanism are reported.
 Paper now 8 pages including references (body ends on page 7).
 
-### Update 25 Nov 2026 — run 3n (Amendment I): class-wise score shift — PRIMARY CRITERION MET (with a pending fairness check)
+### Update 25 Nov 2026 — run 3n (Amendment I): class-wise score shift — PRIMARY CRITERION MET against uncorrected chunks (superseded by run 3p below)
 Pre-registered (map chosen on 124 development images, frozen before the test): a fixed per-class logit shift of the bank's
 Soft-NMS scores, estimated without labels on 300 disjoint reference images. On the same 1,000 full-image test images:
 0.4052 AP vs 0.3982 for standard 14-pass inference, **+0.70 AP [−0.23, +2.05]** (non-inferior at 1 AP),
@@ -164,3 +164,17 @@ present the shift as a general post-hoc fix and the bank's claim reverts to "6.7
 Paper: 8 pages; the body now ends on page 8 (references start on page 8); 312 of 312 numbers traced.
 ICCV 2027 kit re-checked 25 Nov 2026: still no official call for papers or author kit (iccv.thecvf.com lists only the
 venue, Hong Kong, 2–8 Oct 2027); trackers project ≈ 8 Mar 2027. Formatting check against the kit remains outstanding.
+
+### Update 26–27 Nov 2026 — run 3p (Amendment I2): the fairness comparison is in, and it narrows the claim
+Same normalization applied to standard chunked inference with its own reference statistics (CPU fallback run, 1,000 test
+images): chunks 0.3980 → chunks + shift 0.4121 AP (**+1.41 [+0.97, +1.88]**), chunks + z 0.4139. Pre-registered
+bank + shift − chunks + shift: **−0.69 AP [−1.50, +0.59]**; AP50 +0.23 [−0.60, +1.96].
+**What this does to the novelty claim.** As pre-registered, the class-wise shift is reported as a *general* post-hoc
+correction of the cross-class score scale under the 300-per-image cap (prior art: Dave et al. 2021), not as a bank-specific
+contribution. The run-3n statement "within 1 AP of the strongest baseline" held only against standard inference as
+practised; against equally corrected chunks the CI lower bound is −1.50, so non-inferiority at 1 AP is **not shown** and
+the goal's Grounding DINO accuracy criterion is **not met** against the strongest baseline. What survives: one
+request-invariant pass at 6.7× lower cost than the 14 chunks, measured zero request interference (run 3o), and a point
+estimate 0.69 AP below corrected chunks.
+**Reviewer risk (resolved, against us).** "Apply the same shift to chunks" — done; it helps chunks. The paper's abstract,
+contribution (3), paragraph (viii), Table tab:full and Limitations now say so.

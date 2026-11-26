@@ -719,7 +719,7 @@ The 300-detection cap costs the bank 6.8 AP on development, so the ceiling condi
 Pre-registered rule selects **shift** (frozen). APr on development rests on very few rare instances (noisy). The
 1,000-image test (all three maps saved; shift primary) follows.
 
-## Run 3n (Amendment I) — frozen test, 1,000 run-3l images, map = shift, CPU, 25 Nov 2026 — PRIMARY CRITERION MET
+## Run 3n (Amendment I) — frozen test, 1,000 run-3l images, map = shift, CPU, 25 Nov 2026 — PRIMARY CRITERION MET against standard inference (not against normalized chunks: run 3p)
 `bank/bank_calib.py --mode test` (resumable; one bank pass per image, CPU ≈ 15 s/image) → outputs
 `results/bank/calib/test_outputs.zip`; `bank/bank_calib_analysis.py --map shift --boot 200` →
 `results/bank/calib/test_analysis.{txt,json}`. Official LVIS evaluator, 300 dets/image, 13,073 boxes, all 1,203 classes:
@@ -755,8 +755,8 @@ Until I2 is in, the claim is limited to: **one request-invariant pass plus a fix
 **Tests** (`bank/test_calib.py`, 5 passed): empty slots stay empty; each class's ranking is unchanged by every map;
 mapping then selecting any requested subset equals selecting then mapping (request invariance); the shift sends every
 class's reference level to the same value; top-300 selection is capped and sorted.
-**Amendment I2 status (25 Nov 11:30):** CPU fallback run at ≈ 36 images/h on 4 cores (72/1,300 after 2 h, ≈ 34 h left);
-analysis `bank/calib_i2_analysis.py` chained to start when it ends.
+**Amendment I2 status:** completed 26 Nov 2026 on the CPU fallback — see "Run 3p" below. **It changes the claim above:**
+the chunks gain more from the same normalization than the margin by which the shifted bank led them.
 
 ## Run 3o (Amendment J) — measured request interference of the corrected method, CPU, 25 Nov 2026
 `bank/calib_interference.py --n 40` → `results/bank/calib/interference.json`. 171 (image, target) pairs on confirmation
@@ -783,3 +783,35 @@ No map 0.4720; all 300 reference images 0.4889 (reproduces run 3n development ex
 each) 0.4882–0.4895; five bootstrap resamples of the 300 0.4864–0.4917; ten disjoint tenths (30 images each)
 0.4817–0.4920 (smallest gain over no map +0.98 AP). The gain does not hinge on the particular reference images; 100
 unlabelled images suffice to within ±0.1 AP of the 300-image result on development.
+
+## Run 3p (Amendment I2) — the class-wise normalization applied to standard chunked inference (fairness baseline), CPU, 26 Nov 2026
+`bank/bank_calib.py --method chunks` (`--mode ref` on the same 300 reference images, then `--mode test` on the same 1,000
+run-3l test images; the 14 fixed canonical chunks, class-wise Soft-NMS, maps none / shift / z with the chunks' **own**
+reference statistics; CPU, 4 cores, ≈ 36–44 images/h, 25–26 Nov, one container restart resumed from saved images) →
+`bank/calib_i2_analysis.py --boot 200` → `results/bank/calib/i2_test_analysis.{txt,json}`; per-image outputs
+`results/bank/calib/i2_chunks_outputs.zip`. Official LVIS evaluator, 1,000 images.
+
+| method | AP | AP50 | APr | APc | APf |
+|---|---|---|---|---|---|
+| chunks (none; CPU re-run) | 0.3980 | 0.5065 | 0.3376 | 0.4047 | 0.3982 |
+| chunks + shift (own reference stats) | 0.4121 | 0.5262 | 0.4001 | 0.4111 | 0.4130 |
+| chunks + z (own reference stats) | **0.4139** | **0.5279** | **0.4079** | **0.4216** | 0.4115 |
+| bank (none) | 0.3774 | 0.4930 | 0.2509 | 0.3376 | 0.3968 |
+| bank + shift (frozen primary) | 0.4052 | 0.5285 | 0.3696 | 0.3983 | 0.4091 |
+| bank + z | 0.3971 | 0.5153 | 0.4437 | 0.3987 | 0.3945 |
+
+Pre-registered comparisons (paired image bootstrap, 200 resamples):
+- **chunks + shift − chunks: +0.0141 AP [+0.0097, +0.0188]**; AP50 +0.0197 [+0.0140, +0.0260]. The normalization helps
+  standard inference significantly, by half as much as it helps the bank (+0.0278).
+- **bank + shift − chunks + shift: −0.0069 AP [−0.0150, +0.0059]**; AP50 +0.0023 [−0.0060, +0.0196]. Against the
+  equally normalized standard inference, the shifted bank is 0.69 AP lower; the CI lower bound (−1.50) is below the
+  1-AP non-inferiority margin, so **non-inferiority at 1 AP is not shown against this stronger baseline**.
+
+The chunks' AP without a map (0.3980) differs from run 3l's GPU chunks (0.3982) by 0.0002, from CPU vs GPU numerics.
+**Consequence, as pre-registered in Amendment I2:** the shift is a general post-hoc correction of the cross-class score
+scale under the 300-per-image cap, not a bank-specific gain. The run-3n statement "within 1 AP of the strongest baseline"
+held against standard inference as practised (0.398) but not against standard inference with the same correction. What
+remains specific to the bank: one request-invariant pass (6.7× faster than the 14 chunks on the L4) and measured zero
+request interference (run 3o), at −0.69 AP (CI −1.50 to +0.59) relative to normalized chunks. For a fixed full
+vocabulary the chunks are themselves request-invariant, so the bank's advantage there is cost only.
+

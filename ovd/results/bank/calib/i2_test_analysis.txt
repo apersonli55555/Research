@@ -1,0 +1,12 @@
+bank 1000, chunks 1000, common 1000 images
+  bank_none     AP 0.3774  AP50 0.4930  APr 0.2509  APc 0.3376  APf 0.3968
+  bank_shift    AP 0.4052  AP50 0.5285  APr 0.3696  APc 0.3983  APf 0.4091
+  bank_z        AP 0.3971  AP50 0.5153  APr 0.4437  APc 0.3987  APf 0.3945
+  chunks_none   AP 0.3980  AP50 0.5065  APr 0.3376  APc 0.4047  APf 0.3982
+  chunks_shift  AP 0.4121  AP50 0.5262  APr 0.4001  APc 0.4111  APf 0.4130
+  chunks_z      AP 0.4139  AP50 0.5279  APr 0.4079  APc 0.4216  APf 0.4115
+  chunks_shift − chunks_none AP: +0.0141 [+0.0097, +0.0188] (200 image resamples)
+  chunks_shift − chunks_none AP50: +0.0197 [+0.0140, +0.0260] (200 image resamples)
+  bank_shift − chunks_shift AP: -0.0069 [-0.0150, +0.0059] (200 image resamples)
+  bank_shift − chunks_shift AP50: +0.0023 [-0.0060, +0.0196] (200 image resamples)
+I2_POST_DONE
