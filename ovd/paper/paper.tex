@@ -191,7 +191,7 @@ through the per-image budget, it would vanish under a per-class budget~\cite{dev
 comparison applies the same shift to the chunks with their own reference statistics: they rise from 0.398 to 0.412 AP
 ($+$1.41, CI $+$0.97 to $+$1.88), and the shifted bank is 0.69 AP below them (CI $-$1.50 to $+$0.59), so against
 corrected chunks non-inferiority at 1 AP is not shown. The shift is therefore a general post-hoc correction of the
-score scale, and what remains specific to the bank is one request-invariant pass at 6.7$\times$ lower cost.POSTHOC
+score scale, and what remains specific to the bank is one request-invariant pass at 6.7$\times$ lower cost.
 \begin{table}[t]\centering\footnotesize\setlength{\tabcolsep}{2.5pt}
 \caption{Standard full-image LVIS protocol: 1{,}000 fresh val images, all 1{,}203 classes, official evaluator, class-wise
 Soft-NMS for all, one L4 (bank-proposed, shifted bank and shifted chunks: CPU; 14 passes for chunks, 1 for the bank). Fixed chunks are also the standard full-vocabulary inference. Each shifted method uses its own label-free reference statistics; the per-class map adds 8.6\,ms per image.}\label{tab:full}
