@@ -35,6 +35,27 @@ The shift does **not** generalize to YOLO-World (run 3q; independent evaluator r
 check: the shift changes AP only through the per-image cap, and with YOLO-World on COCO the cap binds on only 33 of 1,000
 images (pipeline P; LVIS 641 of 1,000).
 
+## Coverage of the required design (held-out runs 2i/2j and the CPU runs; files in `results/`)
+| | COCO 2017 (1,000 images, 5,013 pairs) | LVIS v1 (600 images, 2,689 pairs) |
+|---|---|---|
+| vocabulary sizes | 1, 5, 20, all 80 (COCO has 80 classes, so 80 is the maximum "where supported") | 1, 5, 20, 80, 200, 500, all 1,203 |
+| distractor families | random, semantically similar (near), visually confusable (vis, CLIP), unrelated (far) at 5 and 20 | the same at 5, 20 and 80; random also at 200 and 500 |
+| orders | all 80 names in 5 seeded orders | all 1,203 names in 5 seeded orders |
+| models | Grounding DINO (`run2_gdino_full_gpu.md`), OWLv2 (`run2_coco_owlv2_cpu.md`), YOLO-World (`run2_coco_yoloworld_cpu.md`) | Grounding DINO (`run2_gdino_full_gpu.md`), OWLv2 (`run2_lvis_owlv2_cpu.md`), YOLO-World (`run2_lvis_yoloworld_cpu.md`) |
+| pruning baseline | CLIP-only VocAda-style top-K | same |
+Every cell above was run for all three models (120,312 runs on COCO, 86,048 on LVIS per model). Target phrase, image,
+preprocessing and weights are held fixed in every run. Measured: AP/mAP50, target score shift, box IoU, flips and
+false positives on verified-absent classes per condition; latency in runs 4a–4e (CPU and the L4).
+
+## Status of each completion condition
+| condition | status | evidence |
+|---|---|---|
+| findings independently checked | done | `independent_check.py` (6/6 headline mAPs, 90/90 table values on CPU re-runs); independent LVIS evaluator without lvis-api reproduces runs 3l, 3m, 3n, 3p and 3q at four decimals; GPU-vs-CPU reproduction of pilot and run 3p |
+| every number traceable | done | `paper/check_numbers.py`: 345/345 manuscript numbers traced to `RESULTS.md` / result files |
+| alternative explanations tested | done | normalization, label competition, NMS (Soft-NMS on all conditions), thresholds (flip rates across 0.20–0.50, expert package and run 3o), chunking and token limits (order effects within vs across chunks), budget crowding, missing boxes vs score scale, reference-image choice, the per-image cap, fairness and generality of the shift |
+| manuscript reflects the evidence | done, pending a human read | negatives stated in the abstract, contributions, results and Limitations |
+| aspirational targets | partly met, reported as measured | met: interference (all models on LVIS, Grounding DINO and YOLO-World on COCO), 100% reduction, cost < 2x, three architectures on two datasets; not met: OWLv2 COCO effect size (2.3 AP / 3.1%), Grounding DINO within 1 AP of corrected chunks on the full-image protocol, transfer to grounding-dino-tiny, transfer of the shift to YOLO-World. These are measured outcomes; per the goal they are not forced. |
+
 ## Novelty (2024–2026 literature; sources and dates in `NOVELTY.md`)
 What is new and supported:
 1. A counterfactual, fixed-target protocol (same image, same target string, only the other names change) that isolates
