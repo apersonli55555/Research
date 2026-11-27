@@ -1,0 +1,1398 @@
+<title>Estuary Rod Co.</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Partner rewrite of the Project Estuary pitch: 3D rod configurator, engineering, sourcing, financial model and exit plan.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=Instrument+Sans:wght@400..700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout: a studio-lit 3D bench on top, then a field-lab spec document on a 12-col grid; sections are marked with tide-staff "E" gauges. */
+:root{
+  --bg:#0f1517; --bg2:#151e21; --bg3:#1b272b; --line:#2a3a3f; --line2:#38494f;
+  --fg:#e8e6de; --muted:#9eaca9; --faint:#73827f;
+  --accent:#7cc4b2; --accent-ink:#0f1517; --tannin:#d29d61;
+  --good:#8cc79a; --warn:#e2b25c; --bad:#ec8775;
+  --c1:#3fae94; --c2:#5b8fd6; --c3:#d08a3e; --c4:#c46bb0;
+  --stage1:#22323a; --stage2:#0b1012;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"Instrument Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#eef1ef; --bg2:#ffffff; --bg3:#f5f7f6; --line:#d3dbd8; --line2:#b9c5c1;
+    --fg:#132022; --muted:#4c5d5a; --faint:#76858a;
+    --accent:#17715f; --accent-ink:#ffffff; --tannin:#8d5a22;
+    --good:#2f7d45; --warn:#8f6400; --bad:#b4442f;
+    --c1:#0b8a6c; --c2:#2d64b0; --c3:#b5651d; --c4:#a2458f;
+    --stage1:#fbfcfb; --stage2:#d6dfdb;
+    color-scheme:light;
+  }
+}
+:root[data-theme="light"]{
+  --bg:#eef1ef; --bg2:#ffffff; --bg3:#f5f7f6; --line:#d3dbd8; --line2:#b9c5c1;
+  --fg:#132022; --muted:#4c5d5a; --faint:#76858a;
+  --accent:#17715f; --accent-ink:#ffffff; --tannin:#8d5a22;
+  --good:#2f7d45; --warn:#8f6400; --bad:#b4442f;
+  --c1:#0b8a6c; --c2:#2d64b0; --c3:#b5651d; --c4:#a2458f;
+  --stage1:#fbfcfb; --stage2:#d6dfdb;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+a{color:var(--accent);text-underline-offset:3px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1220px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3,h4{font-family:var(--f-display);text-wrap:balance;margin:0;font-weight:700}
+h1{font-size:clamp(2.4rem,6.4vw,4.6rem);line-height:.98;font-stretch:118%;letter-spacing:-.01em}
+h2{font-size:clamp(1.6rem,3.2vw,2.35rem);line-height:1.08;font-stretch:108%}
+h3{font-size:1.18rem;line-height:1.2;font-stretch:104%}
+h4{font-size:.98rem;font-stretch:100%}
+p{margin:0}
+.mono{font-family:var(--f-mono)}
+.eyebrow{font-family:var(--f-mono);font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.muted{color:var(--muted)}
+.small{font-size:.86rem}
+.tiny{font-size:.76rem}
+.num{font-variant-numeric:tabular-nums}
+
+/* top bar */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in oklab,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:20px;padding-block:10px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--fg)}
+.brand svg{width:22px;height:28px}
+.brand b{font-family:var(--f-display);font-stretch:125%;font-weight:700;letter-spacing:.22em;font-size:.95rem}
+.nav{display:flex;gap:16px;margin-left:auto;overflow-x:auto;scrollbar-width:none;min-width:0}
+.nav::-webkit-scrollbar{display:none}
+.nav a{color:var(--muted);text-decoration:none;font-size:.85rem;white-space:nowrap}
+.nav a:hover{color:var(--fg)}
+.themebtn{border:1px solid var(--line2);background:transparent;color:var(--muted);border-radius:6px;padding:4px 8px;font:inherit;font-size:.78rem;cursor:pointer;flex:none}
+
+/* hero */
+.hero{padding-block:44px 18px;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:32px;align-items:end}
+.hero .lede{font-size:1.08rem;color:var(--muted);max-width:60ch;margin-top:16px}
+.pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.pill{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.04em;border:1px solid var(--line2);border-radius:999px;padding:3px 10px;color:var(--muted)}
+.pill.warn{border-color:color-mix(in oklab,var(--warn) 55%,transparent);color:var(--warn)}
+.verdict{border-left:2px solid var(--tannin);padding-left:16px;color:var(--fg);font-size:.98rem}
+.verdict strong{color:var(--tannin);font-family:var(--f-mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;display:block;margin-bottom:6px;font-weight:500}
+
+/* configurator */
+.bench{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--bg2)}
+.stage{position:relative;min-height:560px;background:radial-gradient(120% 90% at 50% 35%,var(--stage1),var(--stage2));}
+.stage canvas{display:block;width:100%;height:100%;position:absolute;inset:0;cursor:grab}
+.stage canvas:active{cursor:grabbing}
+.stage .ovl{position:absolute;display:flex;gap:6px;flex-wrap:wrap;z-index:2}
+.ovl.tl{top:12px;left:12px;right:12px}
+.ovl.bl{bottom:12px;left:12px;right:12px}
+.sbtn{font:inherit;font-size:.78rem;padding:6px 11px;border-radius:999px;border:1px solid color-mix(in oklab,var(--fg) 22%,transparent);background:color-mix(in oklab,var(--bg) 70%,transparent);color:var(--fg);cursor:pointer;backdrop-filter:blur(6px)}
+.sbtn:hover{border-color:var(--accent)}
+.sbtn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.stage .note{position:absolute;right:12px;bottom:52px;font-family:var(--f-mono);font-size:.68rem;color:var(--faint);z-index:2;text-align:right;max-width:46%}
+.tip3d{position:absolute;z-index:3;pointer-events:none;background:var(--bg2);border:1px solid var(--line2);border-radius:6px;padding:6px 9px;font-size:.78rem;max-width:240px;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.tip3d b{display:block;font-size:.8rem}
+.loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-family:var(--f-mono);font-size:.8rem}
+.panel{border-left:1px solid var(--line);padding:16px;display:flex;flex-direction:column;gap:14px;max-height:560px;overflow-y:auto}
+fieldset{border:0;margin:0;padding:0;min-width:0}
+legend{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:6px;padding:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips input{position:absolute;opacity:0;pointer-events:none}
+.chips label{font-size:.8rem;padding:5px 10px;border:1px solid var(--line2);border-radius:7px;cursor:pointer;color:var(--fg);background:var(--bg3);line-height:1.25}
+.chips label small{display:block;font-family:var(--f-mono);font-size:.64rem;color:var(--faint)}
+.chips input:checked+label{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:color-mix(in oklab,var(--accent) 14%,var(--bg3))}
+.chips input:focus-visible+label{outline:2px solid var(--accent);outline-offset:2px}
+.swatch{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;border:1px solid color-mix(in oklab,var(--fg) 25%,transparent)}
+.readout{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--line)}
+.readout>div{padding:14px 16px;border-right:1px solid var(--line);min-width:0}
+.readout>div:last-child{border-right:0}
+.readout .k{font-family:var(--f-mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+.readout .v{font-family:var(--f-display);font-stretch:110%;font-size:1.55rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.15;margin-top:2px}
+.readout .s{font-size:.78rem;color:var(--muted)}
+.gate{display:inline-flex;align-items:center;gap:6px;font-family:var(--f-mono);font-size:.7rem;padding:2px 8px;border-radius:999px;margin-top:4px}
+.gate::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.gate.good{color:var(--good);background:color-mix(in oklab,var(--good) 14%,transparent)}
+.gate.warn{color:var(--warn);background:color-mix(in oklab,var(--warn) 14%,transparent)}
+.gate.bad{color:var(--bad);background:color-mix(in oklab,var(--bad) 14%,transparent)}
+.specline{padding:12px 16px;border-top:1px solid var(--line);font-size:.84rem;color:var(--muted)}
+.specline b{color:var(--fg);font-weight:600}
+
+/* sections */
+section.sec{padding-block:64px 8px}
+.sechead{display:grid;grid-template-columns:56px minmax(0,1fr);gap:16px;align-items:start;margin-bottom:26px}
+.staff{width:44px;height:64px;color:var(--accent)}
+.sechead .eyebrow{display:block;margin-bottom:6px}
+.sechead p{color:var(--muted);max-width:70ch;margin-top:10px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.card{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:20px;min-width:0}
+.card h3{margin-bottom:8px}
+.card p+p{margin-top:10px}
+.card ul{margin:10px 0 0;padding-left:18px}
+.card li{margin:4px 0}
+.prose{max-width:72ch}
+.prose p+p{margin-top:12px}
+.tag{display:inline-block;font-family:var(--f-mono);font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:4px;border:1px solid var(--line2);color:var(--muted);vertical-align:2px}
+.tag.est{color:var(--warn);border-color:color-mix(in oklab,var(--warn) 50%,transparent)}
+.tag.src{color:var(--good);border-color:color-mix(in oklab,var(--good) 50%,transparent)}
+.tag.gate2{color:var(--tannin);border-color:color-mix(in oklab,var(--tannin) 55%,transparent)}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--bg2)}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:500;background:var(--bg3);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.total td{font-weight:700;background:color-mix(in oklab,var(--accent) 8%,transparent)}
+.neg{color:var(--bad)} .pos{color:var(--good)}
+.drawing{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:14px;overflow-x:auto}
+.drawing svg{display:block;width:100%;height:auto;min-width:640px}
+.drawing.narrow svg{min-width:0}
+.drawing figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
+svg text{font-family:var(--f-mono)}
+.dw-line{stroke:var(--fg);fill:none}
+.dw-thin{stroke:var(--muted);fill:none;stroke-width:1}
+.dw-dim{stroke:var(--accent);fill:none;stroke-width:1}
+.dw-txt{fill:var(--muted);font-size:11px}
+.dw-txt-acc{fill:var(--accent);font-size:11px}
+.dw-txt-fg{fill:var(--fg);font-size:12px}
+
+/* challenge table */
+.chal td:first-child{font-family:var(--f-mono);font-size:.8rem;color:var(--muted);white-space:nowrap}
+.chal td:nth-child(2){min-width:180px}
+.chal td{min-width:200px}
+
+/* ledger */
+.ledger{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.ledger .card h3{display:flex;align-items:center;gap:8px}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none}
+
+/* products */
+.prod{display:flex;flex-direction:column;gap:10px}
+.prod .price{font-family:var(--f-display);font-stretch:112%;font-size:2rem;font-weight:700;line-height:1}
+.prod dl{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;margin:0;font-size:.84rem}
+.prod dt{color:var(--faint);font-family:var(--f-mono);font-size:.72rem;padding-top:2px}
+.prod dd{margin:0}
+
+/* model */
+.model{display:grid;grid-template-columns:340px minmax(0,1fr);gap:20px;align-items:start}
+.inputs{display:flex;flex-direction:column;gap:14px}
+.inrow{display:grid;grid-template-columns:minmax(0,1fr) 92px;gap:8px;align-items:center;font-size:.85rem}
+.inrow label{color:var(--muted)}
+.inrow input,.yr input{width:100%;font:inherit;font-variant-numeric:tabular-nums;font-size:.86rem;padding:5px 7px;border-radius:6px;border:1px solid var(--line2);background:var(--bg3);color:var(--fg);text-align:right}
+.yr{width:100%;border-collapse:collapse}
+.yr th,.yr td{padding:4px 4px;border:0;font-size:.8rem;background:transparent}
+.yr th{font-size:.64rem}
+.outs{display:flex;flex-direction:column;gap:20px;min-width:0}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;border:1px solid var(--line);border-radius:10px;background:var(--bg2);overflow:hidden}
+.kpis>div{padding:14px 16px;border-right:1px solid var(--line);min-width:0}
+.kpis>div:last-child{border-right:0}
+.chart{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:16px;position:relative;min-width:0}
+.chart h4{margin-bottom:4px}
+.chart svg{display:block;width:100%;height:auto}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.78rem;color:var(--muted);margin:6px 0 4px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.heat{border-collapse:separate;border-spacing:2px;width:100%;font-size:.78rem}
+.heat th,.heat td{padding:7px 4px;text-align:center;border:0;border-radius:4px;background:transparent}
+.heat th{font-size:.64rem}
+.heat td{font-variant-numeric:tabular-nums;color:var(--fg)}
+.heat td.cur{outline:2px solid var(--fg);outline-offset:-2px}
+.ctip{position:absolute;pointer-events:none;background:var(--bg3);border:1px solid var(--line2);border-radius:6px;padding:6px 9px;font-size:.78rem;z-index:5;white-space:nowrap}
+
+/* brand */
+.logos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.logo-card{background:var(--bg2);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.logo-card .art{aspect-ratio:4/3;display:grid;place-items:center;background:var(--bg3);color:var(--fg);max-width:100%}
+.logo-card .art svg{width:78%;height:auto}
+.logo-card .cap{padding:14px 16px;font-size:.85rem;color:var(--muted)}
+.logo-card .cap b{color:var(--fg);display:block;margin-bottom:4px}
+.pal{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.pal div{border-radius:8px;border:1px solid var(--line);overflow:hidden;font-size:.76rem}
+.pal span{display:block;height:64px}
+.pal p{padding:8px 10px}
+.pal p b{display:block;font-size:.8rem}
+
+/* steps */
+.steps{display:flex;flex-direction:column;gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--bg2)}
+.step{display:grid;grid-template-columns:120px minmax(0,1fr) 150px;gap:16px;padding:16px 18px;border-bottom:1px solid var(--line);align-items:start}
+.step:last-child{border-bottom:0}
+.step .when{font-family:var(--f-mono);font-size:.78rem;color:var(--accent)}
+.step .kind{font-family:var(--f-mono);font-size:.7rem;color:var(--faint);text-align:right}
+.step h4{margin-bottom:4px}
+.step p{font-size:.88rem;color:var(--muted)}
+.foot{padding-block:48px 64px;color:var(--faint);font-size:.8rem}
+.foot ul{padding-left:18px}
+.foot li{margin:4px 0}
+
+@media (max-width:980px){
+  .bench{grid-template-columns:1fr}
+  .panel{border-left:0;border-top:1px solid var(--line);max-height:none}
+  .stage{min-height:420px}
+  .hero{grid-template-columns:1fr}
+  .model{grid-template-columns:1fr}
+  .grid4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .logos{grid-template-columns:1fr 1fr}
+}
+@media (max-width:700px){
+  .grid2,.grid3,.ledger,.logos{grid-template-columns:1fr}
+  .readout,.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .readout>div:nth-child(2),.kpis>div:nth-child(2){border-right:0}
+  .readout>div:nth-child(-n+2),.kpis>div:nth-child(-n+2){border-bottom:1px solid var(--line)}
+  .stage{min-height:320px}
+  .stage .note{display:none}
+  .pal{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .step{grid-template-columns:1fr}
+  .step .kind{text-align:left}
+  .nav{display:none}
+  .sechead{grid-template-columns:36px minmax(0,1fr)}
+  .staff{width:30px;height:44px}
+}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="staffE" viewBox="0 0 44 64"><rect x="4" y="2" width="9" height="60" fill="currentColor"/><rect x="4" y="2" width="36" height="9" fill="currentColor"/><rect x="4" y="27.5" width="26" height="9" fill="currentColor"/><rect x="4" y="53" width="36" height="9" fill="currentColor"/></symbol>
+    <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="currentColor" stroke-width="1"/></pattern>
+  </defs>
+</svg>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Estuary, back to top"><svg aria-hidden="true" style="color:var(--accent)"><use href="#staffE"/></svg><b>ESTUARY</b></a>
+    <nav class="nav" aria-label="Sections">
+      <a href="#verdict">Verdict</a><a href="#product">Product</a><a href="#engineering">Engineering</a><a href="#competition">Competition</a><a href="#brand">Brand</a><a href="#sourcing">Sourcing</a><a href="#model">Model</a><a href="#market">Marketing</a><a href="#exit">Exit</a><a href="#next">Next</a>
+    </nav>
+    <button class="themebtn" id="themeBtn" type="button">Theme</button>
+  </div>
+</header>
+
+<main id="top">
+<div class="wrap">
+  <div class="hero">
+    <div>
+      <span class="eyebrow">Project Estuary · partner rewrite · 27 Nov 2026</span>
+      <h1 style="margin-top:12px">Every rod,<br>measured.</h1>
+      <p class="lede">An inshore rod brand for the Gulf Coast, built overseas and sold on proof. Every rod leaves the factory with its own measured weight, power and action printed on a serialized card. The rod below is a working model of the launch spec. Swap a part and the cost, weight and margin update.</p>
+      <div class="pills"><span class="pill warn">Concept stage</span><span class="pill">No prototypes yet</span><span class="pill">No supplier quotes yet</span><span class="pill">No sales yet</span></div>
+    </div>
+    <div class="verdict"><strong>Partner verdict</strong>Keep the deck's honesty and its narrow start. Replace "without the luxury markup" with proof. As written, the product is a white-label spec: a good blank, Fuji parts and cork, which every brand from $150 to $300 already sells. At realistic 2026 costs the margins don't support wholesale. This plan adds three things a competitor can't copy in one season and resets the numbers to what can be checked.</div>
+  </div>
+
+  <div class="bench" id="bench">
+    <div class="stage" id="stage">
+      <div class="loading" id="loading">Loading 3D bench…</div>
+      <div class="ovl tl" role="group" aria-label="Camera views">
+        <button class="sbtn" data-view="full" aria-pressed="true" type="button">Full rod</button>
+        <button class="sbtn" data-view="handle" aria-pressed="false" type="button">Handle</button>
+        <button class="sbtn" data-view="guides" aria-pressed="false" type="button">Guide train</button>
+        <button class="sbtn" data-view="tip" aria-pressed="false" type="button">Tip</button>
+      </div>
+      <div class="ovl bl" role="group" aria-label="Animations">
+        <button class="sbtn" id="bLoad" type="button" aria-pressed="false">Load test</button>
+        <button class="sbtn" id="bExplode" type="button" aria-pressed="false">Exploded view</button>
+        <button class="sbtn" id="bDetach" type="button" aria-pressed="false" hidden>Unlock handle</button>
+        <button class="sbtn" id="bReel" type="button" aria-pressed="true">Reel</button>
+        <button class="sbtn" id="bSway" type="button" aria-pressed="true">Turntable</button>
+      </div>
+      <div class="note" id="stageNote">Concept render. Load test shows a modeled bend shape, not a measured curve.</div>
+      <div class="tip3d" id="tip3d" hidden></div>
+    </div>
+    <form class="panel" id="cfg" onsubmit="return false">
+      <fieldset><legend>Model</legend><div class="chips" id="g-model"></div></fieldset>
+      <fieldset><legend>Handle</legend><div class="chips" id="g-handle"></div></fieldset>
+      <fieldset><legend>Reel seat</legend><div class="chips" id="g-seat"></div></fieldset>
+      <fieldset><legend>Guide train</legend><div class="chips" id="g-guides"></div></fieldset>
+      <fieldset><legend>Blank finish</legend><div class="chips" id="g-finish"></div></fieldset>
+      <fieldset><legend>Thread trim</legend><div class="chips" id="g-trim"></div></fieldset>
+    </form>
+    <div class="readout" style="grid-column:1/-1">
+      <div><div class="k">Factory cost (FOB)</div><div class="v" id="rFob">$—</div><div class="s" id="rFobR">range</div></div>
+      <div><div class="k">Landed + excise</div><div class="v" id="rLand">$—</div><div class="s" id="rLandS">duty scenario</div></div>
+      <div><div class="k">Suggested retail</div><div class="v" id="rMsrp">$—</div><div class="s" id="rGate"></div></div>
+      <div><div class="k">Contribution per rod</div><div class="v" id="rCon">$—</div><div class="s" id="rConS">DTC / wholesale</div></div>
+    </div>
+    <div class="specline" style="grid-column:1/-1" id="specline"></div>
+  </div>
+  <p class="tiny muted" style="margin-top:8px">Costs are my planning estimates for a 500-unit order, not supplier quotes. Weight is estimated to about ±15%. Margins use the inputs in the financial model below, so changing the duty or CAC there changes these numbers.</p>
+
+  <!-- 1 VERDICT -->
+  <section class="sec" id="verdict">
+    <div class="sechead"><svg class="staff" aria-hidden="true"><use href="#staffE"/></svg><div><span class="eyebrow">01 · What changes</span><h2>Twelve assumptions, challenged</h2><p>Each row names what the deck assumes, why that won't hold up with an investor or a factory, what to replace it with, and how to settle it with evidence rather than opinion.</p></div></div>
+    <div class="tablewrap"><table class="chal">
+      <thead><tr><th>Deck says</th><th>Problem</th><th>Rewrite</th><th>Settle it by</th></tr></thead>
+      <tbody>
+        <tr><td>"$42 landed cost"</td><td>No quote behind it. My bottom-up estimate for this spec at 500 units is $34–$61 FOB before duty and freight.</td><td>Model $44 FOB in Year 1 and set a hard design-to-cost ceiling of $38 FOB by Year 3.</td><td>Three itemized RFQs, from Taiwan, Vietnam and China, priced at 300, 500 and 1,000 units.</td></tr>
+        <tr><td>"Without the luxury markup"</td><td>That is value positioning. Okuma and Abu win on value with scale you will never have. It also contradicts "premium".</td><td>Position on proof: <em>every rod, measured</em>. Price in the gap between Mojo-class and Avid-class rods.</td><td>A price test in interviews and refundable reservations split across $179, $199 and $219.</td></tr>
+        <tr><td>$159 / $179 MSRP</td><td>At a realistic landed cost, wholesale at 50% of MSRP leaves about $15–20 per rod. One warranty claim can erase that.</td><td>Launch at $199 (Flats) and $219 (Channel). Go DTC-heavy until landed cost is ≤24% of MSRP.</td><td>The configurator's wholesale gate, and real quotes.</td></tr>
+        <tr><td>Shimano Zodias B benchmark</td><td>Zodias is a freshwater bass rod, so it is the wrong comparison for Gulf inshore.</td><td>Benchmark Shimano's inshore line, Teramar, and confirm the current models.</td><td>Buy or borrow the rods and measure them on your fixture.</td></tr>
+        <tr><td>$25 CAC</td><td>Optimistic for an unknown $200 hard good with a long consideration cycle.</td><td>Model $38 as the base case and stress-test it at $60. Build the guide and shop channel so CAC falls.</td><td>A $1–2K paid test after launch, measured as cost per first order.</td></tr>
+        <tr><td>$18 DTC fulfillment</td><td>A one-piece 7′ rod ships in an ~86″ box, and long parcels pick up carrier surcharges.</td><td>Model $21 and quote USPS, UPS and a 3PL with the real box size.</td><td>Carrier rate tools with 88×4×4 in, 2 lb.</td></tr>
+        <tr><td>"Confirm HTS duties" footnote</td><td>The tariff regime changed twice in 2026. IEEPA tariffs were struck down on 20 Feb, the 10% §122 tariff expired on 24 Jul, and new §301 duties of 10–12.5% now apply to most partners. Country choice now moves landed cost by double digits.</td><td>Make duty a scenario input. The model ships with Taiwan, Vietnam and China presets.</td><td>A licensed customs broker's ruling on HTS 9507.10 plus the Chapter 99 lines for each origin.</td></tr>
+        <tr><td>$85K Year-1 fixed cost</td><td>Excludes founder pay, product-liability insurance and IP filings. That's fine for a bootstrapped case, but say so.</td><td>$90K, with legal/IP, insurance, samples, fixture and content itemized. No founder salary.</td><td>Insurance and trademark-attorney quotes.</td></tr>
+        <tr><td>Name "ESTUARY"</td><td>It describes where the product is used, which makes it a weak trademark that is hard to defend and worth less to a buyer.</td><td>Run a knockout search now. Keep ESTUARY as a line name if needed, and screen coined alternatives.</td><td>USPTO search in Class 28 and an attorney clearance opinion.</td></tr>
+        <tr><td>"Co-design blank taper"</td><td>Unless the contract says you own the mandrel and layup, the factory can sell your taper to anyone.</td><td>Start on the factory's existing mandrels with your own layup and measured targets. Commission and own custom mandrels in Phase 2.</td><td>Tooling-ownership and NNN clauses in the supply agreement.</td></tr>
+        <tr><td>$2–3M exit at 4–6× $500K EBITDA</td><td>The deck's own Year 3 shows $210K operating profit. At my estimates it is about $0.1M. $500K EBITDA is roughly a $4–5M-revenue business.</td><td>State exit scenarios with the revenue each one requires. Treat the exit as an outcome of the business, not a plan.</td><td>Track normalized EBITDA quarterly from Year 2.</td></tr>
+        <tr><td>Travel rod as Phase 2</td><td>Four-piece ferrules are the hardest engineering in the line, for an unproven segment.</td><td>Phase 2 becomes the Keel modular handle, which serves existing buyers. Travel becomes Phase 3 and is gated on demand.</td><td>Reservation counts and Keel fatigue-test results.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="sec" id="ledger" style="padding-top:40px">
+    <div class="ledger">
+      <div class="card"><h3><span class="dot" style="background:var(--good)"></span>Done</h3><ul class="small"><li>16-slide concept deck with an honest risk framing</li><li>Public price benchmarks for five competitors</li><li>Working name and visual identity (not cleared)</li><li>This rewrite: spec, cost model, test plan</li></ul></div>
+      <div class="card"><h3><span class="dot" style="background:var(--warn)"></span>Next, being pursued</h3><ul class="small"><li>Trademark knockout search</li><li>30 angler and 10 shop interviews with a price test</li><li>RFQ pack to three factories</li><li>Measurement fixture plus six benchmark rods measured</li></ul></div>
+      <div class="card"><h3><span class="dot" style="background:var(--faint)"></span>Ambitious, later</h3><ul class="small"><li>300–500-rod pilot lot (mid-2027 at the earliest)</li><li>Regional dealer network with reorders</li><li>Keel modular platform (patent only if novel)</li><li>Strategic sale, a 6–8-year horizon</li></ul></div>
+    </div>
+  </section>
+
+  <!-- 2 PRODUCT -->
+  <section class="sec" id="product">
+    <div class="sechead"><svg class="staff" aria-hidden="true"><use href="#staffE"/></svg><div><span class="eyebrow">02 · Product</span><h2>Three things only this brand has</h2><p>Blanks, Fuji guides and cork are table stakes. Differentiation has to come from what the customer can see, check and feel. It should also leave the company owning something a buyer would pay for.</p></div></div>
+    <div class="grid3">
+      <div class="card"><span class="tag src">Core · launch</span><h3 style="margin-top:10px">The measured spec card</h3><p class="small">Every rod is measured at the factory on a simple fixture: weight to 0.1 g, balance point with a reference 2500 reel, tip deflection under a 1.00 lb reference load and the resulting action angle. The numbers print on a serialized card in the tube and go to a public lot page.</p><p class="small"><b>Why it matters:</b> "Medium, Fast" means different things at every brand. A measured number does not. Each lot page shows the spread, so tight tolerances become visible proof.</p><p class="small"><b>What you own:</b> a growing dataset of every rod you've made, plus the process. It is copyable, but big brands rarely publish per-unit spread.</p><p class="small muted">Estimated cost: $0.60–$1.50 per rod plus a ~$400–900 fixture.</p></div>
+      <div class="card"><span class="tag src">Core · launch</span><h3 style="margin-top:10px">Salt-service design</h3><p class="small">Designed for the way inshore rods actually fail: a broken tip, a cracked insert, a corroded seat, a car-door snap.</p><ul class="small"><li>SiC on titanium frames as the "Ti" upgrade</li><li>No bare aluminum touching stainless, to avoid galvanic corrosion in salt</li><li>O-ring sealed hood, and the fore grip sealed to the blank</li><li>Spare tip tops and guides sold, with re-wraps through partner shops</li><li>Blank-only replacement price for breakage</li></ul><p class="small"><b>What you own:</b> warranty data and lower service cost per claim.</p></div>
+      <div class="card"><span class="tag gate2">Phase 2 · gated</span><h3 style="margin-top:10px">Keel Lock modular handle</h3><p class="small">A machined collar locks a sealed handle module onto a ground spigot on the blank, with a key that aligns the reel to the guides. One premium handle can then move between a Flats blank and a Channel blank.</p><p class="small"><b>Why it matters:</b> a second technique costs the angler a $129 blank, not a $219 rod. It shortens what has to fit in a car or kayak, and it creates repeat purchases.</p><p class="small"><b>Risk:</b> detachable handles go back decades, so a utility patent may be impossible. Ship it only if it passes the fatigue gate in §03. Fixed-handle rods are the fallback.</p></div>
+    </div>
+
+    <div class="grid4" style="margin-top:20px" id="prodCards"></div>
+  </section>
+
+  <!-- 3 ENGINEERING -->
+  <section class="sec" id="engineering">
+    <div class="sechead"><svg class="staff" aria-hidden="true"><use href="#staffE"/></svg><div><span class="eyebrow">03 · Engineering</span><h2>Drawings a factory can quote from</h2><p>These are starting targets for the RFQ pack, not finished production drawings. Guide stations get finalized with a static-load string test on the first samples. Blank diameters come from the factory's mandrel plus measured deflection.</p></div></div>
+
+    <figure class="drawing" style="margin:0">
+      <svg id="dwElev" viewBox="0 0 1000 300" role="img" aria-label="Side elevation of the Flats 70M with handle zones and guide stations"></svg>
+      <figcaption>Fig. 1 · Flats 70M side elevation. Radii are exaggerated about 6× for legibility. Stations are measured in inches from the butt. Ring sizes are Fuji-style nominal sizes. The guide train is a KR-style layout: 20 → 12 → 8 choke, then 7 runners.</figcaption>
+    </figure>
+
+    <div class="grid2" style="margin-top:20px">
+      <figure class="drawing narrow" style="margin:0">
+        <svg viewBox="0 0 560 300" role="img" aria-label="Blank cross-section showing ply stack">
+          <g transform="translate(140 150)">
+            <circle r="112" fill="var(--bg3)" stroke="var(--line2)"/>
+            <circle r="108" fill="none" stroke="var(--c4)" stroke-width="5"/>
+            <circle r="100" fill="none" stroke="var(--c3)" stroke-width="10"/>
+            <circle r="86" fill="none" stroke="var(--c2)" stroke-width="16" stroke-dasharray="6 3"/>
+            <circle r="62" fill="none" stroke="var(--c1)" stroke-width="30"/>
+            <circle r="46" fill="var(--bg2)" stroke="var(--line2)"/>
+            <text class="dw-txt" text-anchor="middle" y="4">bore</text>
+          </g>
+          <g class="dw-txt">
+            <line x1="250" y1="44" x2="300" y2="44" class="dw-thin"/><text x="306" y="48">Clear finish, thin build</text>
+            <line x1="236" y1="80" x2="300" y2="80" class="dw-thin"/><text x="306" y="84">Glass scrim, 0/90 (abrasion)</text>
+            <line x1="226" y1="118" x2="300" y2="118" class="dw-thin"/><text x="306" y="122">Carbon hoop ply, 90°</text>
+            <line x1="216" y1="160" x2="300" y2="160" class="dw-thin"/><text x="306" y="164">±45° bias, butt 40% only</text>
+            <line x1="196" y1="200" x2="300" y2="200" class="dw-thin"/><text x="306" y="204">Axial 0°, 24–30T main</text>
+            <text x="306" y="240" class="dw-txt-acc">Section A–A, 12 in from butt</text>
+            <text x="306" y="256">Not to scale. Ply counts set</text>
+            <text x="306" y="270">by factory layup and deflection.</text>
+          </g>
+        </svg>
+        <figcaption>Fig. 2 · Blank layup concept. The hoop ply resists ovaling under load. The ±45° bias plies in the butt add torsional stiffness for hooksets and fish that turn. These are generic, decades-old techniques. Avoid naming or imitating proprietary constructions such as Shimano's Spiral-X.</figcaption>
+      </figure>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Station from tip</th><th class="r">Target OD</th><th>Flats 70M note</th></tr></thead>
+          <tbody id="taperBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="margin-top:20px;display:grid;gap:20px">
+      <figure class="drawing" style="margin:0">
+        <svg viewBox="0 0 900 260" role="img" aria-label="Keel Lock joint longitudinal section">
+          <rect x="60" y="48" width="470" height="34" fill="var(--bg3)" stroke="var(--line2)"/>
+          <rect x="60" y="168" width="470" height="34" fill="var(--bg3)" stroke="var(--line2)"/>
+          <text x="70" y="40" class="dw-txt">Handle module: grip + reel seat, sealed</text>
+          <rect x="110" y="82" width="420" height="12" fill="url(#hatch)" style="color:var(--c2)" stroke="var(--c2)"/>
+          <rect x="110" y="156" width="420" height="12" fill="url(#hatch)" style="color:var(--c2)" stroke="var(--c2)"/>
+          <path d="M140 95 L540 94 L880 92 L880 158 L540 156 L140 155 Z" fill="color-mix(in oklab,var(--c1) 22%,var(--bg2))" stroke="var(--c1)"/>
+          <line x1="140" y1="108" x2="880" y2="104" class="dw-thin" stroke-dasharray="4 4"/>
+          <line x1="140" y1="142" x2="880" y2="146" class="dw-thin" stroke-dasharray="4 4"/>
+          <line x1="110" y1="82" x2="110" y2="168" stroke="var(--fg)" stroke-width="3"/>
+          <rect x="190" y="88" width="56" height="7" fill="var(--c3)"/>
+          <path d="M530 62 L640 62 L640 92 L600 92 L560 94 L530 94 Z" fill="color-mix(in oklab,var(--tannin) 35%,var(--bg2))" stroke="var(--tannin)"/>
+          <path d="M530 188 L640 188 L640 158 L600 158 L560 156 L530 156 Z" fill="color-mix(in oklab,var(--tannin) 35%,var(--bg2))" stroke="var(--tannin)"/>
+          <path d="M530 62 l6 6 l6 -6 l6 6 l6 -6 l6 6 l6 -6" class="dw-line" stroke-width="1"/>
+          <path d="M540 94 L590 94 L590 99 L540 99 Z M540 151 L590 151 L590 156 L540 156 Z" fill="var(--c4)"/>
+          <circle cx="618" cy="96" r="5" fill="none" stroke="var(--fg)" stroke-width="2"/>
+          <circle cx="618" cy="154" r="5" fill="none" stroke="var(--fg)" stroke-width="2"/>
+          <line x1="140" y1="222" x2="530" y2="222" class="dw-dim"/><line x1="140" y1="214" x2="140" y2="230" class="dw-dim"/><line x1="530" y1="214" x2="530" y2="230" class="dw-dim"/>
+          <text x="335" y="240" text-anchor="middle" class="dw-txt-acc">Engagement 5.0 in, target ≥ 10× blank OD</text>
+          <g class="dw-txt">
+            <line x1="218" y1="88" x2="218" y2="20" class="dw-thin"/><text x="224" y="20">Anti-rotation key: reel aligned to guides</text>
+            <line x1="565" y1="99" x2="660" y2="128" class="dw-thin"/><text x="666" y="132">Split collet, compressed by collar</text>
+            <line x1="618" y1="91" x2="660" y2="76" class="dw-thin"/><text x="666" y="80">O-ring: keeps salt out of the joint</text>
+            <line x1="600" y1="62" x2="660" y2="46" class="dw-thin"/><text x="666" y="50">Threaded collar, hard-anodized</text>
+            <line x1="330" y1="150" x2="330" y2="168" class="dw-thin"/>
+            <text x="666" y="112" class="dw-txt-fg">Blank continues to tip →</text>
+            <text x="116" y="128" fill="var(--fg)" font-size="11">stop</text>
+          </g>
+          <text x="300" y="130" class="dw-txt" style="fill:var(--fg)">Ground spigot, 1:40 taper</text>
+          <text x="140" y="180" class="dw-txt" style="fill:var(--c2)">Bonded carbon sleeve</text>
+        </svg>
+        <figcaption>Fig. 3 · Keel Lock joint, longitudinal section (Phase 2). The joint sits where bending load is highest, so it ships only after the fatigue and break gates below.</figcaption>
+      </figure>
+      <figure class="drawing" style="margin:0">
+        <svg viewBox="0 0 900 260" role="img" aria-label="Measurement fixture: clamp, rod, reference weight, grid">
+          <g stroke="var(--line)" stroke-width="1">
+            <path d="M60 30 V230 M140 30 V230 M220 30 V230 M300 30 V230 M380 30 V230 M460 30 V230 M540 30 V230 M620 30 V230 M700 30 V230 M780 30 V230 M860 30 V230 M60 30 H860 M60 70 H860 M60 110 H860 M60 150 H860 M60 190 H860 M60 230 H860"/>
+          </g>
+          <rect x="40" y="88" width="90" height="44" rx="4" fill="var(--bg3)" stroke="var(--fg)"/>
+          <text x="85" y="150" text-anchor="middle" class="dw-txt">Clamp at reel seat</text>
+          <line x1="130" y1="110" x2="860" y2="110" stroke="var(--faint)" stroke-dasharray="5 5"/>
+          <path d="M130 110 C 420 112, 640 130, 790 205" fill="none" stroke="var(--c1)" stroke-width="4"/>
+          <line x1="790" y1="205" x2="790" y2="228" stroke="var(--fg)"/>
+          <rect x="772" y="228" width="36" height="22" fill="var(--c3)" rx="3"/>
+          <text x="818" y="244" class="dw-txt">1.00 lb ref. load</text>
+          <line x1="840" y1="110" x2="840" y2="205" class="dw-dim"/>
+          <text x="846" y="160" class="dw-txt-acc">tip drop</text>
+          <path d="M600 110 A 80 80 0 0 1 660 140" fill="none" stroke="var(--tannin)" stroke-width="1.5"/>
+          <text x="610" y="96" class="dw-txt" style="fill:var(--tannin)">action angle</text>
+          <text x="70" y="22" class="dw-txt">Grid board + phone camera on a fixed mount reads drop and angle. Scale weighs to 0.1 g.</text>
+        </svg>
+        <figcaption>Fig. 4 · The measurement fixture, adapted from the Common Cents System approach to rod measurement. It is cheap and repeatable, and a factory can run it in 30–60 seconds per rod after training.</figcaption>
+      </figure>
+    </div>
+
+    <h3 style="margin:28px 0 12px">Test plan with pass gates <span class="tag est">targets, not results</span></h3>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Test</th><th>Method</th><th>Sample</th><th>Pass gate (proposed)</th></tr></thead>
+      <tbody>
+        <tr><td>Power and action</td><td>Fixture deflection under 1.00 lb, action angle</td><td>100% of production</td><td>Within ±5% of the lot mean for deflection and ±3° for angle. Outliers are pulled, not sold.</td></tr>
+        <tr><td>Weight and balance</td><td>Scale to 0.1 g. Balance point with a reference 2500 reel.</td><td>100%</td><td>Within ±4 g of spec</td></tr>
+        <tr><td>Guide alignment</td><td>Sight-line jig on the fixture</td><td>100%</td><td>No visible misalignment between the stripper and the tip top</td></tr>
+        <tr><td>Cyclic fatigue</td><td>Flex to 50% of rated load, motorized rig</td><td>3 per SKU per sample round</td><td>10,000 cycles with deflection change under 3%</td></tr>
+        <tr><td>Break test</td><td>Controlled high-stick and lift loads to failure</td><td>3 per SKU per round</td><td>Failure load documented, with no failure at a ferrule or Keel joint below the blank's own failure load</td></tr>
+        <tr><td>Salt exposure</td><td>Neutral salt spray, ASTM B117, on guides, seat and hardware</td><td>2 sets per supplier</td><td>No red rust on frames or seat hardware at 96 h, and no insert loosening</td></tr>
+        <tr><td>Keel Lock (Phase 2)</td><td>Cycling plus 200 assemble/disassemble cycles in sandy salt water</td><td>5 joints</td><td>No measurable play, no rotation under 15 in·lb torque, and joint stiffness ≥ the solid blank at that station</td></tr>
+        <tr><td>Blind preference</td><td>20+ anglers cast covered rods against two benchmarks</td><td>Pilot gate</td><td>At least parity on feel and a preference on weight or sensitivity, with failures written down</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- 4 COMPETITION -->
+  <section class="sec" id="competition">
+    <div class="sechead"><svg class="staff" aria-hidden="true"><use href="#staffE"/></svg><div><span class="eyebrow">04 · Competition</span><h2>Where to fight, and where not to</h2><p>You will not out-engineer Shimano or Daiwa on materials, out-heritage St. Croix, out-price Okuma or out-local Waterloo in Texas in Year 1. The opening is narrower than that, and it is real: nobody in this set publishes per-rod measured data or is built around salt service. That finding comes from public product pages only. Re-check it before claiming "first" in any ad.</p></div></div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Brand</th><th>Inshore reference</th><th>Price evidence</th><th>Their real edge</th><th>Don't fight them on</th><th>Estuary's opening</th></tr></thead>
+      <tbody>
+        <tr><td><b>St. Croix</b></td><td>Avid Inshore spinning</td><td>~$240–$320 street at major retailers <span class="tag src">Nov 2026</span></td><td>US-built heritage, long warranty, dealer reach</td><td>Warranty length and heritage story</td><td>Measured spec at about $40–80 less. Salt-service hardware.</td></tr>
+        <tr><td><b>Waterloo</b></td><td>Salinity</td><td>$179.99 <span class="tag src">deck, official page</span></td><td>Texas coast credibility, technique-specific actions</td><td>Texas guides in Year 1</td><td>Proof-based marketing plus modular handle. Start in Louisiana and Florida's Gulf coast as well as Texas.</td></tr>
+        <tr><td><b>Shimano</b></td><td>Teramar (not Zodias)</td><td>verify current models <span class="tag est">to check</span></td><td>Materials R&amp;D, rod + reel ecosystem, distribution</td><td>Blank technology claims</td><td>A focused inshore voice, a service program and lot transparency</td></tr>
+        <tr><td><b>Daiwa</b></td><td>Ardito-TR (travel)</td><td>official page <span class="tag src">deck</span></td><td>Materials R&amp;D, travel formats</td><td>Travel rods in Years 1–2</td><td>Keel modularity as a different answer to packability</td></tr>
+        <tr><td><b>Okuma</b></td><td>Pulse Wave</td><td>from $99.99 <span class="tag src">deck</span></td><td>Price and value at volume</td><td>Price, ever</td><td>Premium proof, design and service. Not a cheaper rod.</td></tr>
+      </tbody>
+    </table></div>
+    <p class="small muted" style="margin-top:10px">An incumbent can copy the measured card within a year. The moat is not the card. It is being the brand that started it, the lot data built up behind it, and a service program that makes the brand cheaper to own over five years.</p>
+  </section>
+
+  <!-- 5 BRAND -->
+  <section class="sec" id="brand">
+    <div class="sechead"><svg class="staff" aria-hidden="true"><use href="#staffE"/></svg><div><span class="eyebrow">05 · Brand</span><h2>A mark taken from the water itself</h2><p>Tide and river staff gauges are marked in a repeating "E" pattern every tenth of a foot. Anyone who fishes tidal water has seen one on a piling. The E of Estuary is that mark, so the logo is a measurement. That is the whole brand idea in one shape.</p></div></div>
+    <div class="logos">
+      <div class="logo-card"><div class="art"><svg viewBox="0 0 320 160" aria-label="Staff E logo concept"><use href="#staffE" x="24" y="38" width="56" height="84" style="color:var(--accent)"/><text x="96" y="92" font-family="Archivo, sans-serif" font-weight="700" font-size="34" letter-spacing="6" style="font-stretch:125%" fill="currentColor">ESTUARY</text><text x="98" y="114" font-size="10" letter-spacing="3" fill="var(--muted)">MEASURED ROD CO.</text><g stroke="var(--muted)"><line x1="14" y1="38" x2="20" y2="38"/><line x1="14" y1="59" x2="18" y2="59"/><line x1="14" y1="80" x2="20" y2="80"/><line x1="14" y1="101" x2="18" y2="101"/><line x1="14" y1="122" x2="20" y2="122"/></g></svg></div><div class="cap"><b>A · Staff E (recommended)</b>Works at 6 mm on a butt cap and on a 3-inch tube band. Repeated as a pattern, it becomes the packaging.</div></div>
+      <div class="logo-card"><div class="art"><svg viewBox="0 0 320 160" aria-label="Confluence logo concept"><path d="M30 50 C 90 50, 120 80, 170 80 M30 110 C 90 110, 120 80, 170 80 L 268 80" fill="none" stroke="var(--accent)" stroke-width="7" stroke-linecap="round"/><circle cx="282" cy="80" r="10" fill="none" stroke="var(--tannin)" stroke-width="5"/><text x="160" y="134" text-anchor="middle" font-family="Archivo, sans-serif" font-weight="700" font-size="16" letter-spacing="8" fill="currentColor">ESTUARY</text></svg></div><div class="cap"><b>B · Confluence</b>A river and the tide merge into a rod line that ends in a tip-top ring. Friendlier, but closer to generic "wave" marks.</div></div>
+      <div class="logo-card"><div class="art"><svg viewBox="0 0 320 160" aria-label="Lot seal logo concept"><defs><path id="ring" d="M160 80 m -58 0 a 58 58 0 1 1 116 0 a 58 58 0 1 1 -116 0"/></defs><circle cx="160" cy="80" r="70" fill="none" stroke="var(--line2)"/><circle cx="160" cy="80" r="46" fill="none" stroke="var(--line2)"/><text font-size="10.5" letter-spacing="2.4" fill="var(--muted)"><textPath href="#ring">EVERY ROD MEASURED · LOT 001 · GULF COAST ·</textPath></text><use href="#staffE" x="141" y="54" width="36" height="52" style="color:var(--tannin)"/></svg></div><div class="cap"><b>C · Lot seal</b>A secondary mark for the spec card, the lot page and the end cap. It is not a primary logo.</div></div>
+    </div>
+
+    <div class="grid2" style="margin-top:20px">
+      <div class="card">
+        <h3>Palette from an estuary at low tide</h3>
+        <div class="pal" style="margin-top:12px">
+          <div><span style="background:#13201f"></span><p><b>Marsh night</b>#13201F</p></div>
+          <div><span style="background:#6fb8a6"></span><p><b>Sea-glass</b>#6FB8A6</p></div>
+          <div><span style="background:#7a4a24"></span><p><b>Tannin</b>#7A4A24</p></div>
+          <div><span style="background:#e9e5da"></span><p><b>Salt</b>#E9E5DA</p></div>
+          <div><span style="background:#2b3134"></span><p><b>Graphite</b>#2B3134</p></div>
+        </div>
+        <p class="small muted" style="margin-top:12px">Tannin is the tea color of marsh runoff. It is the signature blank finish, and no big brand owns it in this category. Type: a wide grotesk for the wordmark and a mono for every measured number.</p>
+      </div>
+      <div class="card">
+        <h3>Name risk, before any spend on identity</h3>
+        <p class="small">"Estuary" describes where the rod is used. Descriptive marks can be refused registration or are hard to enforce, and a buyer prices that in. Search before printing anything.</p>
+        <ul class="small"><li><b>Keep:</b> ESTUARY, if a knockout search and attorney opinion come back clean</li><li><b>Fallback:</b> a coined house brand with "Estuary" as the inshore line name</li><li><b>Unscreened coined ideas:</b> Tidewright, Brackline, Saltgauge. These are not cleared, so search them before falling in love.</li></ul>
+        <p class="small muted">Official search: <a href="https://tmsearch.uspto.gov/" target="_blank" rel="noopener">USPTO trademark search</a>, Class 28 (fishing tackle).</p>
+      </div>
+    </div>
+
+    <div class="grid2" style="margin-top:20px">
+      <figure class="drawing narrow" style="margin:0">
+        <svg viewBox="0 0 560 300" role="img" aria-label="Packaging concept: printed rod tube and measured spec card">
+          <rect x="20" y="40" width="520" height="60" rx="30" fill="#b9946a"/>
+          <rect x="20" y="40" width="70" height="60" rx="30" fill="#2b3134"/>
+          <rect x="470" y="40" width="70" height="60" rx="30" fill="#2b3134"/>
+          <g fill="#13201f">
+            <g transform="translate(130 50)"><rect width="5" height="40"/><rect width="22" height="5"/><rect y="17.5" width="15" height="5"/><rect y="35" width="22" height="5"/></g>
+            <g transform="translate(178 50) scale(-1 1)"><rect width="5" height="40"/><rect width="22" height="5"/><rect y="17.5" width="15" height="5"/><rect y="35" width="22" height="5"/></g>
+            <g transform="translate(184 50)"><rect width="5" height="40"/><rect width="22" height="5"/><rect y="17.5" width="15" height="5"/><rect y="35" width="22" height="5"/></g>
+            <g transform="translate(232 50) scale(-1 1)"><rect width="5" height="40"/><rect width="22" height="5"/><rect y="17.5" width="15" height="5"/><rect y="35" width="22" height="5"/></g>
+          </g>
+          <text x="252" y="74" font-family="Archivo, sans-serif" font-weight="700" font-size="14" letter-spacing="3" fill="#13201f">ESTUARY · FLATS 70M</text>
+          <text x="253" y="90" font-size="9" fill="#13201f">7′0″ · M · F · №0001 · LOT 001</text>
+          <text x="20" y="124" class="dw-txt">Kraft tube, staff-E band, rod sock inside. Est. $2–4 per rod.</text>
+          <rect x="20" y="146" width="300" height="140" rx="6" fill="#e9e5da" stroke="#13201f"/>
+          <text x="36" y="170" font-family="Archivo, sans-serif" font-weight="700" font-size="13" letter-spacing="3" fill="#13201f">MEASURED · №0001</text>
+          <g font-size="10" fill="#13201f">
+            <text x="36" y="194">Weight</text><text x="200" y="194">— — . — g</text>
+            <text x="36" y="212">Balance (2500 ref. reel)</text><text x="200" y="212">— — . — in</text>
+            <text x="36" y="230">Deflection @ 1.00 lb</text><text x="200" y="230">— — . — in</text>
+            <text x="36" y="248">Action angle</text><text x="200" y="248">— — °</text>
+            <text x="36" y="270" fill="#5b4a3a">Measured by — —  ·  date — —  ·  lot page QR</text>
+          </g>
+          <use href="#staffE" x="278" y="156" width="26" height="38" style="color:#7a4a24"/>
+          <text x="340" y="170" class="dw-txt-fg">Spec card, front</text>
+          <text x="340" y="190" class="dw-txt">Fields stay blank until real</text>
+          <text x="340" y="206" class="dw-txt">measurements exist. Never</text>
+          <text x="340" y="222" class="dw-txt">print sample numbers.</text>
+          <text x="340" y="250" class="dw-txt">Back: line and lure ratings,</text>
+          <text x="340" y="266" class="dw-txt">rinse and care, service link.</text>
+        </svg>
+        <figcaption>Fig. 5 · Packaging. The staff-E marks alternate direction, as they do on a real gauge.</figcaption>
+      </figure>
+      <div class="card">
+        <h3>Voice</h3>
+        <p class="small">Plain, specific, a little dry. Numbers over adjectives.</p>
+        <ul class="small">
+          <li><b>Instead of</b> "insane sensitivity" → "4.1 oz on our scale. Here's the scale."</li>
+          <li><b>Instead of</b> "built tough" → "Lot 003 average failure load, and how we tested it."</li>
+          <li><b>Instead of</b> "limited drop!" → "Lot 004 is 300 rods in Tannin. When it's gone, the next lot is Graphite."</li>
+        </ul>
+        <h3 style="margin-top:16px">Won't do</h3>
+        <ul class="small"><li>Fake scarcity, gifted-for-review without disclosure, or bought reviews</li><li>Claims of "first" or "best" without a source</li><li>Pro-staff patches for people who don't fish the rods</li></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 SOURCING -->
+  <section class="sec" id="sourcing">
+    <div class="sechead"><svg class="staff" aria-hidden="true"><use href="#staffE"/></svg><div><span class="eyebrow">06 · Factory and cost</span><h2>Pick the factory with a scorecard, not a feeling</h2><p>No factory has been contacted. The country notes reflect US duty conditions as reported in November 2026 and must be confirmed by a licensed customs broker. The new §301 actions are under legal challenge and could change again.</p></div></div>
+    <div class="grid3">
+      <div class="card"><span class="tag">Engineering RFQ</span><h3 style="margin-top:8px">Taiwan</h3><p class="small">Deep rod and blank expertise and good prototype flexibility. Labor costs more. Reported Nov 2026 treatment: MFN plus §301 combined generally capped near 10%.</p><p class="small muted">Model preset: 10% total duty</p></div>
+      <div class="card"><span class="tag">Primary RFQ</span><h3 style="margin-top:8px">Vietnam</h3><p class="small">A growing export rod base. Verify that blanks are actually rolled there. A Chinese blank finished in Vietnam raises origin questions. Reported: 6% MFN plus 10–12.5% §301.</p><p class="small muted">Model preset: 18.5% total duty</p></div>
+      <div class="card"><span class="tag">Parallel RFQ</span><h3 style="margin-top:8px">China</h3><p class="small">The deepest ecosystem (the Weihai rod cluster) and usually the lowest FOB, but the highest duty stack: MFN plus legacy §301 plus the new §301. Use it as a cost benchmark even if you don't buy there.</p><p class="small muted">Model preset: 35% total duty (range ~24–44%)</p></div>
+    </div>
+
+    <div class="grid2" style="margin-top:20px">
+      <div class="tablewrap"><table>
+        <thead><tr><th>Factory scorecard criterion</th><th class="r">Weight</th></tr></thead>
+        <tbody>
+          <tr><td>Rolls its own blanks. Shows its mandrel library and documents its prepreg source.</td><td class="r">20</td></tr>
+          <tr><td>Quality system: in-line QC, AQL inspection, and willing to run our measurement step on 100% of rods</td><td class="r">20</td></tr>
+          <tr><td>Commercials: FOB at 300/500/1,000, MOQ, sample cost, payment terms (30/70 is typical)</td><td class="r">15</td></tr>
+          <tr><td>Origin and duty: documented, substantially transformed in-country</td><td class="r">15</td></tr>
+          <tr><td>Traceable genuine Fuji components (authorized purchase records)</td><td class="r">10</td></tr>
+          <tr><td>IP and tooling: we own mandrels, layups and handle tooling, with an NNN agreement signed</td><td class="r">10</td></tr>
+          <tr><td>References from existing US brands and a third-party audit</td><td class="r">10</td></tr>
+        </tbody>
+      </table></div>
+      <div class="card">
+        <h3>Gates from RFQ to first shipment</h3>
+        <ol class="small" style="padding-left:18px;margin:8px 0 0">
+          <li>NNN agreement, then the RFQ pack: drawings (Figs. 1–3), BOM, test plan</li>
+          <li>Paid samples from the top two factories. Expect 2–3 rounds.</li>
+          <li>Measure the samples on our fixture against six benchmark rods</li>
+          <li>Golden sample signed and sealed. The spec is frozen.</li>
+          <li>Pilot lot of 300–500. Third-party pre-shipment inspection (ISO 2859-1, AQL 2.5 major / 4.0 minor).</li>
+          <li>LCL ocean freight, customs broker entry, FET filed quarterly on <a href="https://www.irs.gov/forms-pubs/about-form-720" target="_blank" rel="noopener">IRS Form 720</a></li>
+        </ol>
+        <p class="small muted" style="margin-top:10px">Plan around factory closures for Lunar New Year in February 2027. Samples requested in January may not move until March.</p>
+      </div>
+    </div>
+
+    <div class="grid2" style="margin-top:20px">
+      <div>
+        <h3 style="margin-bottom:10px">Itemized cost of the rod on the bench <span class="tag est">estimates</span></h3>
+        <div class="tablewrap"><table>
+          <thead><tr><th>Line</th><th class="r">Low</th><th class="r">Base</th><th class="r">High</th></tr></thead>
+          <tbody id="bomBody"></tbody>
+        </table></div>
+        <p class="tiny muted" style="margin-top:6px">Per rod, FOB factory, 500 units. Factory overhead and margin are inside each line. Change the parts on the bench at the top and this table follows.</p>
+      </div>
+      <div class="chart" id="landChart">
+        <h4>From factory price to all-in cost</h4>
+        <p class="tiny muted" id="landSub"></p>
+        <div class="legend"><span><i style="background:var(--c1)"></i>FOB</span><span><i style="background:var(--c2)"></i>Duty</span><span><i style="background:var(--c3)"></i>Freight + broker</span><span><i style="background:var(--c4)"></i>Excise (FET)</span></div>
+        <svg id="landSvg" viewBox="0 0 560 170" role="img" aria-label="Stacked bar of cost per rod"></svg>
+        <p class="small" id="landNote" style="margin-top:6px"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 MODEL -->
+  <section class="sec" id="model">
+    <div class="sechead"><svg class="staff" aria-hidden="true"><use href="#staffE"/></svg><div><span class="eyebrow">07 · Financial model</span><h2>Change any input. Watch what survives.</h2><p>This is an illustration, not a forecast. Every input is an assumption, and the defaults are my base case. The deck's model showed $47 contribution per rod. With 2026 duty, realistic CAC and a 500-unit FOB, a blended rod earns about the same in dollars on a higher price, and Year 3 is profitable but thin.</p></div></div>
+    <div class="model">
+      <form class="card inputs" id="fm" onsubmit="return false">
+        <div>
+          <legend style="font-family:var(--f-mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:6px">Duty scenario</legend>
+          <div class="chips" id="dutyChips"></div>
+        </div>
+        <div class="inrow"><label for="i-msrp">Blended MSRP ($)</label><input id="i-msrp" type="number" step="1"></div>
+        <div class="inrow"><label for="i-dtcReal">DTC price realized (% of MSRP)</label><input id="i-dtcReal" type="number" step="1"></div>
+        <div class="inrow"><label for="i-whPct">Wholesale price (% of MSRP)</label><input id="i-whPct" type="number" step="1"></div>
+        <div class="inrow"><label for="i-duty">Total duty on FOB (%)</label><input id="i-duty" type="number" step="0.5"></div>
+        <div class="inrow"><label for="i-freight">Inbound freight + broker ($/rod)</label><input id="i-freight" type="number" step="0.5"></div>
+        <div class="inrow"><label for="i-ship">DTC ship + pack ($/order)</label><input id="i-ship" type="number" step="0.5"></div>
+        <div class="inrow"><label for="i-cac">CAC per DTC order ($)</label><input id="i-cac" type="number" step="1"></div>
+        <div class="inrow"><label for="i-rep">Rep commission (% of wholesale)</label><input id="i-rep" type="number" step="0.5"></div>
+        <div class="inrow"><label for="i-acc">Parts + accessories per rod ($, 60% margin)</label><input id="i-acc" type="number" step="1"></div>
+        <table class="yr">
+          <thead><tr><th></th><th>Y1</th><th>Y2</th><th>Y3</th></tr></thead>
+          <tbody>
+            <tr><th scope="row" style="text-align:left">Rods sold</th><td><input id="u0" type="number" step="100" aria-label="Rods sold year 1"></td><td><input id="u1" type="number" step="100" aria-label="Rods sold year 2"></td><td><input id="u2" type="number" step="100" aria-label="Rods sold year 3"></td></tr>
+            <tr><th scope="row" style="text-align:left">DTC share %</th><td><input id="d0" type="number" step="5" aria-label="DTC share year 1"></td><td><input id="d1" type="number" step="5" aria-label="DTC share year 2"></td><td><input id="d2" type="number" step="5" aria-label="DTC share year 3"></td></tr>
+            <tr><th scope="row" style="text-align:left">FOB $</th><td><input id="f0" type="number" step="1" aria-label="FOB year 1"></td><td><input id="f1" type="number" step="1" aria-label="FOB year 2"></td><td><input id="f2" type="number" step="1" aria-label="FOB year 3"></td></tr>
+            <tr><th scope="row" style="text-align:left">Fixed $K</th><td><input id="x0" type="number" step="5" aria-label="Fixed costs year 1 in thousands"></td><td><input id="x1" type="number" step="5" aria-label="Fixed costs year 2 in thousands"></td><td><input id="x2" type="number" step="5" aria-label="Fixed costs year 3 in thousands"></td></tr>
+          </tbody>
+        </table>
+        <button class="sbtn" id="fmReset" type="button" style="align-self:flex-start">Reset to base case</button>
+      </form>
+      <div class="outs">
+        <div class="kpis">
+          <div><div class="k readout-k">Blended contribution</div><div class="v" id="kCon">—</div><div class="s" id="kConS"></div></div>
+          <div><div class="k readout-k">Year-1 break-even</div><div class="v" id="kBe">—</div><div class="s">rods at Year-1 mix</div></div>
+          <div><div class="k readout-k">Year-3 operating</div><div class="v" id="kY3">—</div><div class="s" id="kY3S"></div></div>
+          <div><div class="k readout-k">Peak inventory cash</div><div class="v" id="kInv">—</div><div class="s">Year 3, 5-month pipeline</div></div>
+        </div>
+        <div class="grid2">
+          <div class="tablewrap"><table>
+            <thead><tr><th>Per rod, Year 1</th><th class="r">DTC</th><th class="r">Wholesale</th></tr></thead>
+            <tbody id="ueBody"></tbody>
+          </table></div>
+          <div class="tablewrap"><table>
+            <thead><tr><th>Three-year view</th><th class="r">Y1</th><th class="r">Y2</th><th class="r">Y3</th></tr></thead>
+            <tbody id="plBody"></tbody>
+          </table></div>
+        </div>
+        <div class="chart" id="tornadoBox">
+          <h4>What moves Year-3 operating result most</h4>
+          <p class="tiny muted">Each input moved 20% down and 20% up, one at a time, from the current inputs.</p>
+          <div class="legend"><span><i style="background:var(--c1)"></i>Raises the result</span><span><i style="background:var(--c3)"></i>Lowers the result</span></div>
+          <svg id="tornado" viewBox="0 0 640 330" role="img" aria-label="Tornado chart of sensitivities"></svg>
+        </div>
+        <div class="chart" id="heatBox">
+          <h4>Blended contribution margin, by retail price and factory cost</h4>
+          <p class="tiny muted">At Year-3 channel mix and the current duty, freight and CAC. The outlined cell is closest to your current inputs. Below about 20%, the business can't carry its fixed costs at pilot scale.</p>
+          <div style="overflow-x:auto"><table class="heat" id="heat"></table></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 MARKET -->
+  <section class="sec" id="market">
+    <div class="sechead"><svg class="staff" aria-hidden="true"><use href="#staffE"/></svg><div><span class="eyebrow">08 · Marketing</span><h2>Guides' boats are the showroom</h2><p>Inshore anglers trust the guide they fished with and the shop they buy live bait from. Paid social comes last, not first. Every partner below is a role to recruit. None has been contacted, and no name is implied.</p></div></div>
+    <div class="grid4">
+      <div class="card"><span class="eyebrow">Tier 1 · 6–10 guides</span><h3 style="margin-top:6px">Field-test fleet</h3><p class="small">Working inshore guides across four regions: Texas middle coast, Louisiana marsh, Florida Gulf, and Charleston or Georgia. Each gets a demo set and a paid field-test contract. Clients who fish the rods buy with the guide's code at 10% commission.</p><p class="small muted">Gives you real abuse data, plus each guide puts the rods in 100+ client hands a season.</p></div>
+      <div class="card"><span class="eyebrow">Tier 2 · 2–4 creators</span><h3 style="margin-top:6px">Mid-size inshore channels</h3><p class="small">YouTube or Instagram creators with 10k–150k followers whose audience actually fishes the Gulf. Pay a flat fee for 3 videos plus an 8% affiliate, with FTC disclosure on every post. Content license is perpetual for brand use.</p><p class="small muted">Judge them by the comment section, not follower counts.</p></div>
+      <div class="card"><span class="eyebrow">Tier 3 · 1 partner</span><h3 style="margin-top:6px">Anchor advisor</h3><p class="small">After six months of working together, one respected guide or builder may get 0.5–2% equity with a 4-year vest and a 1-year cliff, tied to design input and their name on a signature lot.</p><p class="small muted">Never trade equity for a single post.</p></div>
+      <div class="card"><span class="eyebrow">Shops</span><h3 style="margin-top:6px">10 independent dealers</h3><p class="small">A demo rack of 2 rods with a printed lot sheet, and a casting day per season. Start on consignment or small opening orders, and track sell-through monthly.</p><p class="small muted">Reorders, not opening orders, prove demand.</p></div>
+    </div>
+    <div class="grid3" style="margin-top:20px">
+      <div class="card"><h3>Content pillars</h3><ul class="small"><li><b>The measuring board:</b> benchmarks, lot data, failures</li><li><b>Tide notes:</b> technique by region and season</li><li><b>Service bench:</b> rinse, re-wrap, replace a tip</li><li><b>Build log:</b> factory visits and sample rounds, including rejects</li></ul></div>
+      <div class="card"><h3>Desirability without hype</h3><ul class="small"><li>Numbered lots in honest quantities with a finish per lot</li><li>Tannin as the signature finish people recognize from across a dock</li><li>A lot page per rod, so owners can look up their own rod</li><li>Measuring days at shops: bring any rod and we measure it</li></ul></div>
+      <div class="card"><h3>Metrics that matter</h3><ul class="small"><li>Cost per first order by channel</li><li>Guide-code share of sales</li><li>Dealer sell-through and reorder rate</li><li>Warranty claims per 100 rods</li><li>Second purchase within 12 months (Keel blanks, parts)</li></ul></div>
+    </div>
+  </section>
+
+  <!-- 9 EXIT -->
+  <section class="sec" id="exit">
+    <div class="sechead"><svg class="staff" aria-hidden="true"><use href="#staffE"/></svg><div><span class="eyebrow">09 · Exit</span><h2>What a buyer would actually pay for</h2><p>A multimillion-dollar exit is possible in this industry, but most hardgoods startups never reach the first row below. No buyer interest exists. The multiples are hypothetical ranges, not market quotes.</p></div></div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Outcome</th><th>What has to be true</th><th class="r">Revenue</th><th class="r">EBITDA</th><th class="r">Hypothetical value</th></tr></thead>
+      <tbody>
+        <tr><td><b>A · Profitable independent</b></td><td>Two to four rod SKUs, 20–40 dealers, DTC working. Owner-operated.</td><td class="r">$2–4M</td><td class="r">$0.2–0.5M</td><td class="r">$0.5–2M at 2.5–4×</td></tr>
+        <tr><td><b>B · Strategic tuck-in</b></td><td>A national specialty dealer base, the Keel platform shipping, two qualified factories, clean books. A team runs it without the founder.</td><td class="r">$8–15M</td><td class="r">$1.0–2.4M</td><td class="r">$5–19M at 5–8×</td></tr>
+        <tr><td><b>C · Platform</b></td><td>A second category (reels, apparel or terminal tackle) and growth above 25% a year</td><td class="r">$25M+</td><td class="r">$3M+</td><td class="r">Rare, so don't plan on it</td></tr>
+      </tbody>
+    </table></div>
+    <div class="grid2" style="margin-top:20px">
+      <div class="card"><h3>Acquisition-ready checklist</h3><ul class="small">
+        <li>Trademark registered in Class 28 in the US, with key export markets filed</li>
+        <li>Design patents on the handle and Keel collar. A utility patent only if a search shows novelty.</li>
+        <li>Contracts that say you own mandrels, layups and tooling</li>
+        <li>Two qualified factories in different countries</li>
+        <li>Lot measurement dataset and warranty-claim history</li>
+        <li>No retailer above 30% of revenue</li>
+        <li>Accrual books from Day 1, and reviewed financials by Year 3</li>
+        <li>Perpetual licenses to all creator content, and an owned email list</li>
+      </ul></div>
+      <div class="card"><h3>Likely buyer types</h3><p class="small">Large tackle groups such as Pure Fishing (sold by Newell in 2018 for about $1.3B), Rapala VMC, Johnson Outdoors and Globeride/Daiwa. Also distributors adding an owned brand, private-equity outdoor platforms, and retailers buying a brand rather than building private label.</p><p class="small muted">They buy a brand that is already growing in dealers they don't reach, with margins that survive their overhead. They don't buy concepts.</p></div>
+    </div>
+  </section>
+
+  <!-- 10 NEXT -->
+  <section class="sec" id="next">
+    <div class="sechead"><svg class="staff" aria-hidden="true"><use href="#staffE"/></svg><div><span class="eyebrow">10 · Next five actions</span><h2>Ninety days, cheapest proof first</h2><p>Only the Lunar New Year date is fixed. Every other date below is a target you set, so move it if school or other commitments need the time. None of these need money beyond a few hundred dollars except the samples.</p></div></div>
+    <div class="steps">
+      <div class="step"><div class="when">by 18 Dec 2026</div><div><h4>Trademark knockout search</h4><p>Search ESTUARY and three coined alternatives in <a href="https://tmsearch.uspto.gov/" target="_blank" rel="noopener">USPTO search</a>, Class 28. Pick a name before any spend on identity.</p></div><div class="kind">Free · 1 evening</div></div>
+      <div class="step"><div class="when">by 31 Jan 2027</div><div><h4>30 anglers, 10 shops</h4><p>Ask how rods break, corrode and travel, and what they paid last time. Run the $179/$199/$219 price test and ask whether a measured card would change their pick.</p></div><div class="kind">Free · weekends</div></div>
+      <div class="step"><div class="when">send by 15 Jan 2027</div><div><h4>RFQ pack to 3 factories</h4><p>Figs. 1–3, BOM, test plan and the NNN agreement. Ask for itemized FOB at 300, 500 and 1,000 units. Lunar New Year (6 Feb 2027) closes factories for weeks, so expect quotes in March.</p></div><div class="kind">Free · samples $300–900 later</div></div>
+      <div class="step"><div class="when">by 28 Feb 2027</div><div><h4>Build the fixture and measure 6 rods</h4><p>Borrow benchmark rods from shops (Avid Inshore, Salinity, Pulse Wave, Teramar) and measure them. That's the brand's first real data and first real content.</p></div><div class="kind">~$100–300</div></div>
+      <div class="step"><div class="when">optional · July 2027</div><div><h4>ICAST, if the samples are ready</h4><p>ICAST is a trade-only show in Orlando. Check eligibility and dates on the official site before planning. It is a stretch goal. Skip it if the samples aren't ready.</p></div><div class="kind">Optional · stretch</div></div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <p><b>Sources and status.</b> Competitor prices and the Pure Fishing sale come from the original deck's official sources unless marked otherwise. Duty and excise facts were checked against public reporting on 27 Nov 2026 and still need a licensed broker and tax adviser to confirm. Every cost, weight, price and projection not marked as sourced is a planning estimate. No prototypes, test results, supplier quotes, sales or partners exist yet.</p>
+    <ul>
+      <li><a href="https://www.hklaw.com/en/insights/publications/2026/02/supreme-court-strikes-down-ieepa-tariffs" target="_blank" rel="noopener">Holland &amp; Knight: Supreme Court strikes down IEEPA tariffs (Feb 2026)</a></li>
+      <li><a href="https://www.americanbar.org/groups/public_contract_law/resources/procurement-lawyer/2026-fall/ieepa-tariffs-struck-down-replacement-tariffs-expired/" target="_blank" rel="noopener">ABA: replacement §122 tariffs expired</a></li>
+      <li><a href="https://www.morganlewis.com/pubs/2026/07/us-administration-rebuilds-global-tariff-program-under-section-301" target="_blank" rel="noopener">Morgan Lewis: global tariff program rebuilt under §301 (Jul 2026)</a></li>
+      <li><a href="https://hts.usitc.gov/" target="_blank" rel="noopener">USITC Harmonized Tariff Schedule (9507.10, 6% general rate)</a></li>
+      <li><a href="https://www.law.cornell.edu/uscode/text/26/4161" target="_blank" rel="noopener">26 U.S.C. §4161: 10% excise on rods, capped at $10 per article</a></li>
+      <li><a href="https://stcroixrodfactorystore.com/products/avid-inshore-series-spinning" target="_blank" rel="noopener">St. Croix Avid Inshore spinning (factory store)</a> · <a href="https://www.fishusa.com/St.-Croix-Avid-Inshore-Spinning-Rod/" target="_blank" rel="noopener">FishUSA listing</a></li>
+    </ul>
+  </footer>
+</div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function(){
+"use strict";
+var $ = function(s){return document.querySelector(s)};
+var fmt = function(v,d){d=d||0; return (v<0?'−$':'$')+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d})};
+var fmtK = function(v){var a=Math.abs(v); var s = a>=1e6 ? (a/1e6).toFixed(2)+'M' : (a/1e3).toFixed(a>=1e5?0:1)+'K'; return (v<0?'−$':'$')+s};
+var pct = function(v){return (v*100).toFixed(0)+'%'};
+var reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- theme toggle ---------- */
+(function(){
+  var b=$('#themeBtn'); var root=document.documentElement;
+  try{var t=localStorage.getItem('estuary-theme'); if(t) root.setAttribute('data-theme',t);}catch(e){}
+  function label(){var t=root.getAttribute('data-theme'); b.textContent = t==='light'?'Light':t==='dark'?'Dark':'Auto';}
+  label();
+  b.addEventListener('click',function(){var t=root.getAttribute('data-theme'); var n = !t?'light':t==='light'?'dark':null; if(n) root.setAttribute('data-theme',n); else root.removeAttribute('data-theme'); try{ if(n) localStorage.setItem('estuary-theme',n); else localStorage.removeItem('estuary-theme'); }catch(e){} label(); refreshAll();});
+})();
+
+/* ---------- data ---------- */
+var MODELS = {
+  flats:{name:'Flats 70M',short:'Flats',len:84,power:'Medium',action:'Fast',lure:'1/8–5/8 oz',line:'8–17 lb braid',pcs:1,msrp:199,cost:[9,11,15],wt:52,p:2.8,phi:1.15,butt:11.2,tip:1.7,use:'Trout, soft plastics, light topwater',phase:'Launch',
+    guides:[[36,20],[45,12],[52.5,8],[59,7],[65,7],[70.5,7],[75.5,7],[80,7]]},
+  channel:{name:'Channel 72MH',short:'Channel',len:86,power:'Medium-heavy',action:'Fast',lure:'1/4–1 oz',line:'10–20 lb braid',pcs:1,msrp:219,cost:[10,12.5,16.5],wt:60,p:2.5,phi:0.92,butt:12.2,tip:2.0,use:'Redfish, docks, heavier jigs',phase:'Launch'},
+  transit:{name:'Transit 70M',short:'Transit',len:84,power:'Medium',action:'Mod-fast',lure:'1/8–5/8 oz',line:'8–17 lb braid',pcs:4,msrp:249,cost:[14,17.5,24],wt:66,p:1.9,phi:1.2,butt:11.6,tip:1.8,use:'Travel, mixed light inshore',phase:'Phase 3, gated',ferrules:[22,43,63.5]}
+};
+MODELS.channel.guides = MODELS.flats.guides.map(function(g){return [Math.round(g[0]*86/84*2)/2, g[1]]});
+MODELS.transit.guides = MODELS.flats.guides;
+var HANDLES = {
+  splitcork:{name:'Split cork',sub:'standard',cost:[4,5,7],wt:22,msrp:0},
+  fullcork:{name:'Full cork',sub:'+$10',cost:[5,6.5,9],wt:32,msrp:10},
+  eva:{name:'Split EVA',sub:'−$10',cost:[2,3,4.5],wt:15,msrp:-10},
+  keel:{name:'Keel Lock',sub:'Phase 2 · +$30',cost:[11,16,24],wt:40,msrp:30}
+};
+var SEATS = {
+  dps:{name:'Down-locking',sub:'Fuji DPS-type',cost:[2.5,3.5,5],wt:18,msrp:0},
+  vss:{name:'Skeleton',sub:'Fuji VSS-type · +$10',cost:[3.5,5,7],wt:15,msrp:10}
+};
+var GUIDES = {
+  alc:{name:'Alconite / stainless',sub:'K-frame',cost:[8,11,15],wt:14,msrp:0},
+  sic:{name:'SiC / titanium',sub:'K-frame · +$50',cost:[22,30,40],wt:9,msrp:50}
+};
+var FINISH = {
+  graphite:{name:'Graphite',hex:'#2b3134',color:0x2b3134,rough:0.62,clear:0.0,cost:[0.6,1,1.6]},
+  tannin:{name:'Tannin',hex:'#5a3417',color:0x4f2d14,rough:0.32,clear:1.0,cost:[1.2,1.8,2.6]},
+  seaglass:{name:'Sea-glass',hex:'#3f6f66',color:0x3b6a61,rough:0.34,clear:1.0,cost:[1.2,1.8,2.6]}
+};
+var TRIM = {
+  black:{name:'Black',hex:'#141414',color:0x141414},
+  seaglass:{name:'Sea-glass',hex:'#6fc2ad',color:0x6fc2ad},
+  tannin:{name:'Tannin',hex:'#b07a3e',color:0xb07a3e},
+  bone:{name:'Bone',hex:'#e6e0cf',color:0xe6e0cf}
+};
+var COMMON = {hw:[1,1.4,2.2], labor:[6,8,12], measure:[0.6,0.9,1.5], pack:[2,2.6,4]};
+var cfg = {model:'flats',handle:'splitcork',seat:'dps',guides:'alc',finish:'tannin',trim:'seaglass'};
+
+/* ---------- financial model ---------- */
+var BASE = {msrp:209,dtcReal:93,whPct:50,duty:18.5,freight:4.5,ship:21,pay:3.3,warrDtc:7,warrWh:3,cac:38,rep:7,dealer:5,acc:8,accGm:60,
+  units:[1200,4000,9000],dtc:[75,60,45],fob:[44,40,37],fixed:[90,190,340],lead:5};
+var FM = JSON.parse(JSON.stringify(BASE));
+var DUTY = [{k:'mfn',name:'MFN only',sub:'6%',v:6},{k:'tw',name:'Taiwan',sub:'~10%',v:10},{k:'vn',name:'Vietnam',sub:'~18.5%',v:18.5},{k:'cn',name:'China',sub:'~35%',v:35}];
+
+function unit(fob,p,msrpOverride){
+  var msrp = msrpOverride||p.msrp;
+  var landed = fob*(1+p.duty/100)+p.freight;
+  var dP = msrp*p.dtcReal/100, wP = msrp*p.whPct/100;
+  var d = {rev:dP,landed:landed,fet:Math.min(10,0.1*dP),ship:p.ship,fee:dP*p.pay/100,warr:p.warrDtc,cac:p.cac};
+  d.con = d.rev-d.landed-d.fet-d.ship-d.fee-d.warr-d.cac;
+  var w = {rev:wP,landed:landed,fet:Math.min(10,0.1*wP),ship:p.dealer,fee:wP*p.rep/100,warr:p.warrWh,cac:0};
+  w.con = w.rev-w.landed-w.fet-w.ship-w.fee-w.warr-w.cac;
+  return {landed:landed,d:d,w:w,msrp:msrp};
+}
+function year(i,p){
+  var u=unit(p.fob[i],p), n=p.units[i], s=Math.max(0,Math.min(100,p.dtc[i]))/100;
+  var accRev=n*p.acc, accGp=accRev*p.accGm/100;
+  var rev=n*(s*u.d.rev+(1-s)*u.w.rev)+accRev;
+  var gp=n*(s*(u.d.rev-u.landed-u.d.fet)+(1-s)*(u.w.rev-u.landed-u.w.fet))+accGp;
+  var con=n*(s*u.d.con+(1-s)*u.w.con)+accGp;
+  var fixed=p.fixed[i]*1000;
+  return {u:u,n:n,s:s,rev:rev,gp:gp,con:con,fixed:fixed,op:con-fixed,perRod:con/n,inv:n/12*p.lead*u.landed};
+}
+
+/* ---------- configurator cost ---------- */
+function configCost(){
+  var m=MODELS[cfg.model],h=HANDLES[cfg.handle],s=SEATS[cfg.seat],g=GUIDES[cfg.guides],f=FINISH[cfg.finish];
+  var labor = COMMON.labor.map(function(v){return v+(m.pcs>1?2:0)+(cfg.handle==='keel'?1.5:0)});
+  var lines=[
+    ['Blank: '+m.name+(m.pcs>1?' (4-pc ferrules)':''),m.cost],
+    ['Handle: '+h.name,h.cost],
+    ['Reel seat: '+s.sub,s.cost],
+    ['Guides + tip top: '+g.name,g.cost],
+    ['Finish: '+f.name+' + thread',f.cost],
+    ['Hardware: winding check, keeper, butt cap',COMMON.hw],
+    ['Assembly, wraps, QC labor',labor],
+    ['Measurement step + serial card',COMMON.measure],
+    ['Packaging: tube share, sock, card',COMMON.pack]
+  ];
+  var tot=[0,0,0]; lines.forEach(function(l){for(var i=0;i<3;i++)tot[i]+=l[1][i]});
+  var wt = m.wt+h.wt+s.wt+g.wt+3+8;
+  var msrp = m.msrp+h.msrp+s.msrp+g.msrp;
+  return {lines:lines,tot:tot,wt:wt,msrp:msrp};
+}
+
+/* ---------- build chips ---------- */
+function chips(id,group,obj,key,swatch){
+  var el=$(id); var html='';
+  Object.keys(obj).forEach(function(k){
+    var o=obj[k]; var iid=group+'-'+k;
+    html+='<input type="radio" name="'+group+'" id="'+iid+'" value="'+k+'"'+(cfg[key]===k?' checked':'')+'>'+
+      '<label for="'+iid+'">'+(swatch?'<span class="swatch" style="background:'+o.hex+'"></span>':'')+o.name+(o.sub?'<small>'+o.sub+'</small>':'')+'</label>';
+  });
+  el.innerHTML=html;
+  el.addEventListener('change',function(e){cfg[key]=e.target.value; onConfig(key);});
+}
+Object.keys(MODELS).forEach(function(k){MODELS[k].sub = MODELS[k].phase+' · $'+MODELS[k].msrp});
+chips('#g-model','model',MODELS,'model');
+chips('#g-handle','handle',HANDLES,'handle');
+chips('#g-seat','seat',SEATS,'seat');
+chips('#g-guides','guides',GUIDES,'guides');
+chips('#g-finish','finish',FINISH,'finish',true);
+chips('#g-trim','trim',TRIM,'trim',true);
+
+function updateReadout(){
+  var c=configCost(); var m=MODELS[cfg.model];
+  var u=unit(c.tot[1],FM,c.msrp);
+  $('#rFob').textContent=fmt(c.tot[1],2);
+  $('#rFobR').textContent='range '+fmt(c.tot[0])+'–'+fmt(c.tot[2])+' · est.';
+  $('#rLand').textContent=fmt(u.landed+u.w.fet,2);
+  $('#rLandS').textContent=FM.duty+'% duty + $'+FM.freight+' freight + $'+u.w.fet.toFixed(2)+' FET';
+  $('#rMsrp').textContent=fmt(c.msrp);
+  var share=u.landed/c.msrp; var cls=share<=0.24?'good':share<=0.28?'warn':'bad';
+  var txt=share<=0.24?'Wholesale works':share<=0.28?'Wholesale is thin':'DTC only';
+  $('#rGate').innerHTML='<span class="gate '+cls+'">landed '+pct(share)+' of MSRP · '+txt+'</span>';
+  $('#rCon').textContent=fmt(u.d.con)+' / '+fmt(u.w.con);
+  $('#rConS').textContent='DTC '+pct(u.d.con/u.d.rev)+' · wholesale '+pct(u.w.con/u.w.rev);
+  var oz=(c.wt/28.35).toFixed(1);
+  $('#specline').innerHTML='<b>'+m.name+'</b> · '+(m.len===86?'7′2″':'7′0″')+' · '+m.power+' · '+m.action+' · '+m.pcs+'-pc · lure '+m.lure+' · '+m.line+' · est. weight <b>'+oz+' oz</b> ('+c.wt+' g) · '+HANDLES[cfg.handle].name+', '+SEATS[cfg.seat].sub+', '+GUIDES[cfg.guides].name+', '+FINISH[cfg.finish].name+' finish'+(cfg.handle==='keel'?' · <span class="tag gate2">Keel ships only after fatigue gate</span>':'')+(cfg.model==='transit'?' · <span class="tag gate2">Phase 3 · gated on demand</span>':'');
+  // BOM
+  var b=''; c.lines.forEach(function(l){b+='<tr><td>'+l[0]+'</td><td class="r">'+fmt(l[1][0],2)+'</td><td class="r">'+fmt(l[1][1],2)+'</td><td class="r">'+fmt(l[1][2],2)+'</td></tr>'});
+  b+='<tr class="total"><td>FOB per rod</td><td class="r">'+fmt(c.tot[0],2)+'</td><td class="r">'+fmt(c.tot[1],2)+'</td><td class="r">'+fmt(c.tot[2],2)+'</td></tr>';
+  $('#bomBody').innerHTML=b;
+  drawLanded(c,u);
+}
+
+/* ---------- landed chart ---------- */
+function drawLanded(c,u){
+  var fob=c.tot[1], duty=fob*FM.duty/100, fr=FM.freight, fet=u.w.fet, tot=fob+duty+fr+fet;
+  var svg=$('#landSvg'); var W=560, x0=10, maxV=Math.max(c.msrp*0.5, tot)*1.05, sc=(W-20)/maxV;
+  var segs=[['FOB',fob,'var(--c1)'],['Duty',duty,'var(--c2)'],['Freight',fr,'var(--c3)'],['FET',fet,'var(--c4)']];
+  var h='', x=x0;
+  segs.forEach(function(s,i){var w=Math.max(0,s[1]*sc-2); h+='<rect x="'+x.toFixed(1)+'" y="40" width="'+w.toFixed(1)+'" height="34" rx="'+(i===0?4:2)+'" fill="'+s[2]+'"><title>'+s[0]+': '+fmt(s[1],2)+'</title></rect>';
+    if(w>44) h+='<text x="'+(x+w/2).toFixed(1)+'" y="62" text-anchor="middle" font-size="11" fill="#fff">'+fmt(s[1],0)+'</text>';
+    x+=s[1]*sc;});
+  h+='<text x="'+x0+'" y="30" font-size="11" fill="var(--muted)">All-in cost before selling: '+fmt(tot,2)+'</text>';
+  var wx=x0+c.msrp*FM.whPct/100*sc;
+  h+='<line x1="'+wx.toFixed(1)+'" y1="34" x2="'+wx.toFixed(1)+'" y2="96" stroke="var(--fg)" stroke-dasharray="3 3"/><text x="'+Math.min(wx,W-6).toFixed(1)+'" y="112" text-anchor="end" font-size="11" fill="var(--fg)">wholesale price '+fmt(c.msrp*FM.whPct/100,2)+'</text>';
+  var gx=x0+c.msrp*0.24*sc;
+  h+='<line x1="'+gx.toFixed(1)+'" y1="80" x2="'+gx.toFixed(1)+'" y2="140" stroke="var(--good)" stroke-width="1.5"/><text x="'+(gx+4).toFixed(1)+'" y="136" font-size="11" fill="var(--good)">landed ceiling, 24% of MSRP = '+fmt(c.msrp*0.24,2)+'</text>';
+  svg.innerHTML=h;
+  $('#landSub').textContent='Per rod, '+MODELS[cfg.model].name+' as configured, base estimate, '+FM.duty+'% duty.';
+  var left=c.msrp*FM.whPct/100-tot;
+  $('#landNote').innerHTML='Selling to a dealer at '+fmt(c.msrp*FM.whPct/100,2)+' leaves <b>'+fmt(left,2)+'</b> before freight to the dealer, rep commission and warranty. '+(u.landed<=c.msrp*0.24?'This configuration clears the ceiling.':'To clear the ceiling, cut FOB by about '+fmt(Math.max(0,(u.landed-c.msrp*0.24)/(1+FM.duty/100)),2)+' or raise the price.');
+}
+
+/* ---------- product cards ---------- */
+(function(){
+  var h='';
+  [['flats','Launch',MODELS.flats],['channel','Launch',MODELS.channel],['keel','Phase 2',null],['transit','Phase 3',MODELS.transit]].forEach(function(r){
+    if(r[0]==='keel'){
+      h+='<div class="card prod"><span class="tag gate2">Phase 2 · gated</span><h3>Keel system</h3><div class="price num">$129 <span class="small muted">blank only</span></div><dl><dt>What</dt><dd>Keel handle module plus Flats or Channel blanks</dd><dt>Handle</dt><dd>+$30 over a fixed rod. Sold once.</dd><dt>Gate</dt><dd>Fatigue and break tests in §03</dd><dt>Owns</dt><dd>Design patent, plus a utility patent only if novel</dd></dl><p class="small muted">Answers the question of what to buy the angler who already owns your rod.</p></div>';
+      return;}
+    var m=r[2];
+    h+='<div class="card prod"><span class="tag '+(r[1]==='Launch'?'src':'gate2')+'">'+r[1]+'</span><h3>'+m.name+'</h3><div class="price num">$'+m.msrp+'</div><dl><dt>Spec</dt><dd>'+(m.len===86?'7′2″':'7′0″')+' · '+m.power+' · '+m.action+' · '+m.pcs+'-pc</dd><dt>Lure</dt><dd>'+m.lure+'</dd><dt>Line</dt><dd>'+m.line+'</dd><dt>Reel</dt><dd>'+(r[0]==='channel'?'3000–4000':'2500')+' spinning</dd><dt>For</dt><dd>'+m.use+'</dd></dl></div>';
+  });
+  $('#prodCards').innerHTML=h;
+})();
+
+/* ---------- taper table + elevation drawing ---------- */
+(function(){
+  var rows=[[0,1.7,'tip top 7 ring'],[6,2.3,'fast taper begins'],[12,2.9,''],[24,4.3,'choke guide zone'],[36,5.8,''],[48,7.3,'stripper guide zone'],[60,8.8,''],[72,10.3,'reel seat region'],[84,11.2,'butt']];
+  $('#taperBody').innerHTML=rows.map(function(r){return '<tr><td class="num">'+r[0]+' in</td><td class="r">'+r[1].toFixed(1)+' mm</td><td class="muted">'+(r[2]||'·')+'</td></tr>'}).join('')+'<tr><td colspan="3" class="tiny muted">Starting targets. Final ODs follow the chosen mandrel and the measured deflection target.</td></tr>';
+  var svg=$('#dwElev'), L=84, X=function(s){return 40+s*(920/L)}, cy=110;
+  var R=function(s){var od=1.7+(11.2-1.7)*Math.pow((L-s)/L,0.85);return od*0.55};
+  var top='',bot='';
+  for(var s=0;s<=L;s+=1){top+=(s?' L':'M')+X(s).toFixed(1)+' '+(cy-R(s)).toFixed(1);}
+  for(s=L;s>=0;s-=1){bot+=' L'+X(s).toFixed(1)+' '+(cy+R(s)).toFixed(1);}
+  var h='<path d="'+top+bot+' Z" fill="color-mix(in oklab,var(--tannin) 30%,var(--bg2))" stroke="var(--fg)" stroke-width="1"/>';
+  function box(a,b,r,fill,label){h+='<rect x="'+X(a)+'" y="'+(cy-r)+'" width="'+(X(b)-X(a))+'" height="'+(2*r)+'" rx="5" fill="'+fill+'" stroke="var(--fg)" stroke-width="1"/>'; if(label) h+='<text x="'+((X(a)+X(b))/2)+'" y="'+(cy-r-8)+'" text-anchor="middle" class="dw-txt">'+label+'</text>';}
+  box(0,0.6,13,'var(--bg3)');
+  box(0.6,4.1,14,'color-mix(in oklab,#c9a175 60%,var(--bg2))','rear grip');
+  box(7.6,9.5,13,'color-mix(in oklab,#c9a175 60%,var(--bg2))');
+  box(9.5,14.5,11,'var(--bg3)','seat');
+  box(14.5,19.5,12,'color-mix(in oklab,#c9a175 60%,var(--bg2))','fore grip');
+  var g=MODELS.flats.guides.concat([[84,7]]);
+  g.forEach(function(q,i){var s=q[0],sz=q[1],x=X(s),r=sz*0.9,y=cy+R(s)+6+r+sz*0.5;
+    if(i<g.length-1){h+='<line x1="'+(x-6)+'" y1="'+(cy+R(s))+'" x2="'+x+'" y2="'+(y-r)+'" stroke="var(--fg)"/><circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="none" stroke="var(--accent)" stroke-width="2"/>';}
+    else {h+='<circle cx="'+x+'" cy="'+cy+'" r="5" fill="none" stroke="var(--accent)" stroke-width="2"/>';}
+    h+='<text x="'+x+'" y="'+(cy+70)+'" text-anchor="middle" class="dw-txt-acc">#'+sz+'</text>';
+    h+='<line x1="'+x+'" y1="'+(cy-24)+'" x2="'+x+'" y2="'+(cy-50)+'" class="dw-thin"/><text x="'+x+'" y="'+(cy-56)+'" text-anchor="middle" class="dw-txt">'+s+'</text>';
+  });
+  h+='<text x="'+X(42)+'" y="34" text-anchor="middle" class="dw-txt">guide stations, in from butt</text>';
+  var dy=240; h+='<line x1="'+X(0)+'" y1="'+dy+'" x2="'+X(L)+'" y2="'+dy+'" class="dw-dim"/><line x1="'+X(0)+'" y1="'+(dy-8)+'" x2="'+X(0)+'" y2="'+(dy+8)+'" class="dw-dim"/><line x1="'+X(L)+'" y1="'+(dy-8)+'" x2="'+X(L)+'" y2="'+(dy+8)+'" class="dw-dim"/><text x="'+X(42)+'" y="'+(dy+18)+'" text-anchor="middle" class="dw-txt-acc">84.0 in overall · 1 pc · butt OD 11.2 mm → tip OD 1.7 mm (targets)</text>';
+  var dy2=272; h+='<line x1="'+X(0)+'" y1="'+dy2+'" x2="'+X(19.5)+'" y2="'+dy2+'" class="dw-dim"/><text x="'+X(9.75)+'" y="'+(dy2+16)+'" text-anchor="middle" class="dw-txt">handle 19.5 in</text>';
+  h+='<text x="'+X(12)+'" y="'+(cy+40)+'" text-anchor="middle" class="dw-txt">reel foot @ 12.0</text>';
+  svg.innerHTML=h;
+})();
+
+/* ---------- financial model UI ---------- */
+var fields=['msrp','dtcReal','whPct','duty','freight','ship','cac','rep','acc'];
+function writeInputs(){
+  fields.forEach(function(f){$('#i-'+f).value=FM[f]});
+  for(var i=0;i<3;i++){$('#u'+i).value=FM.units[i];$('#d'+i).value=FM.dtc[i];$('#f'+i).value=FM.fob[i];$('#x'+i).value=FM.fixed[i];}
+  syncDutyChips();
+}
+function readInputs(){
+  fields.forEach(function(f){var v=parseFloat($('#i-'+f).value); if(!isNaN(v)) FM[f]=v;});
+  for(var i=0;i<3;i++){[['u','units'],['d','dtc'],['f','fob'],['x','fixed']].forEach(function(p){var v=parseFloat($('#'+p[0]+i).value); if(!isNaN(v)) FM[p[1]][i]=v;});}
+  syncDutyChips();
+}
+(function(){
+  var h=''; DUTY.forEach(function(d){h+='<input type="radio" name="duty" id="duty-'+d.k+'" value="'+d.v+'"><label for="duty-'+d.k+'">'+d.name+'<small>'+d.sub+'</small></label>'});
+  $('#dutyChips').innerHTML=h;
+  $('#dutyChips').addEventListener('change',function(e){FM.duty=parseFloat(e.target.value); $('#i-duty').value=FM.duty; refreshAll();});
+})();
+function syncDutyChips(){DUTY.forEach(function(d){$('#duty-'+d.k).checked=(Math.abs(d.v-FM.duty)<0.01)});}
+$('#fm').addEventListener('input',function(e){if(e.target.name==='duty')return; readInputs(); refreshAll();});
+$('#fmReset').addEventListener('click',function(){FM=JSON.parse(JSON.stringify(BASE)); writeInputs(); refreshAll();});
+
+function renderModel(){
+  var y=[0,1,2].map(function(i){return year(i,FM)});
+  var u=y[0].u;
+  var rows=[['Price realized',u.d.rev,u.w.rev],['Landed cost',-u.landed,-u.landed],['Federal excise (FET)',-u.d.fet,-u.w.fet],['Shipping / dealer freight',-u.d.ship,-u.w.ship],['Card fees / rep commission',-u.d.fee,-u.w.fee],['Returns + warranty',-u.d.warr,-u.w.warr],['Customer acquisition',-u.d.cac,0]];
+  var h=rows.map(function(r){return '<tr><td>'+r[0]+'</td><td class="r">'+fmt(r[1],2)+'</td><td class="r">'+(r[2]===0&&r[0]==='Customer acquisition'?'—':fmt(r[2],2))+'</td></tr>'}).join('');
+  h+='<tr class="total"><td>Contribution</td><td class="r '+(u.d.con<0?'neg':'')+'">'+fmt(u.d.con,2)+'</td><td class="r '+(u.w.con<0?'neg':'')+'">'+fmt(u.w.con,2)+'</td></tr>';
+  h+='<tr><td>Contribution margin</td><td class="r">'+pct(u.d.con/u.d.rev)+'</td><td class="r">'+pct(u.w.con/u.w.rev)+'</td></tr>';
+  $('#ueBody').innerHTML=h;
+  var pl=[['Rods',function(r){return r.n.toLocaleString()}],['DTC share',function(r){return pct(r.s)}],['Revenue',function(r){return fmtK(r.rev)}],['Gross profit',function(r){return fmtK(r.gp)}],['Gross margin',function(r){return pct(r.gp/r.rev)}],['Contribution',function(r){return fmtK(r.con)}],['Fixed costs',function(r){return fmtK(-r.fixed)}],['Operating result',function(r){return '<span class="'+(r.op<0?'neg':'pos')+'">'+fmtK(r.op)+'</span>'}],['Inventory cash',function(r){return fmtK(r.inv)}]];
+  $('#plBody').innerHTML=pl.map(function(p,i){return '<tr'+(p[0]==='Operating result'?' class="total"':'')+'><td>'+p[0]+'</td>'+y.map(function(r){return '<td class="r">'+p[1](r)+'</td>'}).join('')+'</tr>'}).join('');
+  $('#kCon').textContent=fmt(y[0].perRod,2);
+  $('#kConS').textContent='per rod, Year 1 · '+pct(y[0].con/y[0].rev)+' of revenue';
+  $('#kBe').textContent=y[0].perRod>0?Math.ceil(y[0].fixed/y[0].perRod).toLocaleString():'never';
+  $('#kY3').textContent=fmtK(y[2].op); $('#kY3').className='v '+(y[2].op<0?'neg':'');
+  $('#kY3S').textContent=pct(y[2].op/y[2].rev)+' of '+fmtK(y[2].rev)+' revenue';
+  $('#kInv').textContent=fmtK(y[2].inv);
+  drawTornado(y[2].op); drawHeat();
+}
+document.querySelectorAll('.readout-k').forEach(function(e){e.className='k'; e.style.cssText='font-family:var(--f-mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)'});
+document.querySelectorAll('.kpis .v').forEach(function(e){e.style.cssText='font-family:var(--f-display);font-stretch:110%;font-size:1.45rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.2;margin-top:2px'});
+document.querySelectorAll('.kpis .s').forEach(function(e){e.style.cssText='font-size:.76rem;color:var(--muted)'});
+
+var DRIVERS=[
+  ['Blended MSRP',function(p){return p.msrp},function(p,v){p.msrp=v}],
+  ['FOB cost, Y3',function(p){return p.fob[2]},function(p,v){p.fob[2]=v}],
+  ['Duty rate',function(p){return p.duty},function(p,v){p.duty=v}],
+  ['CAC',function(p){return p.cac},function(p,v){p.cac=v}],
+  ['Rods sold, Y3',function(p){return p.units[2]},function(p,v){p.units[2]=v}],
+  ['DTC share, Y3',function(p){return p.dtc[2]},function(p,v){p.dtc[2]=Math.min(100,v)}],
+  ['Fixed costs, Y3',function(p){return p.fixed[2]},function(p,v){p.fixed[2]=v}],
+  ['DTC shipping',function(p){return p.ship},function(p,v){p.ship=v}],
+  ['Wholesale % of MSRP',function(p){return p.whPct},function(p,v){p.whPct=v}]
+];
+function drawTornado(base){
+  var res=DRIVERS.map(function(d){
+    var lo=JSON.parse(JSON.stringify(FM)), hi=JSON.parse(JSON.stringify(FM));
+    d[2](lo,d[1](FM)*0.8); d[2](hi,d[1](FM)*1.2);
+    return {name:d[0],lo:year(2,lo).op,hi:year(2,hi).op};
+  }).sort(function(a,b){return Math.abs(b.hi-b.lo)-Math.abs(a.hi-a.lo)});
+  var W=640,left=196,right=W-62,rowH=32,top=24;
+  var all=[base]; res.forEach(function(r){all.push(r.lo,r.hi)});
+  var mn=Math.min.apply(null,all), mx=Math.max.apply(null,all), pad=(mx-mn)*0.14||1; mn-=pad; mx+=pad;
+  var X=function(v){return left+(v-mn)/(mx-mn)*(right-left)};
+  var h='';
+  // gridlines
+  var step=Math.pow(10,Math.floor(Math.log10((mx-mn)/4))); var cand=[1,2,2.5,5,10].map(function(m){return m*step}).find(function(s){return (mx-mn)/s<=6})||step*10;
+  for(var t=Math.ceil(mn/cand)*cand;t<=mx;t+=cand){h+='<line x1="'+X(t).toFixed(1)+'" y1="'+top+'" x2="'+X(t).toFixed(1)+'" y2="'+(top+rowH*res.length)+'" stroke="var(--line)"/><text x="'+X(t).toFixed(1)+'" y="'+(top+rowH*res.length+16)+'" text-anchor="middle" font-size="10" fill="var(--faint)">'+fmtK(t)+'</text>';}
+  if(mn<0&&mx>0) h+='<line x1="'+X(0).toFixed(1)+'" y1="'+top+'" x2="'+X(0).toFixed(1)+'" y2="'+(top+rowH*res.length)+'" stroke="var(--muted)"/>';
+  res.forEach(function(r,i){
+    var y=top+i*rowH+6, bh=rowH-12;
+    [['lo',r.lo,'−20%'],['hi',r.hi,'+20%']].forEach(function(e){
+      var v=e[1]; var a=Math.min(X(v),X(base)), b=Math.max(X(v),X(base)); var col=v>=base?'var(--c1)':'var(--c3)';
+      h+='<rect x="'+a.toFixed(1)+'" y="'+y+'" width="'+Math.max(1,b-a-1).toFixed(1)+'" height="'+bh+'" rx="3" fill="'+col+'"><title>'+r.name+' '+e[2]+': '+fmtK(v)+' Y3 operating</title></rect>';
+      var lx=v>=base?b+4:a-4; h+='<text x="'+lx.toFixed(1)+'" y="'+(y+bh/2+4)+'" text-anchor="'+(v>=base?'start':'end')+'" font-size="10" fill="var(--muted)">'+fmtK(v)+'</text>';
+    });
+    h+='<text x="4" y="'+(y+bh/2+4)+'" text-anchor="start" font-size="11" fill="var(--fg)">'+r.name+'</text>';
+  });
+  h+='<line x1="'+X(base).toFixed(1)+'" y1="'+(top-6)+'" x2="'+X(base).toFixed(1)+'" y2="'+(top+rowH*res.length)+'" stroke="var(--fg)" stroke-width="1.5"/><text x="'+X(base).toFixed(1)+'" y="'+(top-10)+'" text-anchor="middle" font-size="10" fill="var(--fg)">current '+fmtK(base)+'</text>';
+  var svg=$('#tornado'); svg.setAttribute('viewBox','0 0 '+W+' '+(top+rowH*res.length+26)); svg.innerHTML=h;
+}
+function drawHeat(){
+  var prices=[169,184,199,214,229,244,259], fobs=[33,37,41,45,49,53,57];
+  var curP=prices.reduce(function(a,b){return Math.abs(b-FM.msrp)<Math.abs(a-FM.msrp)?b:a}), curF=fobs.reduce(function(a,b){return Math.abs(b-FM.fob[2])<Math.abs(a-FM.fob[2])?b:a});
+  var s=FM.dtc[2]/100;
+  var h='<thead><tr><th>FOB ↓ · MSRP →</th>'+prices.map(function(p){return '<th>$'+p+'</th>'}).join('')+'</tr></thead><tbody>';
+  fobs.forEach(function(f){
+    h+='<tr><th>$'+f+'</th>';
+    prices.forEach(function(p){
+      var u=unit(f,FM,p); var rev=s*u.d.rev+(1-s)*u.w.rev, con=s*u.d.con+(1-s)*u.w.con, m=con/rev;
+      var bg = m>=0 ? 'color-mix(in oklab,var(--c1) '+Math.round(Math.min(1,m/0.4)*85+5)+'%,var(--bg2))' : 'color-mix(in oklab,var(--c3) '+Math.round(Math.min(1,-m/0.2)*70+15)+'%,var(--bg2))';
+      h+='<td class="'+(p===curP&&f===curF?'cur':'')+'" style="background:'+bg+'" title="MSRP $'+p+', FOB $'+f+': '+fmt(con,2)+' per rod, '+pct(m)+'">'+pct(m)+'</td>';
+    });
+    h+='</tr>';
+  });
+  $('#heat').innerHTML=h+'</tbody>';
+}
+
+/* ---------- 3D bench ---------- */
+var three=null;
+function initThree(){
+  if(!window.THREE){ $('#loading').textContent='3D library did not load. Everything else on this page still works.'; return; }
+  var T=THREE, stage=$('#stage');
+  var renderer=new T.WebGLRenderer({antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
+  renderer.outputEncoding=T.sRGBEncoding; renderer.toneMapping=T.ACESFilmicToneMapping; renderer.toneMappingExposure=1.05;
+  stage.insertBefore(renderer.domElement,stage.firstChild);
+  $('#loading').remove();
+  var scene=new T.Scene();
+  var camera=new T.PerspectiveCamera(30,1,0.1,1000);
+  var controls=T.OrbitControls?new T.OrbitControls(camera,renderer.domElement):null;
+  if(controls){controls.enableDamping=true;controls.dampingFactor=0.08;controls.minDistance=3;controls.maxDistance=260;controls.rotateSpeed=0.7;}
+
+  // environment for reflections
+  (function(){
+    var env=new T.Scene();
+    var g=new T.SphereGeometry(50,32,16); var cols=[]; var pos=g.attributes.position; var c=new T.Color();
+    for(var i=0;i<pos.count;i++){var y=pos.getY(i)/50; c.setRGB(0.18+0.5*Math.max(0,y),0.2+0.5*Math.max(0,y),0.22+0.5*Math.max(0,y)); cols.push(c.r,c.g,c.b);}
+    g.setAttribute('color',new T.Float32BufferAttribute(cols,3));
+    env.add(new T.Mesh(g,new T.MeshBasicMaterial({vertexColors:true,side:T.BackSide})));
+    function panel(x,y,z,w,h,k){var m=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshBasicMaterial({color:new T.Color(k,k,k),side:T.DoubleSide})); m.position.set(x,y,z); m.lookAt(0,0,0); env.add(m);}
+    panel(0,30,20,40,10,3.5); panel(-35,10,-10,10,30,2); panel(35,5,10,12,25,2.4); panel(0,-10,-40,60,6,1.2);
+    var pm=new T.PMREMGenerator(renderer); scene.environment=pm.fromScene(env,0.04).texture;
+  })();
+  scene.add(new T.HemisphereLight(0xdfe9ec,0x1a1410,0.55));
+  var key=new T.DirectionalLight(0xffffff,1.6); key.position.set(30,60,50); scene.add(key);
+  var rim=new T.DirectionalLight(0x9fd8cc,0.8); rim.position.set(-40,10,-40); scene.add(rim);
+
+  var pivot=new T.Group(); scene.add(pivot); var root=new T.Group(); pivot.add(root); var pivotX=42;
+
+  /* textures */
+  function canvasTex(w,h,draw,rep){var cv=document.createElement('canvas');cv.width=w;cv.height=h;draw(cv.getContext('2d'),w,h);var t=new T.CanvasTexture(cv);t.encoding=T.sRGBEncoding;t.wrapS=t.wrapT=T.RepeatWrapping;t.anisotropy=4;return t;}
+  function rnd(a,b){return a+Math.random()*(b-a)}
+  var corkTex=canvasTex(512,512,function(x,w,h){x.fillStyle='#c39a6b';x.fillRect(0,0,w,h);
+    for(var i=0;i<5000;i++){x.fillStyle='rgba('+(rnd(110,190)|0)+','+(rnd(75,130)|0)+','+(rnd(40,80)|0)+','+rnd(0.15,0.6)+')';x.beginPath();x.ellipse(rnd(0,w),rnd(0,h),rnd(0.5,3.5),rnd(0.5,2),rnd(0,3),0,6.3);x.fill();}
+    for(i=0;i<260;i++){x.fillStyle='rgba(70,45,25,'+rnd(0.3,0.7)+')';x.beginPath();x.ellipse(rnd(0,w),rnd(0,h),rnd(1,5),rnd(1,3),rnd(0,3),0,6.3);x.fill();}
+    for(i=0;i<8;i++){x.fillStyle='rgba(90,60,35,0.35)';x.fillRect(0,i*64,w,1.5);}});
+  var evaTex=canvasTex(256,256,function(x,w,h){x.fillStyle='#24282a';x.fillRect(0,0,w,h);for(var i=0;i<6000;i++){var v=rnd(20,60)|0;x.fillStyle='rgba('+v+','+(v+4)+','+(v+6)+',0.5)';x.fillRect(rnd(0,w),rnd(0,h),1.2,1.2);}});
+  var knurlTex=canvasTex(64,64,function(x,w,h){x.fillStyle='#777';x.fillRect(0,0,w,h);x.strokeStyle='#222';x.lineWidth=2;for(var i=-64;i<128;i+=8){x.beginPath();x.moveTo(i,0);x.lineTo(i+64,64);x.stroke();x.beginPath();x.moveTo(i+64,0);x.lineTo(i,64);x.stroke();}});
+
+  /* materials */
+  var M={
+    blank:new T.MeshPhysicalMaterial({color:0x4f2d14,roughness:0.32,metalness:0.0,clearcoat:1,clearcoatRoughness:0.12,side:T.DoubleSide}),
+    trim:new T.MeshStandardMaterial({color:0x6fc2ad,roughness:0.45,metalness:0.1}),
+    thread:new T.MeshPhysicalMaterial({color:0x111111,roughness:0.35,clearcoat:1,clearcoatRoughness:0.1})
+  };
+  function mat(o){return new T.MeshStandardMaterial(o)}
+  function lab(mesh,text){mesh.userData.label=text;return mesh}
+
+  /* blank geometry */
+  var N=170,RS=18, model=MODELS[cfg.model];
+  var CX=new Float32Array(N+1),CY=new Float32Array(N+1),CP=new Float32Array(N+1);
+  var VIS=1.25;
+  function radius(s){var L=model.len;var od=model.tip+(model.butt-model.tip)*Math.pow(Math.max(0,(L-s))/L,0.85);return od/2/25.4*VIS;}
+  var loadNow=0, S0=19.5;
+  function computeCurve(){
+    var L=model.len,x=0,y=0,prev=0;
+    for(var i=0;i<=N;i++){var s=i*L/N; var u=s<=S0?0:(s-S0)/(L-S0); var phi=-model.phi*loadNow*Math.pow(u,model.p);
+      if(i>0){var pm=(phi+prev)/2,ds=L/N;x+=Math.cos(pm)*ds;y+=Math.sin(pm)*ds;}
+      CX[i]=x;CY[i]=y;CP[i]=phi;prev=phi;}
+  }
+  function at(s){var L=model.len; var f=Math.max(0,Math.min(N,s/L*N)); var i=Math.min(N-1,Math.floor(f)), t=f-i;
+    if(s>L){var e=s-L;return {x:CX[N]+Math.cos(CP[N])*e,y:CY[N]+Math.sin(CP[N])*e,phi:CP[N]};}
+    return {x:CX[i]+(CX[i+1]-CX[i])*t,y:CY[i]+(CY[i+1]-CY[i])*t,phi:CP[i]+(CP[i+1]-CP[i])*t};}
+  var blankGeo=new T.BufferGeometry(); var bpos=new Float32Array((N+1)*RS*3); blankGeo.setAttribute('position',new T.BufferAttribute(bpos,3));
+  (function(){var idx=[];for(var i=0;i<N;i++)for(var j=0;j<RS;j++){var a=i*RS+j,b=i*RS+(j+1)%RS,c=(i+1)*RS+j,d=(i+1)*RS+(j+1)%RS;idx.push(a,c,b,b,c,d);}blankGeo.setIndex(idx);})();
+  var blankStart=0;
+  function updateBlank(){
+    var L=model.len;
+    for(var i=0;i<=N;i++){var s=blankStart+(L-blankStart)*i/N; var p=at(s), r=radius(s), nx=-Math.sin(p.phi), ny=Math.cos(p.phi);
+      for(var j=0;j<RS;j++){var a=j/RS*Math.PI*2, ca=Math.cos(a), sa=Math.sin(a), k=(i*RS+j)*3; bpos[k]=p.x+r*ca*nx; bpos[k+1]=p.y+r*ca*ny; bpos[k+2]=r*sa;}}
+    blankGeo.attributes.position.needsUpdate=true; blankGeo.computeVertexNormals(); blankGeo.computeBoundingSphere();
+  }
+  var blankMesh=lab(new T.Mesh(blankGeo,M.blank),'Blank');
+  root.add(blankMesh);
+
+  /* placement registry */
+  var placed=[]; // {obj,s,ex:[x,y,z],handle}
+  var slots={}, dying=[];
+  var explode=0,explodeT=0, detach=0, detachT=0;
+  function place(obj,s,ex,handle){obj.userData.s=s;obj.userData.ex=ex||[0,0,0];obj.userData.handle=!!handle;return obj;}
+
+  function cyl(r1,r2,len,m,seg,open,ts,tl){var g=new T.CylinderGeometry(r2,r1,len,seg||32,1,!!open,ts||0,tl||Math.PI*2);g.rotateZ(-Math.PI/2);g.translate(len/2,0,0);return new T.Mesh(g,m);}
+  function lathe(profile,m){var pts=profile.map(function(p){return new T.Vector2(p[1],p[0])});var g=new T.LatheGeometry(pts,40);g.rotateZ(-Math.PI/2);return new T.Mesh(g,m);}
+
+  function buildHandle(){
+    var g=new T.Group(); var h=cfg.handle;
+    var cork=function(len){var t=corkTex.clone();t.needsUpdate=true;t.repeat.set(2,len/2);return mat({map:t,roughness:0.92,metalness:0});};
+    var eva=function(len){var t=evaTex.clone();t.needsUpdate=true;t.repeat.set(2,len/2);return mat({map:t,roughness:0.95});};
+    var gripMat=h==='eva'?eva:cork, gripName=h==='eva'?'EVA grip':'Cork grip';
+    var cap=lab(lathe([[0,0.0],[0.03,0.36],[0.15,0.5],[0.4,0.53],[0.6,0.52]],mat({color:0x16181a,roughness:0.75})),'Butt cap, rubber');
+    g.add(place(cap,0,[-6,0,0],true));
+    var tr=lab(cyl(0.53,0.53,0.07,M.trim),'Trim ring'); g.add(place(tr,0.6,[-5,0,0],true));
+    if(h==='fullcork'){
+      var rg=lab(lathe([[0,0.5],[3,0.56],[7,0.5],[8.9,0.46]],cork(8.9)),'Full cork rear grip'); g.add(place(rg,0.6,[-3.5,0,0],true));
+    } else {
+      var lo=lab(lathe([[0,0.51],[0.2,0.53],[2,0.56],[3.3,0.52],[3.5,0.49]],gripMat(3.5)),gripName+', lower'); g.add(place(lo,0.6,[-4,0,0],true));
+      var t1=lab(cyl(0.32,0.32,0.08,M.trim),'Trim ring'); g.add(place(t1,4.1,[-3,0,0],true));
+      var t2=lab(cyl(0.3,0.3,0.08,M.trim),'Trim ring'); g.add(place(t2,7.52,[-1.6,0,0],true));
+      var up=lab(lathe([[0,0.4],[0.3,0.47],[1.9,0.46]],gripMat(1.9)),gripName+', upper'); g.add(place(up,7.6,[-1.2,0,0],true));
+    }
+    var foreStart=14.5, foreLen=5;
+    if(h==='keel'){
+      var core=lab(cyl(radius(5),radius(8),7.2,M.blank),'Handle module core tube (carbon)'); g.add(place(core,0.5,[-2,0,0],true));
+      var al=mat({map:knurlTex,color:0xb08458,metalness:1,roughness:0.32});
+      var col=lab(cyl(0.5,0.5,0.9,al),'Keel Lock collar, hard-anodized aluminum'); g.add(place(col,14.5,[1.4,3.6,0],true));
+      var ring=lab(cyl(0.505,0.505,0.05,mat({color:0x111111,roughness:0.5})),'Collar witness line'); g.add(place(ring,14.62,[1.4,3.6,0],true));
+      foreStart=15.4; foreLen=4.1;
+    }
+    var fg=lab(lathe([[0,0.47],[0.15,0.48],[foreLen*0.6,0.42],[foreLen-0.15,0.35],[foreLen,0.33]],gripMat(foreLen)),gripName+', fore'); g.add(place(fg,foreStart,[2.6,1.4,0],false));
+    var wc=lab(cyl(0.34,0.3,0.22,mat({color:0x9aa1a6,metalness:1,roughness:0.25})),'Winding check'); g.add(place(wc,19.5,[3.6,1.4,0],false));
+    // hook keeper
+    var hk=new T.Group(); var loop=new T.Mesh(new T.TorusGeometry(0.14,0.018,8,24,Math.PI),mat({color:0xb9c0c4,metalness:1,roughness:0.3})); loop.position.set(0.22,radius(20.4)+0.02,0); hk.add(loop);
+    var hkw=cyl(radius(20.4)*1.12,radius(20.4)*1.12,0.3,M.thread); hk.add(hkw);
+    lab(loop,'Hook keeper'); lab(hkw,'Thread wrap');
+    g.add(place(hk,20.2,[3.4,2.6,0],false));
+    // decal band
+    var m=MODELS[cfg.model];
+    var dt=canvasTex(256,1024,function(x,w,h2){x.clearRect(0,0,w,h2);x.save();x.translate(w/2,h2);x.rotate(-Math.PI/2);x.fillStyle='#e9e5da';x.font='600 30px Archivo, Helvetica, sans-serif';x.textBaseline='middle';x.fillText('ESTUARY',30,0);x.font='22px "IBM Plex Mono", monospace';x.fillText(m.name.toUpperCase()+'  ·  '+(m.len===86?"7'2\"":"7'0\"")+'  '+m.power.charAt(0)+(m.power.indexOf('heavy')>0?'H':'')+'  '+(m.action==='Fast'?'F':'MF')+'  ·  №0001',230,0);x.restore();});
+    dt.wrapS=dt.wrapT=T.ClampToEdgeWrapping;
+    var dg=new T.CylinderGeometry(radius(25)*1.03,radius(25)*1.03,9.6,32,1,true,-Math.PI,Math.PI*2); dg.rotateZ(-Math.PI/2); dg.translate(4.8,0,0);
+    var dm=new T.MeshStandardMaterial({map:dt,transparent:true,roughness:0.4,depthWrite:false}); dm.userData.keepT=true; var decal=lab(new T.Mesh(dg,dm),'Decal: model, rating, serial');
+    g.add(place(decal,20.8,[0,2.2,0],false));
+    return g;
+  }
+  function buildSeat(){
+    var g=new T.Group(); var black=mat({color:0x17191b,roughness:0.38,metalness:0.15});
+    var trim=M.trim;
+    var down=Math.PI/2; // theta center that faces -y
+    if(cfg.seat==='dps'){
+      g.add(place(lab(cyl(0.4,0.4,5.0,black),'Reel seat body (DPS-type)'),9.5,[0,2.6,0],true));
+      g.add(place(lab(cyl(0.48,0.47,1.1,black,32,true,down+0.9,Math.PI*2-1.8),'Fixed hood'),13.4,[0.6,2.6,0],true));
+      g.add(place(lab(cyl(0.5,0.5,1.1,mat({map:knurlTex,color:0x2a2d30,roughness:0.5,metalness:0.3})),'Locking nut'),9.5,[-0.6,2.6,0],true));
+      g.add(place(lab(cyl(0.47,0.48,0.9,black,32,true,down+0.9,Math.PI*2-1.8),'Moving hood'),10.6,[-0.2,2.6,0],true));
+    } else {
+      var shell=mat({color:0x17191b,roughness:0.38,metalness:0.15,side:T.DoubleSide});
+      g.add(place(lab(cyl(0.4,0.38,4.6,shell,32,true,-Math.PI/2+0.55,Math.PI*2-1.1),'Skeleton seat (VSS-type): blank exposed on top'),9.9,[0,2.6,0],true));
+      g.add(place(lab(cyl(0.46,0.45,1.0,black,32,true,down+0.9,Math.PI*2-1.8),'Fixed hood'),13.5,[0.6,2.6,0],true));
+      g.add(place(lab(cyl(0.46,0.46,0.8,mat({map:knurlTex,color:0x2a2d30,roughness:0.5,metalness:0.3})),'Locking nut'),9.5,[-0.6,2.6,0],true));
+    }
+    g.add(place(lab(cyl(0.49,0.49,0.06,trim),'Trim ring'),14.44,[0.8,2.6,0],true));
+    g.add(place(lab(cyl(0.51,0.51,0.06,trim),'Trim ring'),9.44,[-0.8,2.6,0],true));
+    return g;
+  }
+  function buildGuides(){
+    var g=new T.Group(); var m=MODELS[cfg.model]; var ti=cfg.guides==='sic';
+    var frameM=mat({color:ti?0x6c7176:0xd5dadd,metalness:1,roughness:ti?0.42:0.18});
+    var insM=new T.MeshPhysicalMaterial({color:ti?0x1c1d1f:0x2e3033,metalness:0.2,roughness:0.15,clearcoat:1});
+    m.guides.concat([[m.len,'tip']]).forEach(function(q){
+      var s=q[0], sz=q[1], gg=new T.Group(), rb=radius(s);
+      if(sz==='tip'){
+        var R=7/2/25.4;
+        gg.add(lab(cyl(rb*1.35,rb*1.35,0.38,frameM),'Tip top'));
+        gg.children[0].position.x=-0.36;
+        var tr=new T.Mesh(new T.TorusGeometry(R,R*0.16,10,32),frameM); tr.rotation.y=Math.PI/2; tr.position.set(0.04,-0.02,0); gg.add(lab(tr,'Tip top ring'));
+        var ti2=new T.Mesh(new T.TorusGeometry(R*0.82,R*0.12,10,32),insM); ti2.rotation.y=Math.PI/2; ti2.position.copy(tr.position); gg.add(lab(ti2,'Tip top insert'));
+        gg.userData.ring=new T.Vector3(0.04,-0.02,0);
+        g.add(place(gg,s,[3,0,0],false)); return;
+      }
+      var R2=sz/2/25.4, h=rb+R2*0.95+0.07, legDx=Math.max(0.12,R2*0.8), w=Math.max(0.025,R2*0.1);
+      var ring=new T.Mesh(new T.TorusGeometry(R2,R2*0.13,10,40),frameM); ring.rotation.y=Math.PI/2; ring.position.y=-h; gg.add(lab(ring,'Guide #'+sz+' frame ring'));
+      var ins=new T.Mesh(new T.TorusGeometry(R2*0.84,R2*0.11,10,40),insM); ins.rotation.y=Math.PI/2; ins.position.y=-h; gg.add(lab(ins,'Guide #'+sz+' insert: '+(ti?'SiC':'Alconite')));
+      function leg(x1,y1,x2,y2){var dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy);var b=new T.Mesh(new T.BoxGeometry(len,w,w*1.6),frameM);b.position.set((x1+x2)/2,(y1+y2)/2,0);b.rotation.z=Math.atan2(dy,dx);return lab(b,'Guide #'+sz+' K-frame ('+(ti?'titanium':'stainless')+')');}
+      gg.add(leg(0,-h+R2,-legDx,-rb));
+      if(sz>=12) gg.add(leg(-R2*0.5,-h+R2*0.6,-legDx*1.2,-rb));
+      var footLen=0.22+R2*0.7;
+      var foot=new T.Mesh(new T.BoxGeometry(footLen,0.02,w*2.2),frameM); foot.position.set(-legDx-footLen/2+0.04,-rb-0.005,0); gg.add(lab(foot,'Guide foot'));
+      var wl=footLen+0.18, wr=rb*1.14+0.006;
+      var wrap=cyl(wr,wr,wl,M.thread); wrap.position.x=-legDx-footLen-0.1+0.04; gg.add(lab(wrap,'Thread wrap'));
+      var tA=cyl(wr*1.03,wr*1.03,0.05,M.trim); tA.position.x=wrap.position.x-0.03; gg.add(lab(tA,'Trim band'));
+      var tB=cyl(wr*1.03,wr*1.03,0.05,M.trim); tB.position.x=wrap.position.x+wl-0.02; gg.add(lab(tB,'Trim band'));
+      gg.userData.ring=new T.Vector3(0,-h,0);
+      g.add(place(gg,s,[0,-2.4-sz*0.06,0],false));
+    });
+    if(m.ferrules){m.ferrules.forEach(function(s,i){var rb=radius(s); var f=new T.Group(); var sl=cyl(rb*1.22,rb*1.22,2.2,M.blank); sl.position.x=-1.1; f.add(lab(sl,'Spigot ferrule '+(i+1)));
+      var a=cyl(rb*1.26,rb*1.26,0.12,M.trim); a.position.x=-1.15; f.add(lab(a,'Ferrule trim')); var b=cyl(rb*1.26,rb*1.26,0.12,M.trim); b.position.x=1.0; f.add(lab(b,'Ferrule trim'));
+      var dot=new T.Mesh(new T.SphereGeometry(0.035,8,8),mat({color:0xe9e5da})); dot.position.set(-0.5,rb*1.24,0); f.add(lab(dot,'Alignment dot'));
+      g.add(place(f,s,[0,1.8,0],false));});}
+    return g;
+  }
+  function buildReel(){
+    var g=new T.Group(); var gm=mat({color:0x2f3438,metalness:0.7,roughness:0.35}), dk=mat({color:0x15181a,metalness:0.4,roughness:0.5}), sp=mat({color:0xa9b0b5,metalness:1,roughness:0.25});
+    var r=new T.Group();
+    var foot=new T.Mesh(new T.BoxGeometry(2.6,0.06,0.36),dk); foot.position.set(0,-0.43,0); r.add(lab(foot,'Reel foot'));
+    var stem=new T.Mesh(new T.BoxGeometry(0.34,1.9,0.22),gm); stem.position.set(0.15,-1.4,0); stem.rotation.z=0.12; r.add(lab(stem,'Reel stem'));
+    var body=new T.Mesh(new T.SphereGeometry(0.85,24,16),gm); body.scale.set(1.15,1.0,0.75); body.position.set(-0.15,-2.85,0); r.add(lab(body,'Reference 2500 reel (not included)'));
+    var rotor=cyl(0.72,0.8,1.0,dk); rotor.position.set(0.55,-2.85,0); r.add(lab(rotor,'Rotor'));
+    var spool=cyl(0.86,0.86,0.75,sp); spool.position.set(1.55,-2.85,0); r.add(lab(spool,'Spool'));
+    var lip=cyl(0.95,0.95,0.08,sp); lip.position.set(2.27,-2.85,0); r.add(lab(lip,'Spool lip'));
+    var bail=new T.Mesh(new T.TorusGeometry(0.98,0.03,8,32,Math.PI),sp); bail.rotation.y=Math.PI/2; bail.position.set(1.35,-2.85,0); r.add(lab(bail,'Bail'));
+    var arm=new T.Mesh(new T.BoxGeometry(0.12,0.12,1.3),gm); arm.position.set(-0.15,-2.85,-0.95); r.add(lab(arm,'Handle arm'));
+    var knob=new T.Mesh(new T.CylinderGeometry(0.16,0.16,0.55,16),dk); knob.position.set(-0.15,-2.4,-1.6); r.add(lab(knob,'Handle knob'));
+    g.add(place(r,12,[0,-5,0],true));
+    g.userData.spool=new T.Vector3(2.3,-2.05,0); g.userData.reel=r;
+    return g;
+  }
+  var lineGeo=new T.BufferGeometry(); var linePos=new Float32Array(40*3); lineGeo.setAttribute('position',new T.BufferAttribute(linePos,3));
+  var lineMat=new T.LineBasicMaterial({color:0xc9d86a,transparent:true,opacity:0.95}); var line=new T.Line(lineGeo,lineMat); root.add(line);
+  var lure=new T.Group(); (function(){var hd=new T.Mesh(new T.SphereGeometry(0.2,16,12),mat({color:0xb8bec2,metalness:0.8,roughness:0.3}));lure.add(lab(hd,'1/4 oz jig head'));
+    var bd=new T.Mesh(new T.CylinderGeometry(0.16,0.06,1.5,14),mat({color:0xc4a86a,roughness:0.6}));bd.rotation.z=Math.PI/2;bd.position.x=-0.9;lure.add(lab(bd,'Paddletail'));
+    var tl=new T.Mesh(new T.CylinderGeometry(0.2,0.2,0.04,16),mat({color:0xc4a86a,roughness:0.6}));tl.rotation.x=Math.PI/2;tl.position.x=-1.7;lure.add(lab(tl,'Paddle'));})();
+  root.add(lure);
+
+  function setOpacity(group,o){group.traverse(function(n){if(n.isMesh){var mm=Array.isArray(n.material)?n.material:[n.material];mm.forEach(function(m){if(m===M.blank||m===M.trim||m===M.thread){return;}m.transparent=o<1||!!m.userData.keepT;m.opacity=o;});}});}
+  var now=0;
+  function swap(slot,builder,rise){
+    var old=slots[slot]; if(old){dying.push({g:old,t0:now,rise:rise});}
+    var g=builder(); g.userData.born=now; g.userData.rise=rise; slots[slot]=g; root.add(g);
+    if(reduceMotion){g.userData.born=-10;}
+    collect();
+  }
+  function collect(){placed=[];Object.keys(slots).forEach(function(k){slots[k].children.forEach(function(c){placed.push(c)})});}
+
+  function rebuildAll(first){
+    model=MODELS[cfg.model]; blankStart=cfg.handle==='keel'?7.5:0;
+    swap('handle',buildHandle,first?0:3); swap('seat',buildSeat,first?0:3); swap('guides',buildGuides,first?0:-3);
+    if(!slots.reel) swap('reel',buildReel,0);
+  }
+  rebuildAll(true);
+  slots.reel.visible=true;
+
+  /* camera */
+  var VIEWS={full:{t:function(){return [model.len/2,-2.2,0]},W:function(){return model.len*1.04},H:16,d:[-0.06,0.24,1]},
+    handle:{t:function(){return [11.5,-1.6,0]},W:function(){return 26},H:9,d:[-0.45,0.32,1]},
+    guides:{t:function(){return [52,-1,0]},W:function(){return 38},H:9,d:[-0.55,0.3,1]},
+    tip:{t:function(){return [model.len-6,-0.4,0]},W:function(){return 14},H:4.5,d:[-0.5,0.28,1]},
+    explode:{t:function(){return [18,-0.5,0]},W:function(){return 50},H:16,d:[-0.25,0.3,1]}};
+  var curView='full', camAnim=null;
+  function viewPose(v){var V=VIEWS[v]; var aspect=Math.max(0.4,camera.aspect); var vf=camera.fov*Math.PI/180; var hf=2*Math.atan(Math.tan(vf/2)*aspect);
+    var dist=Math.max((V.W()/2)/Math.tan(hf/2),(V.H/2)/Math.tan(vf/2)); var d=new T.Vector3().fromArray(V.d).normalize(); var t=new T.Vector3().fromArray(V.t());
+    return {p:t.clone().add(d.multiplyScalar(dist)),t:t};}
+  function goView(v,instant){curView=v; var pose=viewPose(v);
+    document.querySelectorAll('[data-view]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.view===v?'true':'false')});
+    if(v!=='explode'&&explodeT){explodeT=0;toggle($('#bExplode'),false);}
+    if(instant||reduceMotion){camera.position.copy(pose.p); if(controls){controls.target.copy(pose.t);controls.update();} else camera.lookAt(pose.t); return;}
+    camAnim={t0:now,from:camera.position.clone(),fromT:controls?controls.target.clone():pose.t.clone(),to:pose.p,toT:pose.t};}
+  document.querySelectorAll('[data-view]').forEach(function(b){b.addEventListener('click',function(){goView(b.dataset.view)})});
+
+  function resize(){var w=stage.clientWidth,h=stage.clientHeight; renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix();}
+  resize(); goView('full',true);
+  window.addEventListener('resize',function(){resize(); goView(curView,true);});
+
+  /* buttons */
+  var sway=!reduceMotion, flexing=null;
+  function toggle(btn,on){btn.setAttribute('aria-pressed',on?'true':'false');}
+  $('#bSway').setAttribute('aria-pressed',sway?'true':'false');
+  $('#bSway').addEventListener('click',function(){sway=!sway;toggle(this,sway);});
+  $('#bReel').addEventListener('click',function(){slots.reel.visible=!slots.reel.visible;toggle(this,slots.reel.visible);});
+  $('#bExplode').addEventListener('click',function(){explodeT=explodeT?0:1;toggle(this,!!explodeT); goView(explodeT?'explode':'full');});
+  $('#bDetach').addEventListener('click',function(){detachT=detachT?0:1;toggle(this,!!detachT);this.textContent=detachT?'Lock handle':'Unlock handle';});
+  $('#bLoad').addEventListener('click',function(){if(flexing)return; flexing={t0:now}; toggle(this,true); if(curView==='handle'||curView==='tip') goView('full');});
+
+  /* hover labels */
+  var ray=new T.Raycaster(), mouse=new T.Vector2(), tipEl=$('#tip3d'), hoverPending=null;
+  renderer.domElement.addEventListener('pointermove',function(e){hoverPending=e;});
+  renderer.domElement.addEventListener('pointerleave',function(){hoverPending=null;tipEl.hidden=true;});
+  function doHover(){if(!hoverPending)return; var e=hoverPending; hoverPending=null; var r=renderer.domElement.getBoundingClientRect();
+    mouse.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1); ray.setFromCamera(mouse,camera);
+    var hits=ray.intersectObjects(pivot.children,true).filter(function(h){return h.object.visible&&h.object.userData.label&&(!h.object.parent||h.object.parent.visible)});
+    if(!hits.length){tipEl.hidden=true;return;}
+    var o=hits[0].object; tipEl.innerHTML='<b>'+o.userData.label+'</b>'; tipEl.hidden=false;
+    var x=e.clientX-r.left+14, y=e.clientY-r.top+14; tipEl.style.left=Math.min(x,r.width-200)+'px'; tipEl.style.top=Math.min(y,r.height-50)+'px';}
+
+  /* animate */
+  var clock=new T.Clock(), tmp=new T.Vector3();
+  function ease(k){return k<0.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2}
+  function frame(){
+    requestAnimationFrame(frame);
+    var dt=Math.min(0.05,clock.getDelta()); now+=dt;
+    // flex
+    if(flexing){var t=now-flexing.t0, L;
+      if(t<1.3) L=ease(t/1.3);
+      else if(t<3.6) L=1+0.07*Math.sin((t-1.3)*13)*Math.exp(-(t-1.3)*0.3);
+      else {var tt=t-3.6; L=Math.exp(-tt*2.2)*Math.cos(tt*11); if(tt>2.6){L=0;flexing=null;toggle($('#bLoad'),false);}}
+      loadNow=L;
+    }
+    explode+=(explodeT-explode)*Math.min(1,dt*(reduceMotion?60:5));
+    detach+=(detachT-detach)*Math.min(1,dt*(reduceMotion?60:4));
+    computeCurve(); updateBlank();
+    // place
+    var det=cfg.handle==='keel'?detach*-9:0;
+    for(var i=0;i<placed.length;i++){var o=placed[i], s=o.userData.s, ex=o.userData.ex, p=at(s);
+      o.position.set(p.x+ex[0]*explode+(o.userData.handle?det:0), p.y+ex[1]*explode, ex[2]*explode); o.rotation.z=p.phi;}
+    // swaps
+    Object.keys(slots).forEach(function(k){var g=slots[k], b=g.userData.born; if(b===undefined)return; var kk=Math.min(1,(now-b)/0.55); var e=ease(kk);
+      g.position.y=(1-e)*(g.userData.rise||0); if(kk<1||g.userData.fading){setOpacity(g,e); g.userData.fading=kk<1;} });
+    for(var d=dying.length-1;d>=0;d--){var dd=dying[d], k2=Math.min(1,(now-dd.t0)/0.4), e2=ease(k2); dd.g.position.y=e2*(dd.rise||0)*-1; setOpacity(dd.g,1-e2); if(k2>=1){root.remove(dd.g); dying.splice(d,1);}}
+    // sway
+    var target=(sway&&!flexing)?Math.sin(now*0.35)*0.16:0; pivot.rotation.y+=(target-pivot.rotation.y)*Math.min(1,dt*2);
+    var px=VIEWS[curView].t()[0]; pivotX+=(px-pivotX)*Math.min(1,dt*3); pivot.position.x=pivotX; root.position.x=-pivotX;
+    // line through guides
+    root.updateMatrixWorld(true);
+    var n=0; function push(v){linePos[n*3]=v.x;linePos[n*3+1]=v.y;linePos[n*3+2]=v.z;n++;}
+    var reelG=slots.reel; if(reelG.visible){var rr=reelG.userData.reel; tmp.copy(reelG.userData.spool); rr.localToWorld(tmp); root.worldToLocal(tmp); push(tmp);}
+    var gs=slots.guides.children.filter(function(c){return c.userData.ring}).sort(function(a,b){return a.userData.s-b.userData.s});
+    if(!reelG.visible&&gs.length){tmp.copy(gs[0].userData.ring);gs[0].localToWorld(tmp);root.worldToLocal(tmp);tmp.x-=14;push(tmp);}
+    gs.forEach(function(c){tmp.copy(c.userData.ring); c.localToWorld(tmp); root.worldToLocal(tmp); push(tmp);});
+    var tipP=tmp.clone();
+    var hang=new T.Vector3(tipP.x+0.3+loadNow*28, tipP.y-7-loadNow*40, 0);
+    push(hang);
+    lineGeo.setDrawRange(0,n); lineGeo.attributes.position.needsUpdate=true; lineGeo.computeBoundingSphere();
+    line.visible=explode<0.05;
+    lure.position.copy(hang); lure.position.y-=0.18; lure.rotation.z=Math.sin(now*1.3)*0.15; lure.visible=loadNow<0.02&&explode<0.05;
+    // camera
+    if(camAnim){var ck=Math.min(1,(now-camAnim.t0)/0.9), ce=ease(ck); camera.position.lerpVectors(camAnim.from,camAnim.to,ce); if(controls) controls.target.lerpVectors(camAnim.fromT,camAnim.toT,ce); if(ck>=1)camAnim=null;}
+    if(controls) controls.update(); else camera.lookAt(VIEWS[curView].t()[0],VIEWS[curView].t()[1],0);
+    doHover();
+    renderer.render(scene,camera);
+  }
+  frame();
+
+  three={
+    finish:function(){var f=FINISH[cfg.finish]; M.blank.color.setHex(f.color); M.blank.roughness=f.rough; M.blank.clearcoat=f.clear;},
+    trim:function(){M.trim.color.setHex(TRIM[cfg.trim].color);},
+    rebuild:function(key){
+      model=MODELS[cfg.model]; blankStart=cfg.handle==='keel'?7.5:0;
+      if(key==='model'){swap('handle',buildHandle,3);swap('guides',buildGuides,-3);goView(curView);}
+      else if(key==='handle'){swap('handle',buildHandle,3); if(cfg.handle!=='keel'){detachT=0;detach=0;}}
+      else if(key==='seat'){swap('seat',buildSeat,3);}
+      else if(key==='guides'){swap('guides',buildGuides,-3);}
+      $('#bDetach').hidden=cfg.handle!=='keel';
+      if(cfg.handle!=='keel'){toggle($('#bDetach'),false);$('#bDetach').textContent='Unlock handle';}
+    }
+  };
+  three.finish(); three.trim();
+}
+
+function onConfig(key){
+  if(three){ if(key==='finish')three.finish(); else if(key==='trim')three.trim(); else three.rebuild(key); }
+  updateReadout();
+}
+function refreshAll(){renderModel(); updateReadout();}
+
+writeInputs(); refreshAll();
+try{ initThree(); }catch(err){ var l=$('#loading'); if(l) l.textContent='3D view could not start on this device. Everything else on this page still works.'; console.error(err); }
+})();
+</script>
