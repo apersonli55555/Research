@@ -215,6 +215,21 @@ statistics (same 300 reference images; `bank/calib_chunks.ipynb`, GPU), on the s
 normalization helps chunks as much as the bank, the paper reports it as a general post-hoc fix of the score scale and
 not as a bank-specific gain. Reported whatever the direction; if the GPU run is unavailable, this is stated as a limitation.
 
+## Amendment K (27 Nov 2026, after run 3p, before any YOLO-World / COCO result): does the class-wise shift generalize?
+Run 3p showed the shift is a general post-hoc correction of the cross-class score scale for Grounding DINO. Test whether it
+generalizes to another architecture and a held-out dataset, with the map **frozen** as chosen in Amendment I (shift; no
+development stage, no tuning). Detector: YOLO-World v2-S (`yolov8s-worldv2.pt`), full vocabulary as head and guide text
+(fixed, so list-invariant for this protocol). Reference statistics per detector and dataset from its own 300 label-free
+reference images (per class, mean over images of the logit of the image-max score; μ_g their mean).
+K1 — LVIS v1: the same 300 reference and 1,000 test images as runs 3l/3n/3p; all 1,203 classes; official LVIS evaluator.
+K2 — COCO 2017 val: 80 classes; reference = first 300 and test = next 1,000 images of val2017 ordered by SHA-256 of the
+file name, excluding every image cached by an earlier run; official COCO evaluator (pycocotools, maxDets 100).
+Pipelines (both reported; primary first): (P) the pipeline of runs 3l/3n — per class top 50 with score ≥ 0.02, class-wise
+Gaussian Soft-NMS (σ 0.5), map, top 300 (LVIS) / 100 (COCO) per image; (S) YOLO-World's standard post-processing — per
+class top 50 with score ≥ 0.001, class-wise NMS IoU 0.7, map, same per-image caps. Maps none / shift / z.
+Primary comparison per dataset: shift − none on pipeline P, AP, paired image bootstrap (200). The others are reported.
+Reported whatever the direction; a null or negative result narrows the paper's claim to Grounding DINO. CPU.
+
 ## Amendment J (25 Nov 2026, before running it): measured request interference of the corrected method
 Invariance of bank + class-wise shift is by construction; this measures it end to end. Pairs: the run-3j
 image-independent request pairs (target + four distractors drawn independently per request), on confirmation images
