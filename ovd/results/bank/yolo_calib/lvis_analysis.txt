@@ -1,0 +1,12 @@
+lvis: 1000 images, 13073 annotations
+  P_none   AP 0.2948  AP50 0.4111  APs 0.1333  APm 0.3939  APl 0.5509  APr 0.3489  APc 0.2886  APf 0.2946
+  P_shift  AP 0.2967  AP50 0.4134  APs 0.1345  APm 0.3962  APl 0.5528  APr 0.3734  APc 0.2968  APf 0.2934
+  P_z      AP 0.2977  AP50 0.4157  APs 0.1360  APm 0.3980  APl 0.5449  APr 0.3909  APc 0.3024  APf 0.2920
+  S_none   AP 0.2975  AP50 0.4116  APs 0.1353  APm 0.3961  APl 0.5535  APr 0.3641  APc 0.2949  APf 0.2956
+  S_shift  AP 0.2950  AP50 0.4070  APs 0.1370  APm 0.3965  APl 0.5454  APr 0.3880  APc 0.2954  APf 0.2908
+  S_z      AP 0.2979  AP50 0.4120  APs 0.1371  APm 0.4001  APl 0.5316  APr 0.4065  APc 0.3040  APf 0.2911
+  P_shift − P_none AP: +0.0020 [-0.0022, +0.0050] (200 image resamples)
+  P_shift − P_none AP50: +0.0022 [-0.0038, +0.0080] (200 image resamples)
+  S_shift − S_none AP: -0.0025 [-0.0073, +0.0025] (200 image resamples)
+  S_shift − S_none AP50: -0.0046 [-0.0119, +0.0026] (200 image resamples)
+YWL_DONE

@@ -37,7 +37,7 @@ image) the raw bank is 2.0 AP below the fixed chunks because its score scale dif
 label-free per-class logit shift, estimated once on 300 unlabelled images, raises it on 1{,}000 held-out images from
 0.377 to 0.405 AP in a single pass, above standard 14-pass inference (0.398) at 6.7$\times$ lower cost. The same shift
 also raises the chunks, to 0.412, so it corrects a cross-class score scale under the per-image detection cap rather than a
-weakness of the bank; against equally corrected chunks the bank is 0.69 AP lower (95\% CI $-$1.50 to $+$0.59), so
+weakness of the bank, and does not help YOLO-World; against equally corrected chunks the bank is 0.69 AP lower (95\% CI $-$1.50 to $+$0.59), so
 non-inferiority at 1 AP is not shown. The bank does not transfer to the
 smaller checkpoint. Two random five-name requests
 leave aggregate counts nearly unchanged yet flip 9.0\% of decisions on present objects, so benchmark averages hide the
@@ -71,7 +71,7 @@ NMS and chunking.
 early-fusion Grounding DINO list-invariant in one image pass -- with accuracy and latency against original, single-class,
 fixed-chunk and vocabulary-pruning baselines, confirmed on fresh images, with their limits: under the standard full-image
 LVIS protocol the bank needs a fixed per-class score shift to match exact chunking, the same shift also raises the
-chunks (the bank is then 0.69 AP lower at 6.7$\times$ lower cost), and the bank fails on a second checkpoint.
+chunks (the bank is then 0.69 AP lower at 6.7$\times$ lower cost) but not YOLO-World, and the bank fails on a second checkpoint.
 
 \section{Related work}
 \paragraph{Open-vocabulary detection.} Grounding DINO~\cite{gdino} fuses image and text early and grounds phrases;
@@ -191,8 +191,8 @@ $\mu_c$ from any third of the reference images (100) changes development AP by a
 through the per-image budget, it would vanish under a per-class budget~\cite{devil}. The pre-registered fairness
 comparison applies the same shift to the chunks with their own reference statistics: they rise from 0.398 to 0.412 AP
 ($+$1.41, CI $+$0.97 to $+$1.88), and the shifted bank is 0.69 AP below them (CI $-$1.50 to $+$0.59), so against
-corrected chunks non-inferiority at 1 AP is not shown. The shift is therefore a general post-hoc correction of the
-score scale, and what remains specific to the bank is one request-invariant pass at 6.7$\times$ lower cost. With the $z$ map instead (exploratory), the chunks reach 0.414 AP and the shifted bank is 0.87 AP below them (CI $-$1.99 to $+$0.63); the independent evaluator reproduces all chunk numbers.
+corrected chunks non-inferiority at 1 AP is not shown. The shift therefore corrects Grounding DINO's score scale whether
+the bank or the chunks produce it, and what remains specific to the bank is one request-invariant pass at 6.7$\times$ lower cost. The frozen shift does not transfer to YOLO-World v2-S (pre-registered, own reference statistics, Soft-NMS pipeline): LVIS $+$0.20 AP (CI $-$0.22 to $+$0.50), COCO $-$0.02 AP (CI $-$0.04 to $+$0.00); with YOLO-World's own NMS it costs 0.25 and 0.17 AP. It is thus not a detector-agnostic fix. With the $z$ map instead (exploratory), the chunks reach 0.414 AP and the shifted bank is 0.87 AP below them (CI $-$1.99 to $+$0.63); the independent evaluator reproduces all chunk numbers.
 \begin{table}[t]\centering\footnotesize\setlength{\tabcolsep}{2.5pt}
 \caption{Standard full-image LVIS protocol: 1{,}000 fresh val images, all 1{,}203 classes, official evaluator, class-wise
 Soft-NMS for all, one L4 (bank-proposed, shifted bank and shifted chunks: CPU; 14 passes for chunks, 1 for the bank). Fixed chunks are also the standard full-vocabulary inference. Each shifted method uses its own label-free reference statistics; the per-class map adds 8.6\,ms per image.}\label{tab:full}
@@ -397,7 +397,7 @@ Base/small checkpoints only (one 24\,GB GPU); two datasets; the visually confusa
 pruning baseline omits VocAda's captioner. Grounding DINO's fixed chunks are expensive for small vocabularies from a large label space; the fixed bank with Soft-NMS costs 1.81$\times$ standard inference and is non-inferior to the unmodified prompt, but not shown non-inferior to a prompt that also uses Soft-NMS. On sampled pairs (five-class requests) the bank leads the chunks, but under the full-image LVIS protocol the raw bank is 2.0 AP
 below them, losing on common and rare classes (re-scoring its own top-10 classes with the standard prompt does not help); the
 fixed per-class shift closes this gap only through the 300-detection per-image budget, and it raises the chunks as well,
-leaving the bank 0.69 AP below corrected chunks (not shown within 1 AP); on sampled pairs 126 of the 374 positive classes occur on one image, so
+leaving the bank 0.69 AP below corrected chunks (not shown within 1 AP), and it gives no gain for YOLO-World; on sampled pairs 126 of the 374 positive classes occur on one image, so
 those per-class APs are coarse.
 The bank fails on grounding-dino-tiny ($-$5.75 points against the standard prompt), so it should be validated per
 checkpoint; on tiny no invariant method we tested is within one point of the standard prompt. Independent read-out raises false alarms on verified-absent LVIS classes for OWLv2.

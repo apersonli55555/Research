@@ -28,10 +28,10 @@ Class-wise shift (Amendments I, I2, K), frozen map, label-free reference statist
 | Grounding DINO chunks, LVIS (run 3p) | 0.3980 → 0.4121 | +1.41 [+0.97, +1.88] |
 | YOLO-World v2-S, LVIS, Soft-NMS pipeline (Amendment K1, primary) | 0.2948 → 0.2967 | +0.20 [−0.22, +0.50] (null) |
 | YOLO-World v2-S, LVIS, standard NMS pipeline | 0.2975 → 0.2950 | −0.25 [−0.73, +0.25] (null) |
-| YOLO-World v2-S, COCO, Soft-NMS pipeline (Amendment K2, primary) | 0.3570 → 0.3567 | bootstrap running |
-| YOLO-World v2-S, COCO, standard NMS pipeline | 0.3632 → 0.3615 | bootstrap running |
+| YOLO-World v2-S, COCO, Soft-NMS pipeline (Amendment K2, primary) | 0.3570 → 0.3567 | −0.02 [−0.04, +0.00] (null) |
+| YOLO-World v2-S, COCO, standard NMS pipeline | 0.3632 → 0.3615 | −0.17 [−0.21, −0.13] (small loss) |
 
-The shift does **not** generalize to YOLO-World: it is a Grounding DINO-specific correction. Exploratory mechanism
+The shift does **not** generalize to YOLO-World (run 3q; independent evaluator reproduces the LVIS rows): it is a Grounding DINO-specific correction. Exploratory mechanism
 check: the shift changes AP only through the per-image cap, and with YOLO-World on COCO the cap binds on only 33 of 1,000
 images (pipeline P; LVIS 641 of 1,000).
 
@@ -53,7 +53,8 @@ helps standard chunks too, so it is a general post-hoc correction, not a bank-sp
 
 ## Reviewer risks, ranked
 1. **"The fix is known / the shift is prior art" (high).** True for the shift (Dave et al.). Mitigation: the paper credits
-   it and claims only the diagnosis and the measurement.
+   it and claims only the diagnosis and the measurement. It also does not transfer to YOLO-World (run 3q), so it cannot be
+   sold as a general detector fix; the paper says so.
 2. **"No accurate and fast invariant method for early-fusion detectors" (high).** Against corrected chunks the bank is
    −0.69 AP (not shown within 1 AP). Stated in the abstract and Limitations.
 3. **"Does not transfer across checkpoints" (high).** The bank fails on grounding-dino-tiny (−5.75; its text input also
@@ -71,7 +72,7 @@ helps standard chunks too, so it is a general post-hoc correction, not a bank-sp
 - [x] Independent re-evaluation (no lvis-api) of the full-image LVIS results at four decimals.
 - [x] Alternative explanations tested: duplicate boxes (Soft-NMS), single-image classes, budget crowding (rejected),
       missing boxes vs score scale (run 3m), reference-image choice (ref sensitivity), the cap (stated), fairness of the
-      shift (run 3p), generality of the shift (Amendment K).
+      shift (run 3p), generality of the shift (run 3q: it does not generalize).
 - [x] Format: CVPR 2027 author kit (same `cvpr.sty` family as ICCV); 8 pages including references, letter size, fonts
       embedded, anonymous. ICCV 2027 checked 27 Nov 2026: the official
       site (iccv.thecvf.com) lists only the venue (Hong Kong) and dates (3–7 Oct 2027); no call for papers, deadline,

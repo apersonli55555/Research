@@ -823,3 +823,49 @@ image resamples): chunks + z − chunks +0.0159 AP [+0.0092, +0.0214]; bank + sh
 +0.0063], AP50 +0.0006 [−0.0105, +0.0193]; bank + z − chunks + z −0.0168 AP [−0.0267, −0.0042]. Against the strongest
 measured baseline the frozen corrected bank is 0.87 AP lower, not shown within 1 AP.
 
+
+## Run 3q (Amendment K) — does the class-wise shift generalize to YOLO-World and COCO? CPU, 27 Nov 2026 — NULL
+`bank/yolo_calib.py` (commit 542f6dd; CPU, torch 2.15.0, ultralytics 8.4.216, YOLO-World v2-S `yolov8s-worldv2.pt`, full
+vocabulary as head and guide) → `bank/yolo_calib_analysis.py` (official evaluators; 200 paired image resamples). Outputs:
+`results/bank/yolo_calib/` (`outputs.zip` = reference and test per-image outputs; `{lvis,coco}_ref_stats.json`;
+`coco_images.json` = the COCO split; `{lvis,coco}_analysis.{txt,json}`; `run.log`). Map frozen as in Amendment I; no tuning.
+Reference statistics: LVIS μ_c −7.98 to −3.00 (μ_g −5.37; spread of μ_c 0.65, vs 0.68 for the Grounding DINO bank);
+COCO μ_c −9.98 to −1.13 (μ_g −7.36). COCO split: val2017 by SHA-256 of the file name after excluding 1,815 images cached by
+earlier runs; 300 reference, 1,000 test (7,173 boxes).
+
+**K1 — LVIS v1, the run-3l/3n/3p 1,000 test images (13,073 boxes), lvis-api, 300 detections/image:**
+
+| pipeline | map | AP | AP50 | APr | APc | APf |
+|---|---|---|---|---|---|---|
+| P (Soft-NMS, primary) | none | 0.2948 | 0.4111 | 0.3489 | 0.2886 | 0.2946 |
+| P | shift | 0.2967 | 0.4134 | 0.3734 | 0.2968 | 0.2934 |
+| P | z | 0.2977 | 0.4157 | 0.3909 | 0.3024 | 0.2920 |
+| S (YOLO-World NMS) | none | 0.2975 | 0.4116 | 0.3641 | 0.2949 | 0.2956 |
+| S | shift | 0.2950 | 0.4070 | 0.3880 | 0.2954 | 0.2908 |
+| S | z | 0.2979 | 0.4120 | 0.4065 | 0.3040 | 0.2911 |
+
+Pre-registered primary P_shift − P_none: **AP +0.20 [−0.22, +0.50]**, AP50 +0.22 [−0.38, +0.80]. S_shift − S_none:
+AP −0.25 [−0.73, +0.25], AP50 −0.46 [−1.19, +0.26]. The independent evaluator (`bank/yolo_calib_independent.py`, no
+lvis-api → `lvis_independent_lvis_ap.json`) reproduces all six rows at four decimals.
+
+**K2 — COCO 2017 val, 1,000 test images, pycocotools, maxDets 100:**
+
+| pipeline | map | AP | AP50 | APs | APm | APl |
+|---|---|---|---|---|---|---|
+| P (Soft-NMS, primary) | none | 0.3570 | 0.4886 | 0.1672 | 0.4223 | 0.5218 |
+| P | shift | 0.3567 | 0.4883 | 0.1657 | 0.4221 | 0.5214 |
+| P | z | 0.3566 | 0.4881 | 0.1655 | 0.4217 | 0.5215 |
+| S (YOLO-World NMS) | none | 0.3632 | 0.4978 | 0.1714 | 0.4290 | 0.5312 |
+| S | shift | 0.3615 | 0.4951 | 0.1694 | 0.4269 | 0.5296 |
+| S | z | 0.3608 | 0.4940 | 0.1684 | 0.4260 | 0.5291 |
+
+Pre-registered primary P_shift − P_none: **AP −0.02 [−0.04, +0.00]**, AP50 −0.03 [−0.07, −0.00]. S_shift − S_none:
+AP −0.17 [−0.21, −0.13], AP50 −0.28 [−0.34, −0.22] (small but significant loss).
+
+**Outcome (as pre-registered: a null or negative result narrows the claim to Grounding DINO).** The class-wise shift does
+not generalize to YOLO-World on either dataset: no gain on LVIS (rare classes rise, frequent classes fall) and none or a
+small loss on COCO. It is a correction for Grounding DINO's cross-class score scale (bank and chunks), not a general
+detector fix. Exploratory mechanism check (`cap_binding.txt`): the shift can change AP only through the per-image cap, and
+that cap binds on 641/1,000 LVIS and only 33/1,000 COCO images for pipeline P (S: 1,000 and 684), so on COCO there is
+little for it to act on; on LVIS the cap binds but YOLO-World's per-class score scale is evidently not the limiting factor
+(the spread of μ_c is similar to Grounding DINO's, so the spread alone does not predict a gain).

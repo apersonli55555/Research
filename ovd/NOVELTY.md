@@ -181,3 +181,10 @@ contribution (3), paragraph (viii), Table tab:full and Limitations now say so.
 Exploratory (not pre-registered): the strongest measured baseline is chunks + z (0.4139); bank + shift − chunks + z
 −0.87 AP [−1.99, +0.63]. The independent evaluator reproduces the chunk maps at four decimals.
 
+
+### Update 27 Nov 2026 — run 3q (Amendment K): the shift does not generalize to YOLO-World — NULL
+Frozen shift, YOLO-World v2-S with its own label-free reference statistics, pre-registered primary (Soft-NMS pipeline):
+LVIS +0.20 AP [−0.22, +0.50]; COCO −0.02 AP [−0.04, +0.00]; with YOLO-World's own NMS −0.25 (LVIS) and −0.17 (COCO,
+significant). The claim narrows as pre-registered: the shift corrects Grounding DINO's cross-class score scale (bank and
+chunks), not open-vocabulary detectors in general. This lowers the novelty of the shift further but removes the reviewer
+question "does it generalize?" with a measured answer. Consolidated assessment: `SUBMISSION_READINESS.md`.

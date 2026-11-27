@@ -1,0 +1,12 @@
+coco: 1000 images, 7173 annotations
+  P_none   AP 0.3570  AP50 0.4886  APs 0.1672  APm 0.4223  APl 0.5218
+  P_shift  AP 0.3567  AP50 0.4883  APs 0.1657  APm 0.4221  APl 0.5214
+  P_z      AP 0.3566  AP50 0.4881  APs 0.1655  APm 0.4217  APl 0.5215
+  S_none   AP 0.3632  AP50 0.4978  APs 0.1714  APm 0.4290  APl 0.5312
+  S_shift  AP 0.3615  AP50 0.4951  APs 0.1694  APm 0.4269  APl 0.5296
+  S_z      AP 0.3608  AP50 0.4940  APs 0.1684  APm 0.4260  APl 0.5291
+  P_shift − P_none AP: -0.0002 [-0.0004, +0.0000] (200 image resamples)
+  P_shift − P_none AP50: -0.0003 [-0.0007, -0.0000] (200 image resamples)
+  S_shift − S_none AP: -0.0017 [-0.0021, -0.0013] (200 image resamples)
+  S_shift − S_none AP50: -0.0028 [-0.0034, -0.0022] (200 image resamples)
+YWC_DONE

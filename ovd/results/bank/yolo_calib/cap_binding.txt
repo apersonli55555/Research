@@ -1,0 +1,5 @@
+Images whose final list reaches the per-image cap (map none), YOLO-World Amendment K test outputs
+lvis P cap 300 images at cap 641/1000 median detections 300
+lvis S cap 300 images at cap 1000/1000 median detections 300
+coco P cap 100 images at cap 33/1000 median detections 24
+coco S cap 100 images at cap 684/1000 median detections 100
