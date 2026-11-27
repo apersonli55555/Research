@@ -178,3 +178,6 @@ request-invariant pass at 6.7× lower cost than the 14 chunks, measured zero req
 estimate 0.69 AP below corrected chunks.
 **Reviewer risk (resolved, against us).** "Apply the same shift to chunks" — done; it helps chunks. The paper's abstract,
 contribution (3), paragraph (viii), Table tab:full and Limitations now say so.
+Exploratory (not pre-registered): the strongest measured baseline is chunks + z (0.4139); bank + shift − chunks + z
+−0.87 AP [−1.99, +0.63]. The independent evaluator reproduces the chunk maps at four decimals.
+

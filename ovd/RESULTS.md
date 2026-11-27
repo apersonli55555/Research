@@ -815,3 +815,11 @@ remains specific to the bank: one request-invariant pass (6.7× faster than the 
 request interference (run 3o), at −0.69 AP (CI −1.50 to +0.59) relative to normalized chunks. For a fixed full
 vocabulary the chunks are themselves request-invariant, so the bank's advantage there is cost only.
 
+**Independent check:** `bank/independent_lvis_ap.py --calib <chunks test outputs>` (no lvis-api) gives the same numbers at
+four decimals for chunks none / shift / z (0.3980 / 0.4121 / 0.4139 AP; `results/bank/calib/i2_independent_lvis_ap.json`).
+**Exploratory, not pre-registered** (the z map was the stronger one for the chunks; `bank/calib_i2_analysis.py --pairs
+bank_shift:chunks_z,bank_z:chunks_z,chunks_z:chunks_none` → `results/bank/calib/i2_posthoc_analysis.{txt,json}`, 200 paired
+image resamples): chunks + z − chunks +0.0159 AP [+0.0092, +0.0214]; bank + shift − chunks + z −0.0087 AP [−0.0199,
++0.0063], AP50 +0.0006 [−0.0105, +0.0193]; bank + z − chunks + z −0.0168 AP [−0.0267, −0.0042]. Against the strongest
+measured baseline the frozen corrected bank is 0.87 AP lower, not shown within 1 AP.
+
