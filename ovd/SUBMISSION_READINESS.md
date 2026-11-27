@@ -61,7 +61,7 @@ What is new and supported:
 1. A counterfactual, fixed-target protocol (same image, same target string, only the other names change) that isolates
    vocabulary interference from the "all classes vs present classes" confound of Tsourveloudis (2026) and VocAda (2025).
 2. A per-architecture mechanism decomposition, partly exact: OWLv2 only through top-1 label competition; YOLO-World only
-   through its guide (fixing the guide makes scores invariant to 6e-7); Grounding DINO through fusion, query selection,
+   through its guide (fixing the guide makes scores invariant to 2.1e-6); Grounding DINO through fusion, query selection,
    label competition and chunk membership.
 3. Per-object evidence that averages hide interference (9.0% of decisions flip at near-equal counts; 17.4% of found
    objects depend on the request).

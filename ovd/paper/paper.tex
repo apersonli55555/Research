@@ -31,19 +31,19 @@ each detector: independent read-out (OWLv2), a fixed guide vocabulary (YOLO-Worl
 of all 1{,}203 LVIS class embeddings that takes part in fusion in a single image pass. On 600 fresh LVIS images scored as sampled
 image--class pairs with five-class requests, the bank with class-wise Soft-NMS is 3.26 mAP50 points more accurate (95\% CI 1.67 to 4.50) and 2.15$\times$ faster than the
 previous invariant method (fixed canonical prompt chunks) under identical post-processing, and non-inferior at a 1-point
-margin to unmodified five-class prompting (0.650 vs.\ 0.631) at 1.81$\times$ its latency; with requests chosen without
-looking at the image its lead grows to 3.6 points. Under the standard full-image LVIS protocol (300 detections per
-image) the raw bank is 2.0 AP below the fixed chunks because its score scale differs between classes; a fixed,
-label-free per-class logit shift, estimated once on 300 unlabelled images, raises it on 1{,}000 held-out images from
-0.377 to 0.405 AP in a single pass, above standard 14-pass inference (0.398) at 6.7$\times$ lower cost. The same shift
+margin to unmodified five-class prompting (0.650 vs.\ 0.631) at 1.81$\times$ its latency, a gain that comes from class-wise Soft-NMS~\cite{softnms} (with the same Soft-NMS the standard prompt also reaches 0.650); with requests chosen without
+looking at the image its lead over the unmodified prompt grows to 3.6 points (1.6 with matched Soft-NMS). Under the standard full-image LVIS protocol (300 detections per
+image) the bank with Soft-NMS is 2.0 AP below the fixed chunks, largely because its score scale differs between classes; a fixed,
+label-free per-class logit shift (a cross-class calibration in the sense of~\cite{devil}), estimated once on 300 unlabelled images, raises it on 1{,}000 held-out images from
+0.377 to 0.405 AP in a single pass, level with standard 14-pass inference (0.398; $+$0.70, CI $-$0.23 to $+$2.05) at 6.7$\times$ lower cost. The same shift
 also raises the chunks, to 0.412, so it corrects a cross-class score scale under the per-image detection cap rather than a
 weakness of the bank, and does not help YOLO-World; against equally corrected chunks the bank is 0.69 AP lower (95\% CI $-$1.50 to $+$0.59), so
 non-inferiority at 1 AP is not shown. The bank does not transfer to the
 smaller checkpoint. Two random five-name requests
-leave aggregate counts nearly unchanged yet flip 9.0\% of decisions on present objects, so benchmark averages hide the
+leave aggregate counts nearly unchanged yet flip 9.0\% of decisions on present image--class pairs, so benchmark averages hide the
 effect. For YOLO-World and OWLv2 the
 corrections cost 0.94--1.14$\times$ original inference and match or exceed the better of single-class and full-list
-inference on held-out data (e.g.\ $+$7.8 and $+$20.7 mAP50 points on LVIS).
+inference on held-out data (on LVIS: YOLO-World $+$7.8 mAP50 over the better baseline; OWLv2 equals single-class inference and is $+$20.7 over the full list).
 \end{abstract}
 
 \section{Introduction}
@@ -70,7 +70,7 @@ NMS and chunking.
 (3) Training-free, vocabulary-invariant inference for each detector family -- including a fixed class bank that makes
 early-fusion Grounding DINO list-invariant in one image pass -- with accuracy and latency against original, single-class,
 fixed-chunk and vocabulary-pruning baselines, confirmed on fresh images, with their limits: under the standard full-image
-LVIS protocol the bank needs a fixed per-class score shift to match exact chunking, the same shift also raises the
+LVIS protocol the bank needs a fixed per-class score shift (cross-class calibration~\cite{devil}) to reach the level of exact chunking, the same shift also raises the
 chunks (the bank is then 0.69 AP lower at 6.7$\times$ lower cost) but not YOLO-World, and the bank fails on a second checkpoint.
 
 \section{Related work}
@@ -91,7 +91,8 @@ including when it is present -- and aim for exact list-invariance rather than fe
 
 \section{Protocol}
 \paragraph{Data.} COCO val2017~\cite{coco} and LVIS v1.0 val~\cite{lvis}, public annotations only. Images are ranked by an
-MD5 hash of the file name: the first 500 COCO images are a development split (all design choices); the next 1{,}000
+MD5 hash of the file name: the first 500 COCO images are a development split (all design choices of Secs.~3--5 except the Grounding DINO bank, whose
+development images are stated in Sec.~\ref{sec:inv}); the next 1{,}000
 COCO images and 600 LVIS images (excluding the development images) are held out. Targets are every present COCO class
 (LVIS: up to three) plus two absent classes (LVIS: verified absent).
 \paragraph{Conditions.} For target $c$: $\{c\}$; $c$ plus $k{-}1$ random classes ($k\in\{5,20\}$ on COCO;
@@ -111,7 +112,7 @@ in deployed output comes from top-1 label assignment.
 neck, where max-sigmoid attention weights each location by $\sigma(\max_{t\in V}\langle e_x, g(t)\rangle)$. The maximum
 makes the attention gate exactly order-invariant and, for a fixed input to the block, monotone in the vocabulary
 set: adding a name can only raise the gate at that location (later layers need not be monotone). Fixing the guide to a constant list makes every class score independent of $V$
-(numerically, $<10^{-6}$ difference).
+(measured on 20 COCO images, 186 head vocabularies: score difference at most $2.1{\times}10^{-6}$, boxes identical; with the stock guide up to 0.96).
 \paragraph{Grounding DINO.} Phrases are separated by attention masks and position ids restart per phrase in the text
 encoder, so the target's text features do not depend on other names there. Other names enter through (a) image--text
 fusion in the feature enhancer and decoder, (b) language-guided selection of the 900 decoder queries (maximum over all
@@ -136,7 +137,7 @@ pruning in the style of VocAda (Table~\ref{tab:main}).
 wordpieces), the 1{,}203 vectors are injected as the text input of a single image pass (one text position per class,
 identity text self-attention), and the request only selects output columns, so outputs are list-invariant by
 construction. Developed on the 24 pilot images and checked on 100 further images (0.661 vs.\ 0.644 for the fixed
-chunks, 467 pairs), the bank was frozen together with class-wise Gaussian Soft-NMS ($\sigma{=}0.5$, selected on the 24
+chunks, CI $-$1.65 to $+$3.97, but 5.2 points below the standard prompt; 467 pairs), the bank was frozen together with class-wise Gaussian Soft-NMS ($\sigma{=}0.5$, selected on the 24
 pilot images) and confirmed on
 600 fresh LVIS validation images (2{,}669 image--class pairs, disjoint from all development images; five-class
 requests; one L4; Table~\ref{tab:bank}). The bank with Soft-NMS reaches 0.650 mAP50 against 0.631 for unmodified
@@ -157,7 +158,7 @@ the class in only 23 of 515 pairs: the request decides \emph{whether} an object 
 location. (ii) A class vector does not depend on the other names (identical to $1.8{\times}10^{-6}$ when built in other orders
 or alone), but which classes the bank holds shifts mAP50 by about one point (two random halves, neither significant):
 the bank removes dependence on the request, not on the chosen dictionary. (iii) Mean pooling with the identity mask
-beats first- or last-wordpiece pooling and a full mask (by 0.6 to 0.9 points). (iv) Its cost is constant (1.16\,s per
+beats first- or last-wordpiece pooling and a full mask by 0.6 to 0.9 points (significant only against first-wordpiece pooling). (iv) Its cost is constant (1.16\,s per
 image on the T4 for 1 to 1{,}203 names, 1.2\,GB more peak memory, 0.29\,s set-up): it matches the standard prompt at
 about 100 names and is 6.3$\times$ faster at 1{,}203. (v) \emph{It does not transfer to grounding-dino-tiny}: there
 bank + Soft-NMS scores 0.627 against 0.685 for the standard prompt (difference CI $-$7.35 to $-$4.51) and 0.678 for
@@ -192,15 +193,15 @@ through the per-image budget, it would vanish under a per-class budget~\cite{dev
 comparison applies the same shift to the chunks with their own reference statistics: they rise from 0.398 to 0.412 AP
 ($+$1.41, CI $+$0.97 to $+$1.88), and the shifted bank is 0.69 AP below them (CI $-$1.50 to $+$0.59), so against
 corrected chunks non-inferiority at 1 AP is not shown. The shift therefore corrects Grounding DINO's score scale whether
-the bank or the chunks produce it, and what remains specific to the bank is one request-invariant pass at 6.7$\times$ lower cost. The frozen shift does not transfer to YOLO-World v2-S (pre-registered, own reference statistics, Soft-NMS pipeline): LVIS $+$0.20 AP (CI $-$0.22 to $+$0.50), COCO $-$0.02 AP (CI $-$0.04 to $+$0.00); with YOLO-World's own NMS it costs 0.25 and 0.17 AP. It is thus not a detector-agnostic fix. With the $z$ map instead (exploratory), the chunks reach 0.414 AP and the shifted bank is 0.87 AP below them (CI $-$1.99 to $+$0.63); the independent evaluator reproduces all chunk numbers.
+the bank or the chunks produce it, and what remains specific to the bank is one request-invariant pass at 6.7$\times$ lower cost. The frozen shift does not transfer to YOLO-World v2-S (pre-registered, own reference statistics, Soft-NMS pipeline): LVIS $+$0.20 AP (CI $-$0.22 to $+$0.50), COCO $-$0.02 AP (CI $-$0.04 to $+$0.00); with YOLO-World's own NMS it changes AP by $-$0.25 (CI $-$0.73 to $+$0.25) and $-$0.17 (CI $-$0.21 to $-$0.13). It is thus not a detector-agnostic fix. With the $z$ map instead (exploratory), the chunks reach 0.414 AP and the shifted bank is 0.87 AP below them (CI $-$1.99 to $+$0.63); the independent evaluator reproduces all chunk numbers.
 \begin{table}[t]\centering\footnotesize\setlength{\tabcolsep}{2.5pt}
 \caption{Standard full-image LVIS protocol: 1{,}000 fresh val images, all 1{,}203 classes, official evaluator, class-wise
-Soft-NMS for all, one L4 (bank-proposed, shifted bank and shifted chunks: CPU; 14 passes for chunks, 1 for the bank). Fixed chunks are also the standard full-vocabulary inference. Each shifted method uses its own label-free reference statistics; the per-class map adds 8.6\,ms per image.}\label{tab:full}
+Soft-NMS for all, one L4 (bank-proposed, shifted bank and shifted chunks: CPU; 14 passes for chunks, 1 for the bank). Fixed chunks are also the standard full-vocabulary inference. Each shifted method uses its own label-free reference statistics; the per-class map adds 8.6\,ms per image. Bold: best among pre-registered methods; the AP50 lead of the shifted bank over shifted chunks is not significant. The bank's AP is .378 on the L4 and .377 in the CPU re-run used for the shift.}\label{tab:full}
 \begin{tabular}{lcccccc}\toprule
 method & AP & AP50 & APr & APc & APf & s/img\\\midrule
 fixed chunks & .398 & .507 & .338 & .405 & .399 & 4.215\\
-chunks + class-wise shift & .412 & .526 & .400 & .411 & \textbf{.413} & 14 passes\\
-chunks + class-wise $z$ & \textbf{.414} & .528 & \textbf{.408} & \textbf{.422} & .412 & 14 passes\\
+chunks + class-wise shift & \textbf{.412} & .526 & \textbf{.400} & \textbf{.411} & \textbf{.413} & 14 passes\\
+chunks + class-wise $z$ (exploratory) & .414 & .528 & .408 & .422 & .412 & 14 passes\\
 fixed bank & .378 & .494 & .248 & .338 & .398 & \textbf{.632}\\
 bank-proposed ($K{=}10$) & .376 & .493 & .213 & .339 & .396 & 2 passes\\
 bank + class-wise shift & .405 & \textbf{.529} & .370 & .398 & .409 & 1 pass\\\bottomrule
@@ -246,11 +247,11 @@ OWLv2 & .746 & .726 & .000 & .028 & .000 & .045$\to$.033\\\bottomrule
 
 \subsection{Held-out COCO}
 \paragraph{OWLv2 (1{,}000 held-out images, 5{,}013 pairs).} Raw target scores are again exactly unchanged under every
-vocabulary. What changes is label competition, and it depends on \emph{what} the other names are, not how many:
+vocabulary. What changes is label competition, and on COCO it depends more on \emph{what} the other names are than on how many:
 unrelated distractors flip 0.1--0.2\% of detections and leave mAP50 at 0.743 (k=1: 0.744), random ones 0.2--0.8\%,
 visually confusable ones 1.9--2.5\% and semantically similar ones 2.5--2.7\% (mAP50 0.724); all 80 names flip 3.1\% and
 cost 2.3 points (95\% CI [1.7, 3.2]). The independent read-out matches single-class inference exactly (0.744), beats the
-80-name output by +2.3 points (CI [+1.7, +3.2]) at no extra cost, and has zero interference. CLIP-based vocabulary
+80-name output by +2.3 points (CI [+1.7, +3.2]) at no extra cost, and has zero interference; it raises absent-target false alarms from 0.040 to 0.060 (the single-class level). CLIP-based vocabulary
 pruning in the style of VocAda (top-10 classes per image) is far worse (0.637; $-$10.6 points), because it often
 removes the target itself.
 
@@ -312,8 +313,8 @@ guide with independent read-out reaches 0.442 with zero interference: $+$7.8 poi
 not the best possible guide: random 80--200-name guides reach 0.452--0.455 here; we choose guides only on the
 development split (Sec.~\ref{sec:ablation}). On a third held-out sample (the 600 images of Sec.~\ref{sec:inv}, five-name requests) the fixed guide again leads (0.490 vs.\ 0.424, CI [$+$4.5, $+$7.9]), as does OWLv2's independent read-out ($+$1.5, CI [$+$0.6, $+$2.0]).
 
-\paragraph{Grounding DINO (same 600 images).} Distractors again help on average (single-class 0.496; five random names
-0.571), but similar and visually confusable names hurt once there are many (0.424 with the 80 most similar, 0.434 with
+\paragraph{Grounding DINO (same 600 images).} Few random distractors again help (single-class 0.496; five random names
+0.571; 80--500 random names 0.500--0.508, not significant), but similar and visually confusable names hurt once there are many (0.424 with the 80 most similar, 0.434 with
 80 visually confusable); 21.8\% of instances flip under some vocabulary and single-class prompting false-alarms on
 55.9\% of verified-absent classes. Long vocabularies are chunked, so here order matters (3.6\% order-only flips). The
 fixed canonical chunks reach 0.558 with zero interference: $+$6.2 points over single-class inference (CI [$+$4.0,
@@ -364,7 +365,7 @@ neighbouring name rather than missed. The invariant read-out restores most of th
 \section{Ablations}\label{sec:ablation}
 \paragraph{Which fixed guide?} On the development split only, we compared YOLO-World guides with the head fixed to
 the 80 COCO names (Table~\ref{tab:guide}). The domain's own full label space is best (0.603 mAP50); guides drawn
-from another label space (LVIS) are worse than single-class inference (0.546--0.595 vs.\ 0.580) and small random
+from another label space (LVIS) are mostly worse than single-class inference (8 of 9 at 0.546--0.579 vs.\ 0.580; one draw 0.595) and small random
 guides are unstable across draws. This supports the rule fixed before the held-out runs: guide with the full label
 space of the deployment domain.
 \begin{table}[t]\centering\small
@@ -382,7 +383,7 @@ LVIS random & 500 & .570 / .573\\\bottomrule\end{tabular}\end{table}
 alternative keeps one label per box but decides it on calibrated scores: per-class z-scores or reference quantiles
 estimated on half of the development images (Table~\ref{tab:norm}, other half). Both make things worse for both
 models -- more flips and lower mAP50 than plain top-1 -- while the independent read-out removes all flips and is the
-most accurate. Interference from label competition is therefore not a calibration problem that rescaling can fix.
+most accurate. Interference from top-1 label competition is therefore not a calibration problem that rescaling the label decision can fix.
 \begin{table}[t]\centering\footnotesize\setlength{\tabcolsep}{3pt}
 \caption{Label decision variants, development split (evaluation half), all 80 names; mAP50 (flips vs.\ k=1).
 YOLO-World uses the fixed guide.}\label{tab:norm}
@@ -400,7 +401,7 @@ fixed per-class shift closes this gap only through the 300-detection per-image b
 leaving the bank 0.69 AP below corrected chunks (not shown within 1 AP), and it gives no gain for YOLO-World; on sampled pairs 126 of the 374 positive classes occur on one image, so
 those per-class APs are coarse.
 The bank fails on grounding-dino-tiny ($-$5.75 points against the standard prompt), so it should be validated per
-checkpoint; on tiny no invariant method we tested is within one point of the standard prompt. Independent read-out raises false alarms on verified-absent LVIS classes for OWLv2.
+checkpoint; on tiny no invariant method we tested is within one point of the standard prompt. Independent read-out raises OWLv2's false alarms on absent classes (verified-absent LVIS classes; COCO 0.040 to 0.060).
 The LVIS evaluation plan was built on two machines: images, targets and the random, unrelated, similar and full-list
 vocabularies are identical, but the visually confusable and pruning lists (the only ones built from CLIP image
 embeddings) differ slightly, so those LVIS rows for Grounding DINO and for OWLv2/YOLO-World use slightly different lists
@@ -431,6 +432,8 @@ computed on CPU and checked against GPU on the development split (agreement to $
 \bibitem{tractordogs} F. Ruis, G. J. Burghouts, H. Kuijf. Fantastic tractor-dogs and how not to find them with open-vocabulary detectors. In \emph{ICLR}, 2026.
 
 \bibitem{coco} T.-Y. Lin, M. Maire, S. Belongie, et al. Microsoft COCO: Common objects in context. In \emph{ECCV}, 2014.
+
+\bibitem{softnms} N. Bodla, B. Singh, R. Chellappa, L. S. Davis. Soft-NMS -- Improving object detection with one line of code. In \emph{ICCV}, 2017.
 
 \bibitem{devil} A. Dave, P. Doll\'ar, D. Ramanan, A. Kirillov, R. Girshick. Evaluating large-vocabulary object detectors: The devil is in the details. arXiv:2102.01066, 2021.
 

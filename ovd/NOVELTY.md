@@ -22,7 +22,7 @@ full is marked [VERIFY]. This file will be updated after the pilot and the full 
 2. **Mechanism decomposition per architecture, partly exact:** OWLv2 raw scores are invariant by construction
    (interference only via top-1 label competition); YOLO-World's text guidance is `sigmoid(max over classes)`, so it is
    exactly order-invariant and only set-dependent through the guide (verified: fixing the guide makes scores invariant to
-   6e-7); Grounding DINO's text encoder is block-masked per phrase, so the remaining dependence comes from fusion,
+   2.1e-6); Grounding DINO's text encoder is block-masked per phrase, so the remaining dependence comes from fusion,
    query selection (probed by a hook), label competition and chunking (where *order* changes chunk membership).
 3. **Invariant-by-construction, training-free corrections** (fixed context / fixed guide / independent read-out),
    evaluated for accuracy and latency against original, single-class and (where feasible) vocabulary-pruning baselines.

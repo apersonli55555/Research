@@ -1,0 +1,8 @@
+{
+ "n_images": 20,
+ "n_comparisons": 186,
+ "fixed_guide_max_abs_score_diff": 2.115964889526367e-06,
+ "fixed_guide_max_abs_box_diff_px": 0.0,
+ "stock_max_abs_score_diff": 0.9584465026855469,
+ "stock_mean_of_max_abs_score_diff": 0.2871574602260064
+}

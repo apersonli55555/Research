@@ -869,3 +869,23 @@ detector fix. Exploratory mechanism check (`cap_binding.txt`): the shift can cha
 that cap binds on 641/1,000 LVIS and only 33/1,000 COCO images for pipeline P (S: 1,000 and 684), so on COCO there is
 little for it to act on; on LVIS the cap binds but YOLO-World's per-class score scale is evidently not the limiting factor
 (the spread of μ_c is similar to Grounding DINO's, so the spread alone does not predict a gain).
+
+## Manuscript audit (27 Nov 2026) — independent claim-vs-evidence review and fixes
+An independent reviewer (fresh context, read-only) checked every claim of `paper/paper.tex` against this file and PLAN.md.
+All flagged items were verified here before changing the paper. Fixes: abstract no longer says the shifted bank is "above"
+standard inference (+0.70, CI −0.23 to +2.05: level); "raw bank" → "bank with Soft-NMS" for the −2.0 AP (run 3l); "because"
+→ "largely because" (run 3m/3p); the gain over the five-class prompt is attributed to Soft-NMS (run 3h: standard + Soft-NMS
+0.650 too) and the 3.6-point lead is stated with its matched-Soft-NMS value 1.6; OWLv2's +20.7 is over the full list (it
+equals single class); 9.0% flips are per image–class pair; the 100-image validation now states it was 5.2 points below the
+standard prompt (CI vs chunks −1.65 to +3.97); the development-split sentence now excludes the bank; pooling: only the
+first-wordpiece comparison is significant; OWLv2 COCO false alarms 0.040 → 0.060 stated; Grounding DINO LVIS: only few
+random distractors help (80–500 random: 0.500–0.508, n.s.); guide ablation: 8 of 9 LVIS guides below single class (one
+0.595); YOLO-World NMS changes in run 3q given with CIs; Table tab:full: exploratory chunks + z no longer bold; Soft-NMS
+(Bodla et al., ICCV 2017) cited; the shift attributed to Dave et al. in the abstract and contribution (3).
+Traced: Table tab:bank s/img .362 for standard + Soft-NMS = `results/bank/fixed_bank_soft_confirm_v1/summary.json`
+`seconds.stock5_soft` 0.3621.
+**Fixed-guide invariance re-measured** (`bank/check_fixed_guide.py` → `results/fixed_guide_check.json`; CPU; 20 COCO
+images, every present class as target, head = target alone vs target + 4, + 19 random names and all 80 shuffled; guide =
+all 80 COCO names): 186 comparisons, max |target score difference| 2.1e-6, boxes identical (0 px); with the guide equal to
+the head (stock) up to 0.958 (mean of per-comparison max 0.287). The earlier unrecorded "< 1e-6 / 6e-7" was too tight and
+is replaced by 2.1e-6 in the paper, NOVELTY.md and SUBMISSION_READINESS.md.
