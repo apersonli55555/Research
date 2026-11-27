@@ -1,156 +1,142 @@
 <title>Estuary Rod Co.</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="Partner rewrite of the Project Estuary pitch: 3D rod configurator, engineering, sourcing, financial model and exit plan.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=Instrument+Sans:wght@400..700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-/* Layout: a studio-lit 3D bench on top, then a field-lab spec document on a 12-col grid; sections are marked with tide-staff "E" gauges. */
+/* Layout: a printed spec document. Section numbers hang in a left margin; tables and figures sit on rules, not in boxes. */
 :root{
-  --bg:#0f1517; --bg2:#151e21; --bg3:#1b272b; --line:#2a3a3f; --line2:#38494f;
-  --fg:#e8e6de; --muted:#9eaca9; --faint:#73827f;
-  --accent:#7cc4b2; --accent-ink:#0f1517; --tannin:#d29d61;
-  --good:#8cc79a; --warn:#e2b25c; --bad:#ec8775;
-  --c1:#3fae94; --c2:#5b8fd6; --c3:#d08a3e; --c4:#c46bb0;
-  --stage1:#22323a; --stage2:#0b1012;
-  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
-  --f-body:"Instrument Sans","Segoe UI",system-ui,sans-serif;
-  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
-  color-scheme:dark;
-}
-@media (prefers-color-scheme: light){
-  :root:not([data-theme="dark"]){
-    --bg:#eef1ef; --bg2:#ffffff; --bg3:#f5f7f6; --line:#d3dbd8; --line2:#b9c5c1;
-    --fg:#132022; --muted:#4c5d5a; --faint:#76858a;
-    --accent:#17715f; --accent-ink:#ffffff; --tannin:#8d5a22;
-    --good:#2f7d45; --warn:#8f6400; --bad:#b4442f;
-    --c1:#0b8a6c; --c2:#2d64b0; --c3:#b5651d; --c4:#a2458f;
-    --stage1:#fbfcfb; --stage2:#d6dfdb;
-    color-scheme:light;
-  }
-}
-:root[data-theme="light"]{
-  --bg:#eef1ef; --bg2:#ffffff; --bg3:#f5f7f6; --line:#d3dbd8; --line2:#b9c5c1;
-  --fg:#132022; --muted:#4c5d5a; --faint:#76858a;
-  --accent:#17715f; --accent-ink:#ffffff; --tannin:#8d5a22;
+  --bg:#fcfcfa; --bg2:#ffffff; --bg3:#f0f1ed; --line:#dadcd6; --line2:#b5b9b2;
+  --fg:#1a1c1b; --muted:#4f5452; --faint:#7a7f7b;
+  --accent:#b1361e; --accent-ink:#ffffff; --tannin:#8d5a22;
   --good:#2f7d45; --warn:#8f6400; --bad:#b4442f;
   --c1:#0b8a6c; --c2:#2d64b0; --c3:#b5651d; --c4:#a2458f;
-  --stage1:#fbfcfb; --stage2:#d6dfdb;
-  color-scheme:light;
+  --stage:#e6e7e3;
+  --f-head:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141617; --bg2:#1a1d1e; --bg3:#222628; --line:#33383a; --line2:#4b5153;
+    --fg:#e7e4dc; --muted:#a9ada9; --faint:#80857f;
+    --accent:#ea7a5e; --accent-ink:#141617; --tannin:#d29d61;
+    --good:#8cc79a; --warn:#e2b25c; --bad:#ec8775;
+    --c1:#3fae94; --c2:#5b8fd6; --c3:#d08a3e; --c4:#c46bb0;
+    --stage:#202426;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141617; --bg2:#1a1d1e; --bg3:#222628; --line:#33383a; --line2:#4b5153;
+  --fg:#e7e4dc; --muted:#a9ada9; --faint:#80857f;
+  --accent:#ea7a5e; --accent-ink:#141617; --tannin:#d29d61;
+  --good:#8cc79a; --warn:#e2b25c; --bad:#ec8775;
+  --c1:#3fae94; --c2:#5b8fd6; --c3:#d08a3e; --c4:#c46bb0;
+  --stage:#202426;
+  color-scheme:dark;
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
-@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
-body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
-body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
-a{color:var(--accent);text-underline-offset:3px}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:17px;line-height:1.6}
+a{color:var(--accent);text-underline-offset:2px}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.wrap{max-width:1220px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-h1,h2,h3,h4{font-family:var(--f-display);text-wrap:balance;margin:0;font-weight:700}
-h1{font-size:clamp(2.4rem,6.4vw,4.6rem);line-height:.98;font-stretch:118%;letter-spacing:-.01em}
-h2{font-size:clamp(1.6rem,3.2vw,2.35rem);line-height:1.08;font-stretch:108%}
-h3{font-size:1.18rem;line-height:1.2;font-stretch:104%}
-h4{font-size:.98rem;font-stretch:100%}
 p{margin:0}
-.mono{font-family:var(--f-mono)}
-.eyebrow{font-family:var(--f-mono);font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
-.muted{color:var(--muted)}
-.small{font-size:.86rem}
-.tiny{font-size:.76rem}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3,h4{font-family:var(--f-head);font-weight:600;margin:0;text-wrap:balance;letter-spacing:.005em}
+h1{font-size:clamp(2.4rem,5vw,3.4rem);line-height:1}
+h2{font-size:2rem;line-height:1.05}
+h3{font-size:1.3rem;line-height:1.15}
+h4{font-size:1.1rem}
+.muted{color:var(--muted)} .small{font-size:.9rem} .tiny{font-size:.8rem}
 .num{font-variant-numeric:tabular-nums}
 
-/* top bar */
-.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in oklab,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
-.top .wrap{display:flex;align-items:center;gap:20px;padding-block:10px}
-.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--fg)}
-.brand svg{width:22px;height:28px}
-.brand b{font-family:var(--f-display);font-stretch:125%;font-weight:700;letter-spacing:.22em;font-size:.95rem}
-.nav{display:flex;gap:16px;margin-left:auto;overflow-x:auto;scrollbar-width:none;min-width:0}
-.nav::-webkit-scrollbar{display:none}
-.nav a{color:var(--muted);text-decoration:none;font-size:.85rem;white-space:nowrap}
-.nav a:hover{color:var(--fg)}
-.themebtn{border:1px solid var(--line2);background:transparent;color:var(--muted);border-radius:6px;padding:4px 8px;font:inherit;font-size:.78rem;cursor:pointer;flex:none}
+/* masthead */
+.mast{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:8px 24px;padding-block:28px 14px;border-bottom:3px solid var(--fg)}
+.mast .left{display:flex;align-items:flex-end;gap:14px}
+.mast svg{width:30px;height:44px;color:var(--accent);flex:none}
+.mast .meta{font-family:var(--f-head);font-size:1rem;color:var(--muted);text-align:right;line-height:1.3}
+.themebtn{font:inherit;font-family:var(--f-head);font-size:.95rem;background:none;border:0;border-bottom:1px solid var(--line2);color:var(--muted);cursor:pointer;padding:0 0 1px;margin-left:10px}
+.contents{display:flex;flex-wrap:wrap;gap:4px 18px;padding-block:10px;border-bottom:1px solid var(--line);font-family:var(--f-head);font-size:1rem}
+.contents a{color:var(--fg);text-decoration:none}
+.contents a:hover{color:var(--accent)}
+.contents b{color:var(--accent);font-weight:600;margin-right:3px}
 
-/* hero */
-.hero{padding-block:44px 18px;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:32px;align-items:end}
-.hero .lede{font-size:1.08rem;color:var(--muted);max-width:60ch;margin-top:16px}
-.pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
-.pill{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.04em;border:1px solid var(--line2);border-radius:999px;padding:3px 10px;color:var(--muted)}
-.pill.warn{border-color:color-mix(in oklab,var(--warn) 55%,transparent);color:var(--warn)}
-.verdict{border-left:2px solid var(--tannin);padding-left:16px;color:var(--fg);font-size:.98rem}
-.verdict strong{color:var(--tannin);font-family:var(--f-mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;display:block;margin-bottom:6px;font-weight:500}
+.intro{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:40px;padding-block:28px 24px}
+.intro p+p{margin-top:12px}
+.status{font-size:.92rem;border-top:1px solid var(--line);padding-top:10px;margin-top:16px;color:var(--muted)}
+.status b{color:var(--fg)}
+.aside{font-size:.95rem;color:var(--muted);border-left:3px solid var(--accent);padding-left:16px;align-self:start}
+.aside h4{color:var(--fg);margin-bottom:6px}
 
-/* configurator */
-.bench{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--bg2)}
-.stage{position:relative;min-height:560px;background:radial-gradient(120% 90% at 50% 35%,var(--stage1),var(--stage2));}
+/* bench */
+.bench{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:0 28px;border-top:1px solid var(--fg)}
+.stage{position:relative;height:500px;background:var(--stage)}
 .stage canvas{display:block;width:100%;height:100%;position:absolute;inset:0;cursor:grab}
 .stage canvas:active{cursor:grabbing}
-.stage .ovl{position:absolute;display:flex;gap:6px;flex-wrap:wrap;z-index:2}
-.ovl.tl{top:12px;left:12px;right:12px}
-.ovl.bl{bottom:12px;left:12px;right:12px}
-.sbtn{font:inherit;font-size:.78rem;padding:6px 11px;border-radius:999px;border:1px solid color-mix(in oklab,var(--fg) 22%,transparent);background:color-mix(in oklab,var(--bg) 70%,transparent);color:var(--fg);cursor:pointer;backdrop-filter:blur(6px)}
-.sbtn:hover{border-color:var(--accent)}
-.sbtn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-.stage .note{position:absolute;right:12px;bottom:52px;font-family:var(--f-mono);font-size:.68rem;color:var(--faint);z-index:2;text-align:right;max-width:46%}
-.tip3d{position:absolute;z-index:3;pointer-events:none;background:var(--bg2);border:1px solid var(--line2);border-radius:6px;padding:6px 9px;font-size:.78rem;max-width:240px;box-shadow:0 6px 20px rgba(0,0,0,.25)}
-.tip3d b{display:block;font-size:.8rem}
-.loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-family:var(--f-mono);font-size:.8rem}
-.panel{border-left:1px solid var(--line);padding:16px;display:flex;flex-direction:column;gap:14px;max-height:560px;overflow-y:auto}
+.loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:.9rem}
+.tip3d{position:absolute;z-index:3;pointer-events:none;background:var(--bg2);border:1px solid var(--fg);padding:3px 7px;font-family:var(--f-head);font-size:.95rem;max-width:240px}
+.tip3d b{font-weight:500}
+.toolbar{display:flex;flex-wrap:wrap;gap:6px 20px;align-items:center;padding-block:10px;border-bottom:1px solid var(--line);font-family:var(--f-head);font-size:1rem}
+.toolbar .grp{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.toolbar .grp>span{color:var(--faint);margin-right:4px}
+.sbtn{font:inherit;font-size:.98rem;padding:2px 9px;border:1px solid var(--line2);border-radius:2px;background:var(--bg2);color:var(--fg);cursor:pointer}
+.sbtn:hover{border-color:var(--fg)}
+.sbtn[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.panel{padding-block:12px;display:flex;flex-direction:column;gap:14px}
 fieldset{border:0;margin:0;padding:0;min-width:0}
-legend{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:6px;padding:0}
-.chips{display:flex;flex-wrap:wrap;gap:6px}
-.chips input{position:absolute;opacity:0;pointer-events:none}
-.chips label{font-size:.8rem;padding:5px 10px;border:1px solid var(--line2);border-radius:7px;cursor:pointer;color:var(--fg);background:var(--bg3);line-height:1.25}
-.chips label small{display:block;font-family:var(--f-mono);font-size:.64rem;color:var(--faint)}
-.chips input:checked+label{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:color-mix(in oklab,var(--accent) 14%,var(--bg3))}
-.chips input:focus-visible+label{outline:2px solid var(--accent);outline-offset:2px}
-.swatch{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;border:1px solid color-mix(in oklab,var(--fg) 25%,transparent)}
-.readout{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--line)}
-.readout>div{padding:14px 16px;border-right:1px solid var(--line);min-width:0}
-.readout>div:last-child{border-right:0}
-.readout .k{font-family:var(--f-mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
-.readout .v{font-family:var(--f-display);font-stretch:110%;font-size:1.55rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.15;margin-top:2px}
-.readout .s{font-size:.78rem;color:var(--muted)}
-.gate{display:inline-flex;align-items:center;gap:6px;font-family:var(--f-mono);font-size:.7rem;padding:2px 8px;border-radius:999px;margin-top:4px}
-.gate::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
-.gate.good{color:var(--good);background:color-mix(in oklab,var(--good) 14%,transparent)}
-.gate.warn{color:var(--warn);background:color-mix(in oklab,var(--warn) 14%,transparent)}
-.gate.bad{color:var(--bad);background:color-mix(in oklab,var(--bad) 14%,transparent)}
-.specline{padding:12px 16px;border-top:1px solid var(--line);font-size:.84rem;color:var(--muted)}
+legend{font-family:var(--f-head);font-weight:600;font-size:1.05rem;padding:0;margin-bottom:3px}
+.chips{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 7px;align-items:baseline;font-size:.92rem}
+.chips input{accent-color:var(--accent);margin:0;transform:translateY(1px)}
+.chips label{cursor:pointer;line-height:1.35}
+.chips label small{color:var(--faint);font-size:.82rem;margin-left:4px}
+.swatch{display:inline-block;width:.8em;height:.8em;margin-right:5px;vertical-align:-1px;border:1px solid var(--line2)}
+.readout{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-bottom:1px solid var(--line)}
+.readout>div{padding:10px 14px 12px 0;min-width:0}
+.readout>div+div{padding-left:14px;border-left:1px solid var(--line)}
+.k{font-family:var(--f-head);font-size:.95rem;color:var(--muted)}
+.v{font-family:var(--f-head);font-weight:600;font-size:1.9rem;line-height:1.1;font-variant-numeric:tabular-nums}
+.s{font-size:.82rem;color:var(--muted)}
+.gate{font-size:.82rem;font-style:italic}
+.gate.good{color:var(--good)} .gate.warn{color:var(--warn)} .gate.bad{color:var(--bad)}
+.specline{grid-column:1/-1;padding-block:8px;font-size:.88rem;color:var(--muted)}
 .specline b{color:var(--fg);font-weight:600}
+.benchcap{font-size:.85rem;color:var(--muted);font-style:italic;margin-top:6px;max-width:80ch}
 
 /* sections */
-section.sec{padding-block:64px 8px}
-.sechead{display:grid;grid-template-columns:56px minmax(0,1fr);gap:16px;align-items:start;margin-bottom:26px}
-.staff{width:44px;height:64px;color:var(--accent)}
-.sechead .eyebrow{display:block;margin-bottom:6px}
-.sechead p{color:var(--muted);max-width:70ch;margin-top:10px}
-.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
-.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
-.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
-.card{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:20px;min-width:0}
-.card h3{margin-bottom:8px}
-.card p+p{margin-top:10px}
-.card ul{margin:10px 0 0;padding-left:18px}
-.card li{margin:4px 0}
-.prose{max-width:72ch}
-.prose p+p{margin-top:12px}
-.tag{display:inline-block;font-family:var(--f-mono);font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:4px;border:1px solid var(--line2);color:var(--muted);vertical-align:2px}
-.tag.est{color:var(--warn);border-color:color-mix(in oklab,var(--warn) 50%,transparent)}
-.tag.src{color:var(--good);border-color:color-mix(in oklab,var(--good) 50%,transparent)}
-.tag.gate2{color:var(--tannin);border-color:color-mix(in oklab,var(--tannin) 55%,transparent)}
-.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--bg2)}
-table{border-collapse:collapse;width:100%;font-size:.88rem}
-th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
-th{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:500;background:var(--bg3);white-space:nowrap}
-tr:last-child td{border-bottom:0}
+.sec{display:grid;grid-template-columns:64px minmax(0,1fr);gap:0 20px;padding-block:52px 0}
+.secnum{font-family:var(--f-head);font-weight:700;font-size:2.6rem;line-height:.9;color:var(--accent)}
+.sec h2{margin-bottom:8px}
+.lead{max-width:68ch;color:var(--muted);margin-bottom:22px}
+.cols3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px}
+.cols2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px}
+.cols4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px}
+.block{border-top:1px solid var(--fg);padding-top:10px;min-width:0}
+.block h3{margin-bottom:6px}
+.block p{font-size:.95rem}
+.block p+p{margin-top:8px}
+.block ul{margin:6px 0 0;padding-left:18px;font-size:.95rem}
+.block li{margin:3px 0}
+.block .role{font-family:var(--f-head);color:var(--accent);font-size:1rem}
+.tag{font-family:var(--f-head);font-size:.85rem;font-style:normal;color:var(--muted);white-space:nowrap}
+.tag::before{content:"["} .tag::after{content:"]"}
+.tag.est{color:var(--warn)} .tag.src{color:var(--good)} .tag.gate2{color:var(--tannin)}
+
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+thead th{font-family:var(--f-head);font-weight:600;font-size:1rem;text-align:left;padding:6px 12px 6px 0;border-top:2px solid var(--fg);border-bottom:1px solid var(--fg);white-space:nowrap;color:var(--fg)}
+td{padding:8px 12px 8px 0;border-bottom:1px solid var(--line);vertical-align:top}
 td.r,th.r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-tr.total td{font-weight:700;background:color-mix(in oklab,var(--accent) 8%,transparent)}
+tr.total td{font-weight:600;border-top:1px solid var(--fg)}
 .neg{color:var(--bad)} .pos{color:var(--good)}
-.drawing{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:14px;overflow-x:auto}
-.drawing svg{display:block;width:100%;height:auto;min-width:640px}
-.drawing.narrow svg{min-width:0}
-.drawing figcaption{font-size:.8rem;color:var(--muted);margin-top:8px}
+.chal td{min-width:190px}
+.chal td:first-child{min-width:150px;font-weight:600}
+
+figure{margin:0}
+.fig{overflow-x:auto}
+.fig svg{display:block;width:100%;height:auto;min-width:640px}
+.fig.narrow svg{min-width:0}
+figcaption{font-size:.85rem;color:var(--muted);margin-top:6px;font-style:italic}
+figcaption b{font-style:normal;color:var(--fg)}
 svg text{font-family:var(--f-mono)}
 .dw-line{stroke:var(--fg);fill:none}
 .dw-thin{stroke:var(--muted);fill:none;stroke-width:1}
@@ -159,95 +145,67 @@ svg text{font-family:var(--f-mono)}
 .dw-txt-acc{fill:var(--accent);font-size:11px}
 .dw-txt-fg{fill:var(--fg);font-size:12px}
 
-/* challenge table */
-.chal td:first-child{font-family:var(--f-mono);font-size:.8rem;color:var(--muted);white-space:nowrap}
-.chal td:nth-child(2){min-width:180px}
-.chal td{min-width:200px}
-
-/* ledger */
-.ledger{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
-.ledger .card h3{display:flex;align-items:center;gap:8px}
-.dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none}
-
-/* products */
-.prod{display:flex;flex-direction:column;gap:10px}
-.prod .price{font-family:var(--f-display);font-stretch:112%;font-size:2rem;font-weight:700;line-height:1}
-.prod dl{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;margin:0;font-size:.84rem}
-.prod dt{color:var(--faint);font-family:var(--f-mono);font-size:.72rem;padding-top:2px}
-.prod dd{margin:0}
-
 /* model */
-.model{display:grid;grid-template-columns:340px minmax(0,1fr);gap:20px;align-items:start}
-.inputs{display:flex;flex-direction:column;gap:14px}
-.inrow{display:grid;grid-template-columns:minmax(0,1fr) 92px;gap:8px;align-items:center;font-size:.85rem}
-.inrow label{color:var(--muted)}
-.inrow input,.yr input{width:100%;font:inherit;font-variant-numeric:tabular-nums;font-size:.86rem;padding:5px 7px;border-radius:6px;border:1px solid var(--line2);background:var(--bg3);color:var(--fg);text-align:right}
-.yr{width:100%;border-collapse:collapse}
-.yr th,.yr td{padding:4px 4px;border:0;font-size:.8rem;background:transparent}
-.yr th{font-size:.64rem}
-.outs{display:flex;flex-direction:column;gap:20px;min-width:0}
-.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;border:1px solid var(--line);border-radius:10px;background:var(--bg2);overflow:hidden}
-.kpis>div{padding:14px 16px;border-right:1px solid var(--line);min-width:0}
-.kpis>div:last-child{border-right:0}
-.chart{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:16px;position:relative;min-width:0}
-.chart h4{margin-bottom:4px}
+.model{display:grid;grid-template-columns:300px minmax(0,1fr);gap:32px;align-items:start}
+.inputs{display:flex;flex-direction:column;gap:9px;border-top:1px solid var(--fg);padding-top:10px}
+.inrow{display:grid;grid-template-columns:minmax(0,1fr) 84px;gap:8px;align-items:center;font-size:.9rem}
+.inrow input,.yr input{width:100%;font:inherit;font-variant-numeric:tabular-nums;font-size:.9rem;padding:3px 6px;border:1px solid var(--line2);border-radius:2px;background:var(--bg2);color:var(--fg);text-align:right}
+.yr{width:100%}
+.yr th,.yr td{padding:3px 3px;border:0;font-size:.88rem}
+.yr thead th{border:0;font-size:.95rem}
+.outs{display:flex;flex-direction:column;gap:28px;min-width:0}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:2px solid var(--fg);border-bottom:1px solid var(--line)}
+.kpis>div{padding:8px 12px 10px 0;min-width:0}
+.kpis>div+div{padding-left:12px;border-left:1px solid var(--line)}
+.chart{position:relative;min-width:0}
+.chart h4{margin-bottom:2px}
 .chart svg{display:block;width:100%;height:auto}
-.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.78rem;color:var(--muted);margin:6px 0 4px}
-.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
-.heat{border-collapse:separate;border-spacing:2px;width:100%;font-size:.78rem}
-.heat th,.heat td{padding:7px 4px;text-align:center;border:0;border-radius:4px;background:transparent}
-.heat th{font-size:.64rem}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.85rem;color:var(--muted);margin:4px 0}
+.legend i{display:inline-block;width:10px;height:10px;margin-right:5px;vertical-align:-1px}
+.heat{border-collapse:separate;border-spacing:2px;width:100%;font-size:.84rem}
+.heat th,.heat td{padding:6px 4px;text-align:center;border:0}
+.heat thead th{border:0;font-size:.92rem}
 .heat td{font-variant-numeric:tabular-nums;color:var(--fg)}
 .heat td.cur{outline:2px solid var(--fg);outline-offset:-2px}
-.ctip{position:absolute;pointer-events:none;background:var(--bg3);border:1px solid var(--line2);border-radius:6px;padding:6px 9px;font-size:.78rem;z-index:5;white-space:nowrap}
 
 /* brand */
-.logos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
-.logo-card{background:var(--bg2);border:1px solid var(--line);border-radius:10px;overflow:hidden}
-.logo-card .art{aspect-ratio:4/3;display:grid;place-items:center;background:var(--bg3);color:var(--fg);max-width:100%}
-.logo-card .art svg{width:78%;height:auto}
-.logo-card .cap{padding:14px 16px;font-size:.85rem;color:var(--muted)}
-.logo-card .cap b{color:var(--fg);display:block;margin-bottom:4px}
-.pal{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
-.pal div{border-radius:8px;border:1px solid var(--line);overflow:hidden;font-size:.76rem}
-.pal span{display:block;height:64px}
-.pal p{padding:8px 10px}
-.pal p b{display:block;font-size:.8rem}
+.logo{border-top:1px solid var(--fg);padding-top:10px}
+.logo .art{aspect-ratio:2/1;display:grid;place-items:center;background:var(--bg3);color:var(--fg);max-width:100%}
+.logo .art svg{width:82%;height:auto}
+.logo p{font-size:.92rem;color:var(--muted);margin-top:8px}
+.logo p b{color:var(--fg)}
+.pal{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:8px}
+.pal span{display:block;height:48px;border:1px solid var(--line)}
+.pal p{font-size:.8rem;margin-top:4px;line-height:1.3}
+.pal p b{display:block;font-family:var(--f-head);font-size:.95rem;font-weight:600}
 
 /* steps */
-.steps{display:flex;flex-direction:column;gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--bg2)}
-.step{display:grid;grid-template-columns:120px minmax(0,1fr) 150px;gap:16px;padding:16px 18px;border-bottom:1px solid var(--line);align-items:start}
-.step:last-child{border-bottom:0}
-.step .when{font-family:var(--f-mono);font-size:.78rem;color:var(--accent)}
-.step .kind{font-family:var(--f-mono);font-size:.7rem;color:var(--faint);text-align:right}
-.step h4{margin-bottom:4px}
-.step p{font-size:.88rem;color:var(--muted)}
-.foot{padding-block:48px 64px;color:var(--faint);font-size:.8rem}
-.foot ul{padding-left:18px}
-.foot li{margin:4px 0}
+.steps{border-top:2px solid var(--fg)}
+.step{display:grid;grid-template-columns:130px minmax(0,1fr) 150px;gap:16px;padding-block:12px;border-bottom:1px solid var(--line)}
+.step .when{font-family:var(--f-head);font-size:1.05rem;color:var(--accent)}
+.step .kind{font-size:.85rem;color:var(--muted);text-align:right}
+.step p{font-size:.94rem;color:var(--muted)}
+.foot{padding-block:48px 56px;margin-top:56px;border-top:3px solid var(--fg);color:var(--muted);font-size:.85rem}
+.foot ul{padding-left:18px} .foot li{margin:3px 0}
 
-@media (max-width:980px){
-  .bench{grid-template-columns:1fr}
-  .panel{border-left:0;border-top:1px solid var(--line);max-height:none}
-  .stage{min-height:420px}
-  .hero{grid-template-columns:1fr}
-  .model{grid-template-columns:1fr}
-  .grid4{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .logos{grid-template-columns:1fr 1fr}
+@media (max-width:900px){
+  .bench{grid-template-columns:minmax(0,1fr)}
+  .intro,.model{grid-template-columns:minmax(0,1fr)}
+  .cols4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stage{height:400px}
 }
-@media (max-width:700px){
-  .grid2,.grid3,.ledger,.logos{grid-template-columns:1fr}
+@media (max-width:640px){
+  .cols2,.cols3,.cols4{grid-template-columns:minmax(0,1fr)}
+  .sec{grid-template-columns:minmax(0,1fr)}
+  .secnum{font-size:2rem;margin-bottom:4px}
   .readout,.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .readout>div:nth-child(2),.kpis>div:nth-child(2){border-right:0}
+  .readout>div:nth-child(3),.kpis>div:nth-child(3){padding-left:0;border-left:0}
   .readout>div:nth-child(-n+2),.kpis>div:nth-child(-n+2){border-bottom:1px solid var(--line)}
-  .stage{min-height:320px}
-  .stage .note{display:none}
-  .pal{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .step{grid-template-columns:1fr}
+  .stage{height:300px}
+  .pal{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .step{grid-template-columns:1fr;gap:4px}
   .step .kind{text-align:left}
-  .nav{display:none}
-  .sechead{grid-template-columns:36px minmax(0,1fr)}
-  .staff{width:30px;height:44px}
+  .mast .meta{text-align:left}
 }
 </style>
 
@@ -258,119 +216,134 @@ svg text{font-family:var(--f-mono)}
   </defs>
 </svg>
 
-<header class="top">
-  <div class="wrap">
-    <a class="brand" href="#top" aria-label="Estuary, back to top"><svg aria-hidden="true" style="color:var(--accent)"><use href="#staffE"/></svg><b>ESTUARY</b></a>
-    <nav class="nav" aria-label="Sections">
-      <a href="#verdict">Verdict</a><a href="#product">Product</a><a href="#engineering">Engineering</a><a href="#competition">Competition</a><a href="#brand">Brand</a><a href="#sourcing">Sourcing</a><a href="#model">Model</a><a href="#market">Marketing</a><a href="#exit">Exit</a><a href="#next">Next</a>
-    </nav>
-    <button class="themebtn" id="themeBtn" type="button">Theme</button>
-  </div>
-</header>
-
-<main id="top">
 <div class="wrap">
-  <div class="hero">
-    <div>
-      <span class="eyebrow">Project Estuary · partner rewrite · 27 Nov 2026</span>
-      <h1 style="margin-top:12px">Every rod,<br>measured.</h1>
-      <p class="lede">An inshore rod brand for the Gulf Coast, built overseas and sold on proof. Every rod leaves the factory with its own measured weight, power and action printed on a serialized card. The rod below is a working model of the launch spec. Swap a part and the cost, weight and margin update.</p>
-      <div class="pills"><span class="pill warn">Concept stage</span><span class="pill">No prototypes yet</span><span class="pill">No supplier quotes yet</span><span class="pill">No sales yet</span></div>
-    </div>
-    <div class="verdict"><strong>Partner verdict</strong>Keep the deck's honesty and its narrow start. Replace "without the luxury markup" with proof. As written, the product is a white-label spec: a good blank, Fuji parts and cork, which every brand from $150 to $300 already sells. At realistic 2026 costs the margins don't support wholesale. This plan adds three things a competitor can't copy in one season and resets the numbers to what can be checked.</div>
-  </div>
+<header class="mast" id="top">
+  <div class="left"><svg aria-hidden="true"><use href="#staffE"/></svg><h1>Estuary Rod Co.</h1></div>
+  <div class="meta">Rewrite of the Project Estuary pitch<br>Draft 2 · 27 November 2026<button class="themebtn" id="themeBtn" type="button">Theme</button></div>
+</header>
+<nav class="contents" aria-label="Contents">
+  <a href="#verdict"><b>1</b>Changes</a><a href="#product"><b>2</b>Product</a><a href="#engineering"><b>3</b>Drawings</a><a href="#competition"><b>4</b>Competitors</a><a href="#brand"><b>5</b>Brand</a><a href="#sourcing"><b>6</b>Factories and cost</a><a href="#model"><b>7</b>Financial model</a><a href="#market"><b>8</b>Marketing</a><a href="#exit"><b>9</b>Exit</a><a href="#next"><b>10</b>Next steps</a>
+</nav>
 
-  <div class="bench" id="bench">
+<main>
+<div class="intro">
+  <div>
+    <p>This is my rewrite of the Project Estuary deck, written the way I'd write it as a founding partner. The deck is careful and honest, and starting small on the Gulf Coast with two rods is the right call. The weak spot is the product. Two spinning rods with Fuji guides and a cork grip describe almost every inshore rod sold between $150 and $300, so a customer, a shop or a future buyer has no particular reason to pick this one.</p>
+    <p>I've added three features that give it a reason, and redone the cost model with the duty rates that apply in late 2026. The numbers come out tighter than the deck shows.</p>
+    <p class="status"><b>Status:</b> concept only. There are no prototypes, supplier quotes, sales or partners yet. Anything marked as an estimate is my own figure and still needs checking.</p>
+  </div>
+  <div class="aside">
+    <h4>The three additions</h4>
+    <p>1. Every rod is measured at the factory and ships with its own numbers on a card.</p>
+    <p style="margin-top:6px">2. Hardware and service built around how rods fail in salt water.</p>
+    <p style="margin-top:6px">3. Later, a handle that unlocks and moves between blanks.</p>
+  </div>
+</div>
+
+<div class="bench" id="bench">
+  <div>
     <div class="stage" id="stage">
-      <div class="loading" id="loading">Loading 3D bench…</div>
-      <div class="ovl tl" role="group" aria-label="Camera views">
-        <button class="sbtn" data-view="full" aria-pressed="true" type="button">Full rod</button>
-        <button class="sbtn" data-view="handle" aria-pressed="false" type="button">Handle</button>
-        <button class="sbtn" data-view="guides" aria-pressed="false" type="button">Guide train</button>
-        <button class="sbtn" data-view="tip" aria-pressed="false" type="button">Tip</button>
-      </div>
-      <div class="ovl bl" role="group" aria-label="Animations">
-        <button class="sbtn" id="bLoad" type="button" aria-pressed="false">Load test</button>
-        <button class="sbtn" id="bExplode" type="button" aria-pressed="false">Exploded view</button>
-        <button class="sbtn" id="bDetach" type="button" aria-pressed="false" hidden>Unlock handle</button>
-        <button class="sbtn" id="bReel" type="button" aria-pressed="true">Reel</button>
-        <button class="sbtn" id="bSway" type="button" aria-pressed="true">Turntable</button>
-      </div>
-      <div class="note" id="stageNote">Concept render. Load test shows a modeled bend shape, not a measured curve.</div>
+      <div class="loading" id="loading">Loading the 3D model…</div>
       <div class="tip3d" id="tip3d" hidden></div>
     </div>
-    <form class="panel" id="cfg" onsubmit="return false">
-      <fieldset><legend>Model</legend><div class="chips" id="g-model"></div></fieldset>
-      <fieldset><legend>Handle</legend><div class="chips" id="g-handle"></div></fieldset>
-      <fieldset><legend>Reel seat</legend><div class="chips" id="g-seat"></div></fieldset>
-      <fieldset><legend>Guide train</legend><div class="chips" id="g-guides"></div></fieldset>
-      <fieldset><legend>Blank finish</legend><div class="chips" id="g-finish"></div></fieldset>
-      <fieldset><legend>Thread trim</legend><div class="chips" id="g-trim"></div></fieldset>
-    </form>
-    <div class="readout" style="grid-column:1/-1">
-      <div><div class="k">Factory cost (FOB)</div><div class="v" id="rFob">$—</div><div class="s" id="rFobR">range</div></div>
-      <div><div class="k">Landed + excise</div><div class="v" id="rLand">$—</div><div class="s" id="rLandS">duty scenario</div></div>
-      <div><div class="k">Suggested retail</div><div class="v" id="rMsrp">$—</div><div class="s" id="rGate"></div></div>
-      <div><div class="k">Contribution per rod</div><div class="v" id="rCon">$—</div><div class="s" id="rConS">DTC / wholesale</div></div>
+    <div class="toolbar">
+      <div class="grp" role="group" aria-label="Camera views"><span>View</span>
+        <button class="sbtn" data-view="full" aria-pressed="true" type="button">Full rod</button>
+        <button class="sbtn" data-view="handle" aria-pressed="false" type="button">Handle</button>
+        <button class="sbtn" data-view="guides" aria-pressed="false" type="button">Guides</button>
+        <button class="sbtn" data-view="tip" aria-pressed="false" type="button">Tip</button>
+      </div>
+      <div class="grp" role="group" aria-label="Animations"><span>Show</span>
+        <button class="sbtn" id="bLoad" type="button" aria-pressed="false">Load test</button>
+        <button class="sbtn" id="bExplode" type="button" aria-pressed="false">Parts apart</button>
+        <button class="sbtn" id="bDetach" type="button" aria-pressed="false" hidden>Unlock handle</button>
+        <button class="sbtn" id="bReel" type="button" aria-pressed="true">Reel</button>
+        <button class="sbtn" id="bSway" type="button" aria-pressed="true">Turn slowly</button>
+      </div>
     </div>
-    <div class="specline" style="grid-column:1/-1" id="specline"></div>
   </div>
-  <p class="tiny muted" style="margin-top:8px">Costs are my planning estimates for a 500-unit order, not supplier quotes. Weight is estimated to about ±15%. Margins use the inputs in the financial model below, so changing the duty or CAC there changes these numbers.</p>
+  <form class="panel" id="cfg" onsubmit="return false">
+    <fieldset><legend>Model</legend><div class="chips" id="g-model"></div></fieldset>
+    <fieldset><legend>Handle</legend><div class="chips" id="g-handle"></div></fieldset>
+    <fieldset><legend>Reel seat</legend><div class="chips" id="g-seat"></div></fieldset>
+    <fieldset><legend>Guides</legend><div class="chips" id="g-guides"></div></fieldset>
+    <fieldset><legend>Blank color</legend><div class="chips" id="g-finish"></div></fieldset>
+    <fieldset><legend>Thread color</legend><div class="chips" id="g-trim"></div></fieldset>
+  </form>
+  <div class="readout">
+    <div><div class="k">Factory price (FOB)</div><div class="v" id="rFob">$—</div><div class="s" id="rFobR"></div></div>
+    <div><div class="k">Landed, with excise</div><div class="v" id="rLand">$—</div><div class="s" id="rLandS"></div></div>
+    <div><div class="k">Retail price</div><div class="v" id="rMsrp">$—</div><div class="s" id="rGate"></div></div>
+    <div><div class="k">Profit per rod before overhead</div><div class="v" id="rCon">$—</div><div class="s" id="rConS"></div></div>
+  </div>
+  <div class="specline" id="specline"></div>
+</div>
+<p class="benchcap">The launch rod, modeled to the spec in section 3. Drag to turn it, scroll to zoom, and hover over a part to see its name. Changing a part updates the figures under the model. The figures use my estimates for a 500-rod order and the settings in the financial model (section 7). The load test shows a modeled bend shape, not measured data.</p>
 
-  <!-- 1 VERDICT -->
-  <section class="sec" id="verdict">
-    <div class="sechead"><svg class="staff" aria-hidden="true"><use href="#staffE"/></svg><div><span class="eyebrow">01 · What changes</span><h2>Twelve assumptions, challenged</h2><p>Each row names what the deck assumes, why that won't hold up with an investor or a factory, what to replace it with, and how to settle it with evidence rather than opinion.</p></div></div>
-    <div class="tablewrap"><table class="chal">
-      <thead><tr><th>Deck says</th><th>Problem</th><th>Rewrite</th><th>Settle it by</th></tr></thead>
-      <tbody>
-        <tr><td>"$42 landed cost"</td><td>No quote behind it. My bottom-up estimate for this spec at 500 units is $34–$61 FOB before duty and freight.</td><td>Model $44 FOB in Year 1 and set a hard design-to-cost ceiling of $38 FOB by Year 3.</td><td>Three itemized RFQs, from Taiwan, Vietnam and China, priced at 300, 500 and 1,000 units.</td></tr>
-        <tr><td>"Without the luxury markup"</td><td>That is value positioning. Okuma and Abu win on value with scale you will never have. It also contradicts "premium".</td><td>Position on proof: <em>every rod, measured</em>. Price in the gap between Mojo-class and Avid-class rods.</td><td>A price test in interviews and refundable reservations split across $179, $199 and $219.</td></tr>
-        <tr><td>$159 / $179 MSRP</td><td>At a realistic landed cost, wholesale at 50% of MSRP leaves about $15–20 per rod. One warranty claim can erase that.</td><td>Launch at $199 (Flats) and $219 (Channel). Go DTC-heavy until landed cost is ≤24% of MSRP.</td><td>The configurator's wholesale gate, and real quotes.</td></tr>
-        <tr><td>Shimano Zodias B benchmark</td><td>Zodias is a freshwater bass rod, so it is the wrong comparison for Gulf inshore.</td><td>Benchmark Shimano's inshore line, Teramar, and confirm the current models.</td><td>Buy or borrow the rods and measure them on your fixture.</td></tr>
-        <tr><td>$25 CAC</td><td>Optimistic for an unknown $200 hard good with a long consideration cycle.</td><td>Model $38 as the base case and stress-test it at $60. Build the guide and shop channel so CAC falls.</td><td>A $1–2K paid test after launch, measured as cost per first order.</td></tr>
-        <tr><td>$18 DTC fulfillment</td><td>A one-piece 7′ rod ships in an ~86″ box, and long parcels pick up carrier surcharges.</td><td>Model $21 and quote USPS, UPS and a 3PL with the real box size.</td><td>Carrier rate tools with 88×4×4 in, 2 lb.</td></tr>
-        <tr><td>"Confirm HTS duties" footnote</td><td>The tariff regime changed twice in 2026. IEEPA tariffs were struck down on 20 Feb, the 10% §122 tariff expired on 24 Jul, and new §301 duties of 10–12.5% now apply to most partners. Country choice now moves landed cost by double digits.</td><td>Make duty a scenario input. The model ships with Taiwan, Vietnam and China presets.</td><td>A licensed customs broker's ruling on HTS 9507.10 plus the Chapter 99 lines for each origin.</td></tr>
-        <tr><td>$85K Year-1 fixed cost</td><td>Excludes founder pay, product-liability insurance and IP filings. That's fine for a bootstrapped case, but say so.</td><td>$90K, with legal/IP, insurance, samples, fixture and content itemized. No founder salary.</td><td>Insurance and trademark-attorney quotes.</td></tr>
-        <tr><td>Name "ESTUARY"</td><td>It describes where the product is used, which makes it a weak trademark that is hard to defend and worth less to a buyer.</td><td>Run a knockout search now. Keep ESTUARY as a line name if needed, and screen coined alternatives.</td><td>USPTO search in Class 28 and an attorney clearance opinion.</td></tr>
-        <tr><td>"Co-design blank taper"</td><td>Unless the contract says you own the mandrel and layup, the factory can sell your taper to anyone.</td><td>Start on the factory's existing mandrels with your own layup and measured targets. Commission and own custom mandrels in Phase 2.</td><td>Tooling-ownership and NNN clauses in the supply agreement.</td></tr>
-        <tr><td>$2–3M exit at 4–6× $500K EBITDA</td><td>The deck's own Year 3 shows $210K operating profit. At my estimates it is about $0.1M. $500K EBITDA is roughly a $4–5M-revenue business.</td><td>State exit scenarios with the revenue each one requires. Treat the exit as an outcome of the business, not a plan.</td><td>Track normalized EBITDA quarterly from Year 2.</td></tr>
-        <tr><td>Travel rod as Phase 2</td><td>Four-piece ferrules are the hardest engineering in the line, for an unproven segment.</td><td>Phase 2 becomes the Keel modular handle, which serves existing buyers. Travel becomes Phase 3 and is gated on demand.</td><td>Reservation counts and Keel fatigue-test results.</td></tr>
-      </tbody>
-    </table></div>
-  </section>
+<section class="sec" id="verdict"><div class="secnum">1</div><div>
+  <h2>What I'd change in the deck</h2>
+  <p class="lead">Twelve places where the deck assumes something it can't back up yet, what I'd put there instead, and how to find out for sure.</p>
+  <div class="tablewrap"><table class="chal">
+    <thead><tr><th>The deck says</th><th>The problem</th><th>Replace with</th><th>How to check</th></tr></thead>
+    <tbody>
+      <tr><td>$42 landed cost</td><td>There's no quote behind it. My own estimate for this spec at 500 rods is $34–61 from the factory, before duty and freight.</td><td>Use $44 for Year 1, and set $38 as the most a rod may cost from the factory by Year 3.</td><td>Itemized quotes from factories in Taiwan, Vietnam and China at 300, 500 and 1,000 rods.</td></tr>
+      <tr><td>"Without the luxury markup"</td><td>That's a value pitch. Okuma and Abu Garcia already own value and have far more scale. It also clashes with calling the brand premium.</td><td>Sell on proof: every rod measured. Price it between St. Croix's Mojo and Avid lines.</td><td>Ask about price in interviews and take refundable reservations at $179, $199 and $219.</td></tr>
+      <tr><td>$159 and $179 retail</td><td>With a realistic landed cost, selling to shops at half of retail leaves about $15–20 a rod. One warranty claim wipes that out.</td><td>Launch at $199 (Flats) and $219 (Channel). Sell mostly direct until landed cost is 24% of retail or less.</td><td>The check under the 3D model, then real quotes.</td></tr>
+      <tr><td>Shimano Zodias as a benchmark</td><td>Zodias is a freshwater bass rod.</td><td>Compare against Shimano's inshore line (Teramar) and confirm the current models.</td><td>Borrow the rods and measure them on the rig.</td></tr>
+      <tr><td>$25 to win a customer</td><td>That's low for a $200 rod from a brand nobody has heard of.</td><td>Use $38, test it at $60, and build the guide and shop channels so it falls over time.</td><td>Spend $1–2K on ads after launch and divide by first orders.</td></tr>
+      <tr><td>$18 to ship a rod</td><td>A one-piece 7-foot rod goes in a box about 86 inches long, and carriers add surcharges for long parcels.</td><td>Use $21, and get real quotes.</td><td>USPS, UPS and a fulfillment company, quoted for an 88 × 4 × 4 in box at 2 lb.</td></tr>
+      <tr><td>"Confirm HTS duties" in a footnote</td><td>US tariffs on imports changed twice in 2026. The IEEPA tariffs were struck down on 20 February, the 10% Section 122 tariff that replaced them ran out on 24 July, and new Section 301 duties of 10–12.5% now cover most countries. Where you build now changes cost by double digits.</td><td>Make duty an input. The model has settings for Taiwan, Vietnam and China.</td><td>A licensed customs broker, for HTS 9507.10 and the extra duties for each country.</td></tr>
+      <tr><td>$85K in Year 1 overhead</td><td>It leaves out pay for the founder, product liability insurance and trademark filings. That's fine for a self-funded start, as long as the deck says so.</td><td>$90K, with legal, insurance, samples, the measuring rig and content listed separately. No founder salary.</td><td>Quotes from an insurer and a trademark attorney.</td></tr>
+      <tr><td>The name "Estuary"</td><td>It describes where the rod is used. Descriptive names are hard to register and defend, and a buyer will notice.</td><td>Search it now. If it's weak, keep Estuary as the name of the inshore line and find a made-up name for the company.</td><td>USPTO search in Class 28, then an attorney's opinion.</td></tr>
+      <tr><td>Co-designing the blank taper</td><td>Unless the contract says you own the mandrel and the layup, the factory can sell the same taper to anyone.</td><td>Start on the factory's existing mandrels with your own layup and measured targets. Pay for your own mandrels in Phase 2.</td><td>Ownership and NNN (non-use, non-disclosure, non-circumvention) clauses in the supply contract.</td></tr>
+      <tr><td>A $2–3M sale at 4–6× $500K profit</td><td>The deck's own Year 3 shows $210K operating profit, and my estimate is about $0.1M. Earning $500K a year takes roughly $4–5M in sales.</td><td>List exit scenarios with the sales each one needs, and build the business first.</td><td>Track adjusted profit every quarter from Year 2.</td></tr>
+      <tr><td>Travel rod as Phase 2</td><td>Four-piece ferrules are the hardest engineering in the line, for a market nobody has tested yet.</td><td>Make the modular handle Phase 2, since it sells to existing customers. Move the travel rod to Phase 3 and only build it if demand shows up.</td><td>Reservation counts, and the handle's fatigue tests.</td></tr>
+    </tbody>
+  </table></div>
 
-  <section class="sec" id="ledger" style="padding-top:40px">
-    <div class="ledger">
-      <div class="card"><h3><span class="dot" style="background:var(--good)"></span>Done</h3><ul class="small"><li>16-slide concept deck with an honest risk framing</li><li>Public price benchmarks for five competitors</li><li>Working name and visual identity (not cleared)</li><li>This rewrite: spec, cost model, test plan</li></ul></div>
-      <div class="card"><h3><span class="dot" style="background:var(--warn)"></span>Next, being pursued</h3><ul class="small"><li>Trademark knockout search</li><li>30 angler and 10 shop interviews with a price test</li><li>RFQ pack to three factories</li><li>Measurement fixture plus six benchmark rods measured</li></ul></div>
-      <div class="card"><h3><span class="dot" style="background:var(--faint)"></span>Ambitious, later</h3><ul class="small"><li>300–500-rod pilot lot (mid-2027 at the earliest)</li><li>Regional dealer network with reorders</li><li>Keel modular platform (patent only if novel)</li><li>Strategic sale, a 6–8-year horizon</li></ul></div>
-    </div>
-  </section>
+  <div class="tablewrap" style="margin-top:28px"><table>
+    <thead><tr><th>Done</th><th>Next</th><th>Later, if things work</th></tr></thead>
+    <tbody>
+      <tr><td>The 16-slide concept deck</td><td>Trademark search</td><td>A pilot run of 300–500 rods, mid-2027 at the earliest</td></tr>
+      <tr><td>Public prices for five competitors</td><td>30 angler and 10 shop interviews, with a price test</td><td>Regional dealers who reorder</td></tr>
+      <tr><td>A working name and look (not cleared)</td><td>Quote requests to three factories</td><td>The modular handle, patented only if it's new</td></tr>
+      <tr><td>This rewrite: spec, costs, test plan</td><td>Build the measuring rig and measure six competitor rods</td><td>A sale of the company, 6–8 years out</td></tr>
+    </tbody>
+  </table></div>
+</div></section>
 
-  <!-- 2 PRODUCT -->
-  <section class="sec" id="product">
-    <div class="sechead"><svg class="staff" aria-hidden="true"><use href="#staffE"/></svg><div><span class="eyebrow">02 · Product</span><h2>Three things only this brand has</h2><p>Blanks, Fuji guides and cork are table stakes. Differentiation has to come from what the customer can see, check and feel. It should also leave the company owning something a buyer would pay for.</p></div></div>
-    <div class="grid3">
-      <div class="card"><span class="tag src">Core · launch</span><h3 style="margin-top:10px">The measured spec card</h3><p class="small">Every rod is measured at the factory on a simple fixture: weight to 0.1 g, balance point with a reference 2500 reel, tip deflection under a 1.00 lb reference load and the resulting action angle. The numbers print on a serialized card in the tube and go to a public lot page.</p><p class="small"><b>Why it matters:</b> "Medium, Fast" means different things at every brand. A measured number does not. Each lot page shows the spread, so tight tolerances become visible proof.</p><p class="small"><b>What you own:</b> a growing dataset of every rod you've made, plus the process. It is copyable, but big brands rarely publish per-unit spread.</p><p class="small muted">Estimated cost: $0.60–$1.50 per rod plus a ~$400–900 fixture.</p></div>
-      <div class="card"><span class="tag src">Core · launch</span><h3 style="margin-top:10px">Salt-service design</h3><p class="small">Designed for the way inshore rods actually fail: a broken tip, a cracked insert, a corroded seat, a car-door snap.</p><ul class="small"><li>SiC on titanium frames as the "Ti" upgrade</li><li>No bare aluminum touching stainless, to avoid galvanic corrosion in salt</li><li>O-ring sealed hood, and the fore grip sealed to the blank</li><li>Spare tip tops and guides sold, with re-wraps through partner shops</li><li>Blank-only replacement price for breakage</li></ul><p class="small"><b>What you own:</b> warranty data and lower service cost per claim.</p></div>
-      <div class="card"><span class="tag gate2">Phase 2 · gated</span><h3 style="margin-top:10px">Keel Lock modular handle</h3><p class="small">A machined collar locks a sealed handle module onto a ground spigot on the blank, with a key that aligns the reel to the guides. One premium handle can then move between a Flats blank and a Channel blank.</p><p class="small"><b>Why it matters:</b> a second technique costs the angler a $129 blank, not a $219 rod. It shortens what has to fit in a car or kayak, and it creates repeat purchases.</p><p class="small"><b>Risk:</b> detachable handles go back decades, so a utility patent may be impossible. Ship it only if it passes the fatigue gate in §03. Fixed-handle rods are the fallback.</p></div>
-    </div>
+<section class="sec" id="product"><div class="secnum">2</div><div>
+  <h2>The product</h2>
+  <p class="lead">Rods in this price range share the same blank materials, Fuji guides and cork. On a rack they look interchangeable. The brand needs things a customer can see and check, and things the company ends up owning.</p>
+  <div class="cols3">
+    <div class="block"><h3>A measured card in every tube <span class="tag src">launch</span></h3>
+      <p>Each rod goes on a simple rig at the factory. We record its weight to 0.1 g, its balance point with a standard 2500 reel, how far the tip drops under a 1 lb weight, and the action angle that results. Those numbers go on a numbered card in the tube and on a web page for that production batch.</p>
+      <p>Power and action ratings aren't standardized, so one brand's medium can be another's medium-light. A measurement gets around that. The company also builds up a record of every rod it has made, which helps quality control and is something a buyer can examine.</p>
+      <p>A big brand could copy the card, but most don't publish how much their rods vary. My guess is the numbers wouldn't flatter them.</p>
+      <p class="muted">Roughly $0.60–1.50 a rod, plus $400–900 for the rig.</p></div>
+    <div class="block"><h3>Built for salt water <span class="tag src">launch</span></h3>
+      <p>Inshore rods mostly fail in a few ways: a broken tip, a cracked guide insert, a corroded reel seat, a car door. The design goes after those.</p>
+      <ul><li>Silicon carbide rings on titanium frames as the upgrade</li><li>No bare aluminum touching stainless steel, which corrodes in salt</li><li>An O-ring in the reel seat hood, and a fore grip sealed to the blank</li><li>Spare tip tops and guides for sale, with re-wraps done by partner shops</li><li>A set price for a replacement blank after a break</li></ul>
+      <p style="margin-top:8px">Warranty claims cost less to handle this way, and the claim records show what to fix next.</p></div>
+    <div class="block"><h3>Keel Lock handle <span class="tag gate2">phase 2, after testing</span></h3>
+      <p>A machined collar locks the handle and reel seat onto a ground section at the base of the blank. A key lines the reel up with the guides. One handle then fits both the Flats and the Channel blank.</p>
+      <p>A second rod costs the angler $129 for a blank instead of $219. The rod packs shorter, and existing customers have something new to buy.</p>
+      <p>Detachable handles have been around for decades, so a utility patent may not be possible. It ships only if it passes the fatigue and break tests in section 3. If it doesn't, the line stays fixed-handle.</p></div>
+  </div>
+  <h3 style="margin:32px 0 8px">The line</h3>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Rod</th><th>When</th><th class="r">Price</th><th>Length, power, action</th><th>Lure</th><th>Line</th><th>Reel</th><th>For</th></tr></thead>
+    <tbody id="prodTable"></tbody>
+  </table></div>
+</div></section>
 
-    <div class="grid4" style="margin-top:20px" id="prodCards"></div>
-  </section>
-
-  <!-- 3 ENGINEERING -->
-  <section class="sec" id="engineering">
-    <div class="sechead"><svg class="staff" aria-hidden="true"><use href="#staffE"/></svg><div><span class="eyebrow">03 · Engineering</span><h2>Drawings a factory can quote from</h2><p>These are starting targets for the RFQ pack, not finished production drawings. Guide stations get finalized with a static-load string test on the first samples. Blank diameters come from the factory's mandrel plus measured deflection.</p></div></div>
-
-    <figure class="drawing" style="margin:0">
-      <svg id="dwElev" viewBox="0 0 1000 300" role="img" aria-label="Side elevation of the Flats 70M with handle zones and guide stations"></svg>
-      <figcaption>Fig. 1 · Flats 70M side elevation. Radii are exaggerated about 6× for legibility. Stations are measured in inches from the butt. Ring sizes are Fuji-style nominal sizes. The guide train is a KR-style layout: 20 → 12 → 8 choke, then 7 runners.</figcaption>
-    </figure>
-
-    <div class="grid2" style="margin-top:20px">
-      <figure class="drawing narrow" style="margin:0">
-        <svg viewBox="0 0 560 300" role="img" aria-label="Blank cross-section showing ply stack">
+<section class="sec" id="engineering"><div class="secnum">3</div><div>
+  <h2>Drawings</h2>
+  <p class="lead">These are starting targets to send with quote requests, not production drawings. Guide positions get set on the first samples with a static load test, and blank diameters depend on which mandrel the factory has.</p>
+  <figure class="fig"><svg id="dwElev" viewBox="0 0 1000 300" role="img" aria-label="Side elevation of the Flats 70M with handle zones and guide stations"></svg>
+    <figcaption><b>Fig. 1.</b> Flats 70M, side view. Diameters are drawn about six times too thick so they can be read. Guide positions are in inches from the butt, and ring sizes are Fuji's numbering. The guides step down 20, 12, 8, then 7s to the tip, in the style of Fuji's KR layout.</figcaption></figure>
+  <div class="cols2" style="margin-top:28px">
+    <figure class="fig narrow"><svg viewBox="0 0 560 300" role="img" aria-label="Blank cross-section showing ply stack">
           <g transform="translate(140 150)">
             <circle r="112" fill="var(--bg3)" stroke="var(--line2)"/>
             <circle r="108" fill="none" stroke="var(--c4)" stroke-width="5"/>
@@ -391,19 +364,13 @@ svg text{font-family:var(--f-mono)}
             <text x="306" y="270">by factory layup and deflection.</text>
           </g>
         </svg>
-        <figcaption>Fig. 2 · Blank layup concept. The hoop ply resists ovaling under load. The ±45° bias plies in the butt add torsional stiffness for hooksets and fish that turn. These are generic, decades-old techniques. Avoid naming or imitating proprietary constructions such as Shimano's Spiral-X.</figcaption>
-      </figure>
-      <div class="tablewrap">
-        <table>
-          <thead><tr><th>Station from tip</th><th class="r">Target OD</th><th>Flats 70M note</th></tr></thead>
-          <tbody id="taperBody"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <div style="margin-top:20px;display:grid;gap:20px">
-      <figure class="drawing" style="margin:0">
-        <svg viewBox="0 0 900 260" role="img" aria-label="Keel Lock joint longitudinal section">
+      <figcaption><b>Fig. 2.</b> Blank layers. The hoop layer keeps the blank from flattening under load. The ±45° layers in the butt add twisting stiffness for hooksets and fish that turn. Both are old, generic methods. Don't name or imitate proprietary constructions like Shimano's Spiral-X.</figcaption></figure>
+    <div class="tablewrap"><table>
+      <thead><tr><th>From tip</th><th class="r">Target diameter</th><th>Note</th></tr></thead>
+      <tbody id="taperBody"></tbody>
+    </table></div>
+  </div>
+  <figure class="fig" style="margin-top:28px"><svg viewBox="0 0 900 260" role="img" aria-label="Keel Lock joint longitudinal section">
           <rect x="60" y="48" width="470" height="34" fill="var(--bg3)" stroke="var(--line2)"/>
           <rect x="60" y="168" width="470" height="34" fill="var(--bg3)" stroke="var(--line2)"/>
           <text x="70" y="40" class="dw-txt">Handle module: grip + reel seat, sealed</text>
@@ -434,94 +401,82 @@ svg text{font-family:var(--f-mono)}
           <text x="300" y="130" class="dw-txt" style="fill:var(--fg)">Ground spigot, 1:40 taper</text>
           <text x="140" y="180" class="dw-txt" style="fill:var(--c2)">Bonded carbon sleeve</text>
         </svg>
-        <figcaption>Fig. 3 · Keel Lock joint, longitudinal section (Phase 2). The joint sits where bending load is highest, so it ships only after the fatigue and break gates below.</figcaption>
-      </figure>
-      <figure class="drawing" style="margin:0">
-        <svg viewBox="0 0 900 260" role="img" aria-label="Measurement fixture: clamp, rod, reference weight, grid">
+    <figcaption><b>Fig. 3.</b> Keel Lock joint, cut lengthwise (Phase 2). The joint sits where the rod bends hardest, so it waits on the fatigue and break tests below.</figcaption></figure>
+  <figure class="fig" style="margin-top:28px"><svg viewBox="0 0 900 260" role="img" aria-label="Measurement fixture: clamp, rod, reference weight, grid">
           <g stroke="var(--line)" stroke-width="1">
             <path d="M60 30 V230 M140 30 V230 M220 30 V230 M300 30 V230 M380 30 V230 M460 30 V230 M540 30 V230 M620 30 V230 M700 30 V230 M780 30 V230 M860 30 V230 M60 30 H860 M60 70 H860 M60 110 H860 M60 150 H860 M60 190 H860 M60 230 H860"/>
           </g>
           <rect x="40" y="88" width="90" height="44" rx="4" fill="var(--bg3)" stroke="var(--fg)"/>
-          <text x="85" y="150" text-anchor="middle" class="dw-txt">Clamp at reel seat</text>
+          <text x="85" y="150" text-anchor="middle" class="dw-txt">clamp at reel seat</text>
           <line x1="130" y1="110" x2="860" y2="110" stroke="var(--faint)" stroke-dasharray="5 5"/>
           <path d="M130 110 C 420 112, 640 130, 790 205" fill="none" stroke="var(--c1)" stroke-width="4"/>
           <line x1="790" y1="205" x2="790" y2="228" stroke="var(--fg)"/>
           <rect x="772" y="228" width="36" height="22" fill="var(--c3)" rx="3"/>
-          <text x="818" y="244" class="dw-txt">1.00 lb ref. load</text>
+          <text x="818" y="244" class="dw-txt">1.00 lb weight</text>
           <line x1="840" y1="110" x2="840" y2="205" class="dw-dim"/>
           <text x="846" y="160" class="dw-txt-acc">tip drop</text>
           <path d="M600 110 A 80 80 0 0 1 660 140" fill="none" stroke="var(--tannin)" stroke-width="1.5"/>
           <text x="610" y="96" class="dw-txt" style="fill:var(--tannin)">action angle</text>
           <text x="70" y="22" class="dw-txt">Grid board + phone camera on a fixed mount reads drop and angle. Scale weighs to 0.1 g.</text>
         </svg>
-        <figcaption>Fig. 4 · The measurement fixture, adapted from the Common Cents System approach to rod measurement. It is cheap and repeatable, and a factory can run it in 30–60 seconds per rod after training.</figcaption>
-      </figure>
-    </div>
+    <figcaption><b>Fig. 4.</b> The measuring rig, based on the Common Cents System way of rating rods. It is cheap to build and gives repeatable results. A trained factory worker can run a rod through it in 30–60 seconds.</figcaption></figure>
+  <h3 style="margin:32px 0 8px">Tests and what counts as a pass <span class="tag est">targets, nothing tested yet</span></h3>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Test</th><th>Method</th><th>How many</th><th>Pass</th></tr></thead>
+    <tbody>
+      <tr><td>Power and action</td><td>Tip drop under 1.00 lb on the rig, plus action angle</td><td>Every rod</td><td>Within 5% of the batch average for drop and 3° for angle. Rods outside that are pulled.</td></tr>
+      <tr><td>Weight and balance</td><td>Scale to 0.1 g. Balance point with a standard 2500 reel.</td><td>Every rod</td><td>Within 4 g of spec</td></tr>
+      <tr><td>Guide alignment</td><td>Sight down the rod on the rig</td><td>Every rod</td><td>Stripper guide and tip top line up by eye</td></tr>
+      <tr><td>Fatigue</td><td>Motorized rig flexes the rod to half its rated load</td><td>3 per model, each sample round</td><td>10,000 cycles with less than 3% change in tip drop</td></tr>
+      <tr><td>Break</td><td>High-stick and lift loads until it breaks</td><td>3 per model, each round</td><td>Record the breaking load. Ferrules and the Keel joint must not break before the blank does.</td></tr>
+      <tr><td>Salt</td><td>Salt spray chamber (ASTM B117) on guides, seat and hardware</td><td>2 sets per factory</td><td>No red rust and no loose inserts after 96 hours</td></tr>
+      <tr><td>Keel Lock (Phase 2)</td><td>Fatigue cycles, plus 200 assemblies in sandy salt water</td><td>5 joints</td><td>No play, no turning under 15 in·lb, and the joint as stiff as solid blank at that point</td></tr>
+      <tr><td>Blind casting test</td><td>20 or more anglers cast covered rods against two competitors</td><td>Before the pilot run</td><td>At least as good on feel, and preferred on weight or sensitivity. Write down what failed.</td></tr>
+    </tbody>
+  </table></div>
+</div></section>
 
-    <h3 style="margin:28px 0 12px">Test plan with pass gates <span class="tag est">targets, not results</span></h3>
-    <div class="tablewrap"><table>
-      <thead><tr><th>Test</th><th>Method</th><th>Sample</th><th>Pass gate (proposed)</th></tr></thead>
-      <tbody>
-        <tr><td>Power and action</td><td>Fixture deflection under 1.00 lb, action angle</td><td>100% of production</td><td>Within ±5% of the lot mean for deflection and ±3° for angle. Outliers are pulled, not sold.</td></tr>
-        <tr><td>Weight and balance</td><td>Scale to 0.1 g. Balance point with a reference 2500 reel.</td><td>100%</td><td>Within ±4 g of spec</td></tr>
-        <tr><td>Guide alignment</td><td>Sight-line jig on the fixture</td><td>100%</td><td>No visible misalignment between the stripper and the tip top</td></tr>
-        <tr><td>Cyclic fatigue</td><td>Flex to 50% of rated load, motorized rig</td><td>3 per SKU per sample round</td><td>10,000 cycles with deflection change under 3%</td></tr>
-        <tr><td>Break test</td><td>Controlled high-stick and lift loads to failure</td><td>3 per SKU per round</td><td>Failure load documented, with no failure at a ferrule or Keel joint below the blank's own failure load</td></tr>
-        <tr><td>Salt exposure</td><td>Neutral salt spray, ASTM B117, on guides, seat and hardware</td><td>2 sets per supplier</td><td>No red rust on frames or seat hardware at 96 h, and no insert loosening</td></tr>
-        <tr><td>Keel Lock (Phase 2)</td><td>Cycling plus 200 assemble/disassemble cycles in sandy salt water</td><td>5 joints</td><td>No measurable play, no rotation under 15 in·lb torque, and joint stiffness ≥ the solid blank at that station</td></tr>
-        <tr><td>Blind preference</td><td>20+ anglers cast covered rods against two benchmarks</td><td>Pilot gate</td><td>At least parity on feel and a preference on weight or sensitivity, with failures written down</td></tr>
-      </tbody>
-    </table></div>
-  </section>
+<section class="sec" id="competition"><div class="secnum">4</div><div>
+  <h2>Competitors</h2>
+  <p class="lead">Shimano and Daiwa spend more on materials research than this company ever will. St. Croix has the history and the warranty, Okuma has price, and Waterloo has Texas. From their public product pages, none of the five publishes measurements for individual rods or builds a line around salt-water service. That's the opening. Check it again before any ad uses the word "first".</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Brand</th><th>Inshore rod</th><th>Price</th><th>What they're good at</th><th>Don't compete on</th><th>Where Estuary can win</th></tr></thead>
+    <tbody>
+      <tr><td><b>St. Croix</b></td><td>Avid Inshore spinning</td><td>About $240–320 at big retailers <span class="tag src">checked Nov 2026</span></td><td>Made in the US, long warranty, lots of dealers</td><td>Warranty length or heritage</td><td>Measured specs for $40–80 less, and salt-water hardware</td></tr>
+      <tr><td><b>Waterloo</b></td><td>Salinity</td><td>$179.99 <span class="tag src">from the deck</span></td><td>Credibility on the Texas coast, rods for specific techniques</td><td>Texas guides in Year 1</td><td>Measured specs and the modular handle. Start in Louisiana and on Florida's Gulf coast as well as Texas.</td></tr>
+      <tr><td><b>Shimano</b></td><td>Teramar, not Zodias</td><td>Check current models <span class="tag est">to do</span></td><td>Materials research, matching reels, distribution</td><td>Claims about blank technology</td><td>A brand that only does inshore, a service program, batch data in public</td></tr>
+      <tr><td><b>Daiwa</b></td><td>Ardito-TR (travel)</td><td>Official page <span class="tag src">from the deck</span></td><td>Materials research, travel rods</td><td>Travel rods in Years 1–2</td><td>The modular handle as a different way to pack a rod</td></tr>
+      <tr><td><b>Okuma</b></td><td>Pulse Wave</td><td>From $99.99 <span class="tag src">from the deck</span></td><td>Low prices at high volume</td><td>Price</td><td>Measured specs, design and service</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small muted" style="margin-top:10px">Someone could copy the measured card within a year. It's harder to copy having done it first, the batch data behind it, and a service program that makes the rod cheaper to own over five years.</p>
+</div></section>
 
-  <!-- 4 COMPETITION -->
-  <section class="sec" id="competition">
-    <div class="sechead"><svg class="staff" aria-hidden="true"><use href="#staffE"/></svg><div><span class="eyebrow">04 · Competition</span><h2>Where to fight, and where not to</h2><p>You will not out-engineer Shimano or Daiwa on materials, out-heritage St. Croix, out-price Okuma or out-local Waterloo in Texas in Year 1. The opening is narrower than that, and it is real: nobody in this set publishes per-rod measured data or is built around salt service. That finding comes from public product pages only. Re-check it before claiming "first" in any ad.</p></div></div>
-    <div class="tablewrap"><table>
-      <thead><tr><th>Brand</th><th>Inshore reference</th><th>Price evidence</th><th>Their real edge</th><th>Don't fight them on</th><th>Estuary's opening</th></tr></thead>
-      <tbody>
-        <tr><td><b>St. Croix</b></td><td>Avid Inshore spinning</td><td>~$240–$320 street at major retailers <span class="tag src">Nov 2026</span></td><td>US-built heritage, long warranty, dealer reach</td><td>Warranty length and heritage story</td><td>Measured spec at about $40–80 less. Salt-service hardware.</td></tr>
-        <tr><td><b>Waterloo</b></td><td>Salinity</td><td>$179.99 <span class="tag src">deck, official page</span></td><td>Texas coast credibility, technique-specific actions</td><td>Texas guides in Year 1</td><td>Proof-based marketing plus modular handle. Start in Louisiana and Florida's Gulf coast as well as Texas.</td></tr>
-        <tr><td><b>Shimano</b></td><td>Teramar (not Zodias)</td><td>verify current models <span class="tag est">to check</span></td><td>Materials R&amp;D, rod + reel ecosystem, distribution</td><td>Blank technology claims</td><td>A focused inshore voice, a service program and lot transparency</td></tr>
-        <tr><td><b>Daiwa</b></td><td>Ardito-TR (travel)</td><td>official page <span class="tag src">deck</span></td><td>Materials R&amp;D, travel formats</td><td>Travel rods in Years 1–2</td><td>Keel modularity as a different answer to packability</td></tr>
-        <tr><td><b>Okuma</b></td><td>Pulse Wave</td><td>from $99.99 <span class="tag src">deck</span></td><td>Price and value at volume</td><td>Price, ever</td><td>Premium proof, design and service. Not a cheaper rod.</td></tr>
-      </tbody>
-    </table></div>
-    <p class="small muted" style="margin-top:10px">An incumbent can copy the measured card within a year. The moat is not the card. It is being the brand that started it, the lot data built up behind it, and a service program that makes the brand cheaper to own over five years.</p>
-  </section>
-
-  <!-- 5 BRAND -->
-  <section class="sec" id="brand">
-    <div class="sechead"><svg class="staff" aria-hidden="true"><use href="#staffE"/></svg><div><span class="eyebrow">05 · Brand</span><h2>A mark taken from the water itself</h2><p>Tide and river staff gauges are marked in a repeating "E" pattern every tenth of a foot. Anyone who fishes tidal water has seen one on a piling. The E of Estuary is that mark, so the logo is a measurement. That is the whole brand idea in one shape.</p></div></div>
-    <div class="logos">
-      <div class="logo-card"><div class="art"><svg viewBox="0 0 320 160" aria-label="Staff E logo concept"><use href="#staffE" x="24" y="38" width="56" height="84" style="color:var(--accent)"/><text x="96" y="92" font-family="Archivo, sans-serif" font-weight="700" font-size="34" letter-spacing="6" style="font-stretch:125%" fill="currentColor">ESTUARY</text><text x="98" y="114" font-size="10" letter-spacing="3" fill="var(--muted)">MEASURED ROD CO.</text><g stroke="var(--muted)"><line x1="14" y1="38" x2="20" y2="38"/><line x1="14" y1="59" x2="18" y2="59"/><line x1="14" y1="80" x2="20" y2="80"/><line x1="14" y1="101" x2="18" y2="101"/><line x1="14" y1="122" x2="20" y2="122"/></g></svg></div><div class="cap"><b>A · Staff E (recommended)</b>Works at 6 mm on a butt cap and on a 3-inch tube band. Repeated as a pattern, it becomes the packaging.</div></div>
-      <div class="logo-card"><div class="art"><svg viewBox="0 0 320 160" aria-label="Confluence logo concept"><path d="M30 50 C 90 50, 120 80, 170 80 M30 110 C 90 110, 120 80, 170 80 L 268 80" fill="none" stroke="var(--accent)" stroke-width="7" stroke-linecap="round"/><circle cx="282" cy="80" r="10" fill="none" stroke="var(--tannin)" stroke-width="5"/><text x="160" y="134" text-anchor="middle" font-family="Archivo, sans-serif" font-weight="700" font-size="16" letter-spacing="8" fill="currentColor">ESTUARY</text></svg></div><div class="cap"><b>B · Confluence</b>A river and the tide merge into a rod line that ends in a tip-top ring. Friendlier, but closer to generic "wave" marks.</div></div>
-      <div class="logo-card"><div class="art"><svg viewBox="0 0 320 160" aria-label="Lot seal logo concept"><defs><path id="ring" d="M160 80 m -58 0 a 58 58 0 1 1 116 0 a 58 58 0 1 1 -116 0"/></defs><circle cx="160" cy="80" r="70" fill="none" stroke="var(--line2)"/><circle cx="160" cy="80" r="46" fill="none" stroke="var(--line2)"/><text font-size="10.5" letter-spacing="2.4" fill="var(--muted)"><textPath href="#ring">EVERY ROD MEASURED · LOT 001 · GULF COAST ·</textPath></text><use href="#staffE" x="141" y="54" width="36" height="52" style="color:var(--tannin)"/></svg></div><div class="cap"><b>C · Lot seal</b>A secondary mark for the spec card, the lot page and the end cap. It is not a primary logo.</div></div>
-    </div>
-
-    <div class="grid2" style="margin-top:20px">
-      <div class="card">
-        <h3>Palette from an estuary at low tide</h3>
-        <div class="pal" style="margin-top:12px">
-          <div><span style="background:#13201f"></span><p><b>Marsh night</b>#13201F</p></div>
-          <div><span style="background:#6fb8a6"></span><p><b>Sea-glass</b>#6FB8A6</p></div>
-          <div><span style="background:#7a4a24"></span><p><b>Tannin</b>#7A4A24</p></div>
-          <div><span style="background:#e9e5da"></span><p><b>Salt</b>#E9E5DA</p></div>
-          <div><span style="background:#2b3134"></span><p><b>Graphite</b>#2B3134</p></div>
-        </div>
-        <p class="small muted" style="margin-top:12px">Tannin is the tea color of marsh runoff. It is the signature blank finish, and no big brand owns it in this category. Type: a wide grotesk for the wordmark and a mono for every measured number.</p>
+<section class="sec" id="brand"><div class="secnum">5</div><div>
+  <h2>Brand</h2>
+  <p class="lead">Tide and river gauges are marked with a repeating E shape every tenth of a foot. Anyone who fishes tidal water has seen one bolted to a piling. The logo uses that E, so the brand's mark is a measuring mark.</p>
+  <div class="cols3">
+    <div class="logo"><div class="art"><svg viewBox="0 0 320 160" aria-label="Staff E logo concept"><use href="#staffE" x="24" y="38" width="56" height="84" style="color:var(--accent)"/><text x="96" y="92" font-family="Archivo, sans-serif" font-weight="700" font-size="34" letter-spacing="6" style="font-stretch:125%" fill="currentColor">ESTUARY</text><text x="98" y="114" font-size="10" letter-spacing="3" fill="var(--muted)">ROD CO.</text><g stroke="var(--muted)"><line x1="14" y1="38" x2="20" y2="38"/><line x1="14" y1="59" x2="18" y2="59"/><line x1="14" y1="80" x2="20" y2="80"/><line x1="14" y1="101" x2="18" y2="101"/><line x1="14" y1="122" x2="20" y2="122"/></g></svg></div><p><b>A. Gauge E (my pick).</b> Readable at 6 mm on a butt cap. Repeated in a row, it becomes the pattern on the packaging.</p></div>
+    <div class="logo"><div class="art"><svg viewBox="0 0 320 160" aria-label="Confluence logo concept"><path d="M30 50 C 90 50, 120 80, 170 80 M30 110 C 90 110, 120 80, 170 80 L 268 80" fill="none" stroke="var(--accent)" stroke-width="7" stroke-linecap="round"/><circle cx="282" cy="80" r="10" fill="none" stroke="var(--tannin)" stroke-width="5"/><text x="160" y="134" text-anchor="middle" font-family="Archivo, sans-serif" font-weight="700" font-size="16" letter-spacing="8" fill="currentColor">ESTUARY</text></svg></div><p><b>B. Confluence.</b> A river and the tide join into a line that ends in a tip-top ring. Friendlier, but closer to the wave logos everyone already uses.</p></div>
+    <div class="logo"><div class="art"><svg viewBox="0 0 320 160" aria-label="Lot seal logo concept"><defs><path id="ring" d="M160 80 m -58 0 a 58 58 0 1 1 116 0 a 58 58 0 1 1 -116 0"/></defs><circle cx="160" cy="80" r="70" fill="none" stroke="var(--line2)"/><circle cx="160" cy="80" r="46" fill="none" stroke="var(--line2)"/><text font-size="10.5" letter-spacing="2.4" fill="var(--muted)"><textPath href="#ring">MEASURED AT THE FACTORY · BATCH 001 ·</textPath></text><use href="#staffE" x="141" y="54" width="36" height="52" style="color:var(--tannin)"/></svg></div><p><b>C. Batch seal.</b> A second mark for the spec card, the batch page and the rod tube end cap.</p></div>
+  </div>
+  <div class="cols2" style="margin-top:32px">
+    <div class="block"><h3>Colors</h3>
+      <div class="pal">
+        <div><span style="background:#13201f"></span><p><b>Marsh</b>#13201F</p></div>
+        <div><span style="background:#6fb8a6"></span><p><b>Sea-glass</b>#6FB8A6</p></div>
+        <div><span style="background:#7a4a24"></span><p><b>Tannin</b>#7A4A24</p></div>
+        <div><span style="background:#e9e5da"></span><p><b>Salt</b>#E9E5DA</p></div>
+        <div><span style="background:#b1361e"></span><p><b>Gauge red</b>#B1361E</p></div>
       </div>
-      <div class="card">
-        <h3>Name risk, before any spend on identity</h3>
-        <p class="small">"Estuary" describes where the rod is used. Descriptive marks can be refused registration or are hard to enforce, and a buyer prices that in. Search before printing anything.</p>
-        <ul class="small"><li><b>Keep:</b> ESTUARY, if a knockout search and attorney opinion come back clean</li><li><b>Fallback:</b> a coined house brand with "Estuary" as the inshore line name</li><li><b>Unscreened coined ideas:</b> Tidewright, Brackline, Saltgauge. These are not cleared, so search them before falling in love.</li></ul>
-        <p class="small muted">Official search: <a href="https://tmsearch.uspto.gov/" target="_blank" rel="noopener">USPTO trademark search</a>, Class 28 (fishing tackle).</p>
-      </div>
-    </div>
-
-    <div class="grid2" style="margin-top:20px">
-      <figure class="drawing narrow" style="margin:0">
-        <svg viewBox="0 0 560 300" role="img" aria-label="Packaging concept: printed rod tube and measured spec card">
+      <p style="margin-top:10px">Tannin is the tea color that marsh water turns. It's the standard blank color, and no big brand uses it in this category. Gauge red comes from the numbers painted on tide gauges.</p></div>
+    <div class="block"><h3>Check the name first</h3>
+      <p>"Estuary" describes where the rod gets used. Names like that can be refused registration or be hard to enforce. Search before printing anything.</p>
+      <ul><li>Keep ESTUARY if the search and an attorney's opinion come back clean</li><li>If not, use a made-up company name and keep Estuary as the inshore line</li><li>Made-up names to search, none checked yet: Tidewright, Brackline, Saltgauge</li></ul>
+      <p class="muted" style="margin-top:8px">Search at <a href="https://tmsearch.uspto.gov/" target="_blank" rel="noopener">USPTO trademark search</a>, Class 28 (fishing tackle).</p></div>
+  </div>
+  <div class="cols2" style="margin-top:32px">
+    <figure class="fig narrow"><svg viewBox="0 0 560 300" role="img" aria-label="Packaging concept: printed rod tube and measured spec card">
           <rect x="20" y="40" width="520" height="60" rx="30" fill="#b9946a"/>
           <rect x="20" y="40" width="70" height="60" rx="30" fill="#2b3134"/>
           <rect x="470" y="40" width="70" height="60" rx="30" fill="#2b3134"/>
@@ -551,205 +506,190 @@ svg text{font-family:var(--f-mono)}
           <text x="340" y="250" class="dw-txt">Back: line and lure ratings,</text>
           <text x="340" y="266" class="dw-txt">rinse and care, service link.</text>
         </svg>
-        <figcaption>Fig. 5 · Packaging. The staff-E marks alternate direction, as they do on a real gauge.</figcaption>
-      </figure>
-      <div class="card">
-        <h3>Voice</h3>
-        <p class="small">Plain, specific, a little dry. Numbers over adjectives.</p>
-        <ul class="small">
-          <li><b>Instead of</b> "insane sensitivity" → "4.1 oz on our scale. Here's the scale."</li>
-          <li><b>Instead of</b> "built tough" → "Lot 003 average failure load, and how we tested it."</li>
-          <li><b>Instead of</b> "limited drop!" → "Lot 004 is 300 rods in Tannin. When it's gone, the next lot is Graphite."</li>
-        </ul>
-        <h3 style="margin-top:16px">Won't do</h3>
-        <ul class="small"><li>Fake scarcity, gifted-for-review without disclosure, or bought reviews</li><li>Claims of "first" or "best" without a source</li><li>Pro-staff patches for people who don't fish the rods</li></ul>
-      </div>
-    </div>
-  </section>
+      <figcaption><b>Fig. 5.</b> Packaging. The E marks alternate direction, like on a real gauge. The card stays blank here because there's nothing measured yet. Never print sample numbers.</figcaption></figure>
+    <div class="block"><h3>How it talks</h3>
+      <p>Plain and specific, with numbers in place of adjectives.</p>
+      <ul><li>"Insane sensitivity" becomes "4.1 oz on our scale. Here's the scale."</li><li>"Built tough" becomes "Batch 003's average breaking load, and how we tested it."</li><li>"Limited drop!" becomes "Batch 004 is 300 rods in Tannin. The next batch is Graphite."</li></ul>
+      <h3 style="margin-top:16px">What it won't do</h3>
+      <ul><li>Invent scarcity, or post gifted reviews without saying so, or buy reviews</li><li>Say "first" or "best" without a source</li><li>Put pro-staff patches on people who don't fish the rods</li></ul></div>
+  </div>
+</div></section>
 
-  <!-- 6 SOURCING -->
-  <section class="sec" id="sourcing">
-    <div class="sechead"><svg class="staff" aria-hidden="true"><use href="#staffE"/></svg><div><span class="eyebrow">06 · Factory and cost</span><h2>Pick the factory with a scorecard, not a feeling</h2><p>No factory has been contacted. The country notes reflect US duty conditions as reported in November 2026 and must be confirmed by a licensed customs broker. The new §301 actions are under legal challenge and could change again.</p></div></div>
-    <div class="grid3">
-      <div class="card"><span class="tag">Engineering RFQ</span><h3 style="margin-top:8px">Taiwan</h3><p class="small">Deep rod and blank expertise and good prototype flexibility. Labor costs more. Reported Nov 2026 treatment: MFN plus §301 combined generally capped near 10%.</p><p class="small muted">Model preset: 10% total duty</p></div>
-      <div class="card"><span class="tag">Primary RFQ</span><h3 style="margin-top:8px">Vietnam</h3><p class="small">A growing export rod base. Verify that blanks are actually rolled there. A Chinese blank finished in Vietnam raises origin questions. Reported: 6% MFN plus 10–12.5% §301.</p><p class="small muted">Model preset: 18.5% total duty</p></div>
-      <div class="card"><span class="tag">Parallel RFQ</span><h3 style="margin-top:8px">China</h3><p class="small">The deepest ecosystem (the Weihai rod cluster) and usually the lowest FOB, but the highest duty stack: MFN plus legacy §301 plus the new §301. Use it as a cost benchmark even if you don't buy there.</p><p class="small muted">Model preset: 35% total duty (range ~24–44%)</p></div>
-    </div>
-
-    <div class="grid2" style="margin-top:20px">
-      <div class="tablewrap"><table>
-        <thead><tr><th>Factory scorecard criterion</th><th class="r">Weight</th></tr></thead>
-        <tbody>
-          <tr><td>Rolls its own blanks. Shows its mandrel library and documents its prepreg source.</td><td class="r">20</td></tr>
-          <tr><td>Quality system: in-line QC, AQL inspection, and willing to run our measurement step on 100% of rods</td><td class="r">20</td></tr>
-          <tr><td>Commercials: FOB at 300/500/1,000, MOQ, sample cost, payment terms (30/70 is typical)</td><td class="r">15</td></tr>
-          <tr><td>Origin and duty: documented, substantially transformed in-country</td><td class="r">15</td></tr>
-          <tr><td>Traceable genuine Fuji components (authorized purchase records)</td><td class="r">10</td></tr>
-          <tr><td>IP and tooling: we own mandrels, layups and handle tooling, with an NNN agreement signed</td><td class="r">10</td></tr>
-          <tr><td>References from existing US brands and a third-party audit</td><td class="r">10</td></tr>
-        </tbody>
-      </table></div>
-      <div class="card">
-        <h3>Gates from RFQ to first shipment</h3>
-        <ol class="small" style="padding-left:18px;margin:8px 0 0">
-          <li>NNN agreement, then the RFQ pack: drawings (Figs. 1–3), BOM, test plan</li>
-          <li>Paid samples from the top two factories. Expect 2–3 rounds.</li>
-          <li>Measure the samples on our fixture against six benchmark rods</li>
-          <li>Golden sample signed and sealed. The spec is frozen.</li>
-          <li>Pilot lot of 300–500. Third-party pre-shipment inspection (ISO 2859-1, AQL 2.5 major / 4.0 minor).</li>
-          <li>LCL ocean freight, customs broker entry, FET filed quarterly on <a href="https://www.irs.gov/forms-pubs/about-form-720" target="_blank" rel="noopener">IRS Form 720</a></li>
-        </ol>
-        <p class="small muted" style="margin-top:10px">Plan around factory closures for Lunar New Year in February 2027. Samples requested in January may not move until March.</p>
-      </div>
-    </div>
-
-    <div class="grid2" style="margin-top:20px">
-      <div>
-        <h3 style="margin-bottom:10px">Itemized cost of the rod on the bench <span class="tag est">estimates</span></h3>
-        <div class="tablewrap"><table>
-          <thead><tr><th>Line</th><th class="r">Low</th><th class="r">Base</th><th class="r">High</th></tr></thead>
-          <tbody id="bomBody"></tbody>
-        </table></div>
-        <p class="tiny muted" style="margin-top:6px">Per rod, FOB factory, 500 units. Factory overhead and margin are inside each line. Change the parts on the bench at the top and this table follows.</p>
-      </div>
-      <div class="chart" id="landChart">
-        <h4>From factory price to all-in cost</h4>
-        <p class="tiny muted" id="landSub"></p>
-        <div class="legend"><span><i style="background:var(--c1)"></i>FOB</span><span><i style="background:var(--c2)"></i>Duty</span><span><i style="background:var(--c3)"></i>Freight + broker</span><span><i style="background:var(--c4)"></i>Excise (FET)</span></div>
-        <svg id="landSvg" viewBox="0 0 560 170" role="img" aria-label="Stacked bar of cost per rod"></svg>
-        <p class="small" id="landNote" style="margin-top:6px"></p>
-      </div>
-    </div>
-  </section>
-
-  <!-- 7 MODEL -->
-  <section class="sec" id="model">
-    <div class="sechead"><svg class="staff" aria-hidden="true"><use href="#staffE"/></svg><div><span class="eyebrow">07 · Financial model</span><h2>Change any input. Watch what survives.</h2><p>This is an illustration, not a forecast. Every input is an assumption, and the defaults are my base case. The deck's model showed $47 contribution per rod. With 2026 duty, realistic CAC and a 500-unit FOB, a blended rod earns about the same in dollars on a higher price, and Year 3 is profitable but thin.</p></div></div>
-    <div class="model">
-      <form class="card inputs" id="fm" onsubmit="return false">
-        <div>
-          <legend style="font-family:var(--f-mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:6px">Duty scenario</legend>
-          <div class="chips" id="dutyChips"></div>
-        </div>
-        <div class="inrow"><label for="i-msrp">Blended MSRP ($)</label><input id="i-msrp" type="number" step="1"></div>
-        <div class="inrow"><label for="i-dtcReal">DTC price realized (% of MSRP)</label><input id="i-dtcReal" type="number" step="1"></div>
-        <div class="inrow"><label for="i-whPct">Wholesale price (% of MSRP)</label><input id="i-whPct" type="number" step="1"></div>
-        <div class="inrow"><label for="i-duty">Total duty on FOB (%)</label><input id="i-duty" type="number" step="0.5"></div>
-        <div class="inrow"><label for="i-freight">Inbound freight + broker ($/rod)</label><input id="i-freight" type="number" step="0.5"></div>
-        <div class="inrow"><label for="i-ship">DTC ship + pack ($/order)</label><input id="i-ship" type="number" step="0.5"></div>
-        <div class="inrow"><label for="i-cac">CAC per DTC order ($)</label><input id="i-cac" type="number" step="1"></div>
-        <div class="inrow"><label for="i-rep">Rep commission (% of wholesale)</label><input id="i-rep" type="number" step="0.5"></div>
-        <div class="inrow"><label for="i-acc">Parts + accessories per rod ($, 60% margin)</label><input id="i-acc" type="number" step="1"></div>
-        <table class="yr">
-          <thead><tr><th></th><th>Y1</th><th>Y2</th><th>Y3</th></tr></thead>
-          <tbody>
-            <tr><th scope="row" style="text-align:left">Rods sold</th><td><input id="u0" type="number" step="100" aria-label="Rods sold year 1"></td><td><input id="u1" type="number" step="100" aria-label="Rods sold year 2"></td><td><input id="u2" type="number" step="100" aria-label="Rods sold year 3"></td></tr>
-            <tr><th scope="row" style="text-align:left">DTC share %</th><td><input id="d0" type="number" step="5" aria-label="DTC share year 1"></td><td><input id="d1" type="number" step="5" aria-label="DTC share year 2"></td><td><input id="d2" type="number" step="5" aria-label="DTC share year 3"></td></tr>
-            <tr><th scope="row" style="text-align:left">FOB $</th><td><input id="f0" type="number" step="1" aria-label="FOB year 1"></td><td><input id="f1" type="number" step="1" aria-label="FOB year 2"></td><td><input id="f2" type="number" step="1" aria-label="FOB year 3"></td></tr>
-            <tr><th scope="row" style="text-align:left">Fixed $K</th><td><input id="x0" type="number" step="5" aria-label="Fixed costs year 1 in thousands"></td><td><input id="x1" type="number" step="5" aria-label="Fixed costs year 2 in thousands"></td><td><input id="x2" type="number" step="5" aria-label="Fixed costs year 3 in thousands"></td></tr>
-          </tbody>
-        </table>
-        <button class="sbtn" id="fmReset" type="button" style="align-self:flex-start">Reset to base case</button>
-      </form>
-      <div class="outs">
-        <div class="kpis">
-          <div><div class="k readout-k">Blended contribution</div><div class="v" id="kCon">—</div><div class="s" id="kConS"></div></div>
-          <div><div class="k readout-k">Year-1 break-even</div><div class="v" id="kBe">—</div><div class="s">rods at Year-1 mix</div></div>
-          <div><div class="k readout-k">Year-3 operating</div><div class="v" id="kY3">—</div><div class="s" id="kY3S"></div></div>
-          <div><div class="k readout-k">Peak inventory cash</div><div class="v" id="kInv">—</div><div class="s">Year 3, 5-month pipeline</div></div>
-        </div>
-        <div class="grid2">
-          <div class="tablewrap"><table>
-            <thead><tr><th>Per rod, Year 1</th><th class="r">DTC</th><th class="r">Wholesale</th></tr></thead>
-            <tbody id="ueBody"></tbody>
-          </table></div>
-          <div class="tablewrap"><table>
-            <thead><tr><th>Three-year view</th><th class="r">Y1</th><th class="r">Y2</th><th class="r">Y3</th></tr></thead>
-            <tbody id="plBody"></tbody>
-          </table></div>
-        </div>
-        <div class="chart" id="tornadoBox">
-          <h4>What moves Year-3 operating result most</h4>
-          <p class="tiny muted">Each input moved 20% down and 20% up, one at a time, from the current inputs.</p>
-          <div class="legend"><span><i style="background:var(--c1)"></i>Raises the result</span><span><i style="background:var(--c3)"></i>Lowers the result</span></div>
-          <svg id="tornado" viewBox="0 0 640 330" role="img" aria-label="Tornado chart of sensitivities"></svg>
-        </div>
-        <div class="chart" id="heatBox">
-          <h4>Blended contribution margin, by retail price and factory cost</h4>
-          <p class="tiny muted">At Year-3 channel mix and the current duty, freight and CAC. The outlined cell is closest to your current inputs. Below about 20%, the business can't carry its fixed costs at pilot scale.</p>
-          <div style="overflow-x:auto"><table class="heat" id="heat"></table></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 8 MARKET -->
-  <section class="sec" id="market">
-    <div class="sechead"><svg class="staff" aria-hidden="true"><use href="#staffE"/></svg><div><span class="eyebrow">08 · Marketing</span><h2>Guides' boats are the showroom</h2><p>Inshore anglers trust the guide they fished with and the shop they buy live bait from. Paid social comes last, not first. Every partner below is a role to recruit. None has been contacted, and no name is implied.</p></div></div>
-    <div class="grid4">
-      <div class="card"><span class="eyebrow">Tier 1 · 6–10 guides</span><h3 style="margin-top:6px">Field-test fleet</h3><p class="small">Working inshore guides across four regions: Texas middle coast, Louisiana marsh, Florida Gulf, and Charleston or Georgia. Each gets a demo set and a paid field-test contract. Clients who fish the rods buy with the guide's code at 10% commission.</p><p class="small muted">Gives you real abuse data, plus each guide puts the rods in 100+ client hands a season.</p></div>
-      <div class="card"><span class="eyebrow">Tier 2 · 2–4 creators</span><h3 style="margin-top:6px">Mid-size inshore channels</h3><p class="small">YouTube or Instagram creators with 10k–150k followers whose audience actually fishes the Gulf. Pay a flat fee for 3 videos plus an 8% affiliate, with FTC disclosure on every post. Content license is perpetual for brand use.</p><p class="small muted">Judge them by the comment section, not follower counts.</p></div>
-      <div class="card"><span class="eyebrow">Tier 3 · 1 partner</span><h3 style="margin-top:6px">Anchor advisor</h3><p class="small">After six months of working together, one respected guide or builder may get 0.5–2% equity with a 4-year vest and a 1-year cliff, tied to design input and their name on a signature lot.</p><p class="small muted">Never trade equity for a single post.</p></div>
-      <div class="card"><span class="eyebrow">Shops</span><h3 style="margin-top:6px">10 independent dealers</h3><p class="small">A demo rack of 2 rods with a printed lot sheet, and a casting day per season. Start on consignment or small opening orders, and track sell-through monthly.</p><p class="small muted">Reorders, not opening orders, prove demand.</p></div>
-    </div>
-    <div class="grid3" style="margin-top:20px">
-      <div class="card"><h3>Content pillars</h3><ul class="small"><li><b>The measuring board:</b> benchmarks, lot data, failures</li><li><b>Tide notes:</b> technique by region and season</li><li><b>Service bench:</b> rinse, re-wrap, replace a tip</li><li><b>Build log:</b> factory visits and sample rounds, including rejects</li></ul></div>
-      <div class="card"><h3>Desirability without hype</h3><ul class="small"><li>Numbered lots in honest quantities with a finish per lot</li><li>Tannin as the signature finish people recognize from across a dock</li><li>A lot page per rod, so owners can look up their own rod</li><li>Measuring days at shops: bring any rod and we measure it</li></ul></div>
-      <div class="card"><h3>Metrics that matter</h3><ul class="small"><li>Cost per first order by channel</li><li>Guide-code share of sales</li><li>Dealer sell-through and reorder rate</li><li>Warranty claims per 100 rods</li><li>Second purchase within 12 months (Keel blanks, parts)</li></ul></div>
-    </div>
-  </section>
-
-  <!-- 9 EXIT -->
-  <section class="sec" id="exit">
-    <div class="sechead"><svg class="staff" aria-hidden="true"><use href="#staffE"/></svg><div><span class="eyebrow">09 · Exit</span><h2>What a buyer would actually pay for</h2><p>A multimillion-dollar exit is possible in this industry, but most hardgoods startups never reach the first row below. No buyer interest exists. The multiples are hypothetical ranges, not market quotes.</p></div></div>
+<section class="sec" id="sourcing"><div class="secnum">6</div><div>
+  <h2>Factories and cost</h2>
+  <p class="lead">I haven't contacted any factory. The duty notes below reflect what was reported in November 2026 and need a licensed customs broker to confirm. The new Section 301 duties are being challenged in court and could change again.</p>
+  <div class="cols3">
+    <div class="block"><h3>Taiwan</h3><p>Long experience with rods and blanks, and flexible with prototypes. Labor costs more. Reported duty: the regular rate plus Section 301, capped near 10% combined.</p><p class="muted small">Ask them for engineering help. Model setting: 10%.</p></div>
+    <div class="block"><h3>Vietnam</h3><p>A growing rod export base. Check that the blanks are actually rolled there, because a Chinese blank finished in Vietnam can raise origin questions. Reported duty: 6% regular plus 10–12.5% Section 301.</p><p class="muted small">Main quote. Model setting: 18.5%.</p></div>
+    <div class="block"><h3>China</h3><p>The most suppliers (the rod factories around Weihai) and usually the lowest factory price. It also has the most duty stacked up: regular, the older Section 301 duties and the new ones.</p><p class="muted small">Get a quote to compare even if you buy elsewhere. Model setting: 35% (range about 24–44%).</p></div>
+  </div>
+  <div class="cols2" style="margin-top:28px">
     <div class="tablewrap"><table>
-      <thead><tr><th>Outcome</th><th>What has to be true</th><th class="r">Revenue</th><th class="r">EBITDA</th><th class="r">Hypothetical value</th></tr></thead>
+      <thead><tr><th>Scoring a factory</th><th class="r">Points</th></tr></thead>
       <tbody>
-        <tr><td><b>A · Profitable independent</b></td><td>Two to four rod SKUs, 20–40 dealers, DTC working. Owner-operated.</td><td class="r">$2–4M</td><td class="r">$0.2–0.5M</td><td class="r">$0.5–2M at 2.5–4×</td></tr>
-        <tr><td><b>B · Strategic tuck-in</b></td><td>A national specialty dealer base, the Keel platform shipping, two qualified factories, clean books. A team runs it without the founder.</td><td class="r">$8–15M</td><td class="r">$1.0–2.4M</td><td class="r">$5–19M at 5–8×</td></tr>
-        <tr><td><b>C · Platform</b></td><td>A second category (reels, apparel or terminal tackle) and growth above 25% a year</td><td class="r">$25M+</td><td class="r">$3M+</td><td class="r">Rare, so don't plan on it</td></tr>
+        <tr><td>Rolls its own blanks, shows its mandrels, and documents where its carbon comes from</td><td class="r">20</td></tr>
+        <tr><td>Checks quality during production, does AQL inspections, and will run our measuring step on every rod</td><td class="r">20</td></tr>
+        <tr><td>Price at 300, 500 and 1,000 rods, minimum order, sample cost and payment terms (30/70 is common)</td><td class="r">15</td></tr>
+        <tr><td>Country of origin is documented and the rod is really made there</td><td class="r">15</td></tr>
+        <tr><td>Buys genuine Fuji parts and has the records</td><td class="r">10</td></tr>
+        <tr><td>Agrees we own the mandrels, layups and handle tooling, and signs an NNN agreement</td><td class="r">10</td></tr>
+        <tr><td>Has US brands as references and passes a third-party audit</td><td class="r">10</td></tr>
       </tbody>
     </table></div>
-    <div class="grid2" style="margin-top:20px">
-      <div class="card"><h3>Acquisition-ready checklist</h3><ul class="small">
-        <li>Trademark registered in Class 28 in the US, with key export markets filed</li>
-        <li>Design patents on the handle and Keel collar. A utility patent only if a search shows novelty.</li>
-        <li>Contracts that say you own mandrels, layups and tooling</li>
-        <li>Two qualified factories in different countries</li>
-        <li>Lot measurement dataset and warranty-claim history</li>
-        <li>No retailer above 30% of revenue</li>
-        <li>Accrual books from Day 1, and reviewed financials by Year 3</li>
-        <li>Perpetual licenses to all creator content, and an owned email list</li>
-      </ul></div>
-      <div class="card"><h3>Likely buyer types</h3><p class="small">Large tackle groups such as Pure Fishing (sold by Newell in 2018 for about $1.3B), Rapala VMC, Johnson Outdoors and Globeride/Daiwa. Also distributors adding an owned brand, private-equity outdoor platforms, and retailers buying a brand rather than building private label.</p><p class="small muted">They buy a brand that is already growing in dealers they don't reach, with margins that survive their overhead. They don't buy concepts.</p></div>
+    <div class="block"><h3>From quote request to first shipment</h3>
+      <ol style="padding-left:20px;margin:6px 0 0;font-size:.95rem">
+        <li>Sign the NNN agreement, then send drawings (Figs. 1–3), parts list and test plan</li>
+        <li>Pay for samples from the top two factories. Plan on 2–3 rounds.</li>
+        <li>Measure the samples on our rig next to six competitor rods</li>
+        <li>Sign off on one golden sample and freeze the spec</li>
+        <li>Order a pilot run of 300–500, with an inspection company checking it before it ships (ISO 2859-1, AQL 2.5 major, 4.0 minor)</li>
+        <li>Ship by sea, clear customs through a broker, and pay excise tax quarterly on <a href="https://www.irs.gov/forms-pubs/about-form-720" target="_blank" rel="noopener">IRS Form 720</a></li>
+      </ol>
+      <p class="muted small" style="margin-top:8px">Factories close for weeks around Lunar New Year in February 2027. Samples requested in January may not ship until March.</p></div>
+  </div>
+  <div class="cols2" style="margin-top:28px">
+    <div>
+      <h3 style="margin-bottom:8px">What the rod above costs to make <span class="tag est">estimates</span></h3>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Item</th><th class="r">Low</th><th class="r">Likely</th><th class="r">High</th></tr></thead>
+        <tbody id="bomBody"></tbody>
+      </table></div>
+      <p class="tiny muted" style="margin-top:6px">Per rod at the factory, for 500 rods. Each line includes the factory's overhead and margin. Change parts on the model and this table changes with it.</p>
     </div>
-  </section>
-
-  <!-- 10 NEXT -->
-  <section class="sec" id="next">
-    <div class="sechead"><svg class="staff" aria-hidden="true"><use href="#staffE"/></svg><div><span class="eyebrow">10 · Next five actions</span><h2>Ninety days, cheapest proof first</h2><p>Only the Lunar New Year date is fixed. Every other date below is a target you set, so move it if school or other commitments need the time. None of these need money beyond a few hundred dollars except the samples.</p></div></div>
-    <div class="steps">
-      <div class="step"><div class="when">by 18 Dec 2026</div><div><h4>Trademark knockout search</h4><p>Search ESTUARY and three coined alternatives in <a href="https://tmsearch.uspto.gov/" target="_blank" rel="noopener">USPTO search</a>, Class 28. Pick a name before any spend on identity.</p></div><div class="kind">Free · 1 evening</div></div>
-      <div class="step"><div class="when">by 31 Jan 2027</div><div><h4>30 anglers, 10 shops</h4><p>Ask how rods break, corrode and travel, and what they paid last time. Run the $179/$199/$219 price test and ask whether a measured card would change their pick.</p></div><div class="kind">Free · weekends</div></div>
-      <div class="step"><div class="when">send by 15 Jan 2027</div><div><h4>RFQ pack to 3 factories</h4><p>Figs. 1–3, BOM, test plan and the NNN agreement. Ask for itemized FOB at 300, 500 and 1,000 units. Lunar New Year (6 Feb 2027) closes factories for weeks, so expect quotes in March.</p></div><div class="kind">Free · samples $300–900 later</div></div>
-      <div class="step"><div class="when">by 28 Feb 2027</div><div><h4>Build the fixture and measure 6 rods</h4><p>Borrow benchmark rods from shops (Avid Inshore, Salinity, Pulse Wave, Teramar) and measure them. That's the brand's first real data and first real content.</p></div><div class="kind">~$100–300</div></div>
-      <div class="step"><div class="when">optional · July 2027</div><div><h4>ICAST, if the samples are ready</h4><p>ICAST is a trade-only show in Orlando. Check eligibility and dates on the official site before planning. It is a stretch goal. Skip it if the samples aren't ready.</p></div><div class="kind">Optional · stretch</div></div>
+    <div class="chart" id="landChart">
+      <h4>From factory price to cost in the warehouse</h4>
+      <p class="tiny muted" id="landSub"></p>
+      <div class="legend"><span><i style="background:var(--c1)"></i>Factory</span><span><i style="background:var(--c2)"></i>Duty</span><span><i style="background:var(--c3)"></i>Freight and broker</span><span><i style="background:var(--c4)"></i>Excise tax</span></div>
+      <svg id="landSvg" viewBox="0 0 560 170" role="img" aria-label="Stacked bar of cost per rod"></svg>
+      <p class="small" id="landNote" style="margin-top:6px"></p>
     </div>
-  </section>
+  </div>
+</div></section>
 
-  <footer class="foot">
-    <p><b>Sources and status.</b> Competitor prices and the Pure Fishing sale come from the original deck's official sources unless marked otherwise. Duty and excise facts were checked against public reporting on 27 Nov 2026 and still need a licensed broker and tax adviser to confirm. Every cost, weight, price and projection not marked as sourced is a planning estimate. No prototypes, test results, supplier quotes, sales or partners exist yet.</p>
-    <ul>
-      <li><a href="https://www.hklaw.com/en/insights/publications/2026/02/supreme-court-strikes-down-ieepa-tariffs" target="_blank" rel="noopener">Holland &amp; Knight: Supreme Court strikes down IEEPA tariffs (Feb 2026)</a></li>
-      <li><a href="https://www.americanbar.org/groups/public_contract_law/resources/procurement-lawyer/2026-fall/ieepa-tariffs-struck-down-replacement-tariffs-expired/" target="_blank" rel="noopener">ABA: replacement §122 tariffs expired</a></li>
-      <li><a href="https://www.morganlewis.com/pubs/2026/07/us-administration-rebuilds-global-tariff-program-under-section-301" target="_blank" rel="noopener">Morgan Lewis: global tariff program rebuilt under §301 (Jul 2026)</a></li>
-      <li><a href="https://hts.usitc.gov/" target="_blank" rel="noopener">USITC Harmonized Tariff Schedule (9507.10, 6% general rate)</a></li>
-      <li><a href="https://www.law.cornell.edu/uscode/text/26/4161" target="_blank" rel="noopener">26 U.S.C. §4161: 10% excise on rods, capped at $10 per article</a></li>
-      <li><a href="https://stcroixrodfactorystore.com/products/avid-inshore-series-spinning" target="_blank" rel="noopener">St. Croix Avid Inshore spinning (factory store)</a> · <a href="https://www.fishusa.com/St.-Croix-Avid-Inshore-Spinning-Rod/" target="_blank" rel="noopener">FishUSA listing</a></li>
-    </ul>
-  </footer>
-</div>
+<section class="sec" id="model"><div class="secnum">7</div><div>
+  <h2>Financial model</h2>
+  <p class="lead">Every input is an assumption, and the defaults are my base case. Treat it as a way to see what matters, not a forecast. The deck showed $47 profit per rod before overhead. With 2026 duty, a more realistic cost to win customers and factory prices for 500 rods, you only get back to about that by charging more. Year 3 makes money, but not much.</p>
+  <div class="model">
+    <form class="inputs" id="fm" onsubmit="return false">
+      <fieldset><legend>Where it's made (sets duty)</legend><div class="chips" id="dutyChips"></div></fieldset>
+      <div class="inrow"><label for="i-msrp">Average retail price ($)</label><input id="i-msrp" type="number" step="1"></div>
+      <div class="inrow"><label for="i-dtcReal">Price actually paid online (% of retail)</label><input id="i-dtcReal" type="number" step="1"></div>
+      <div class="inrow"><label for="i-whPct">Price to shops (% of retail)</label><input id="i-whPct" type="number" step="1"></div>
+      <div class="inrow"><label for="i-duty">Duty on factory price (%)</label><input id="i-duty" type="number" step="0.5"></div>
+      <div class="inrow"><label for="i-freight">Freight and broker ($ per rod)</label><input id="i-freight" type="number" step="0.5"></div>
+      <div class="inrow"><label for="i-ship">Shipping an online order ($)</label><input id="i-ship" type="number" step="0.5"></div>
+      <div class="inrow"><label for="i-cac">Marketing cost per online order ($)</label><input id="i-cac" type="number" step="1"></div>
+      <div class="inrow"><label for="i-rep">Sales rep commission (% of shop price)</label><input id="i-rep" type="number" step="0.5"></div>
+      <div class="inrow"><label for="i-acc">Parts and extras sold per rod ($, 60% margin)</label><input id="i-acc" type="number" step="1"></div>
+      <table class="yr">
+        <thead><tr><th></th><th>Year 1</th><th>Year 2</th><th>Year 3</th></tr></thead>
+        <tbody>
+          <tr><td>Rods sold</td><td><input id="u0" type="number" step="100" aria-label="Rods sold year 1"></td><td><input id="u1" type="number" step="100" aria-label="Rods sold year 2"></td><td><input id="u2" type="number" step="100" aria-label="Rods sold year 3"></td></tr>
+          <tr><td>Sold online %</td><td><input id="d0" type="number" step="5" aria-label="Online share year 1"></td><td><input id="d1" type="number" step="5" aria-label="Online share year 2"></td><td><input id="d2" type="number" step="5" aria-label="Online share year 3"></td></tr>
+          <tr><td>Factory $</td><td><input id="f0" type="number" step="1" aria-label="Factory price year 1"></td><td><input id="f1" type="number" step="1" aria-label="Factory price year 2"></td><td><input id="f2" type="number" step="1" aria-label="Factory price year 3"></td></tr>
+          <tr><td>Overhead $K</td><td><input id="x0" type="number" step="5" aria-label="Overhead year 1 in thousands"></td><td><input id="x1" type="number" step="5" aria-label="Overhead year 2 in thousands"></td><td><input id="x2" type="number" step="5" aria-label="Overhead year 3 in thousands"></td></tr>
+        </tbody>
+      </table>
+      <button class="sbtn" id="fmReset" type="button" style="align-self:flex-start">Back to my base case</button>
+    </form>
+    <div class="outs">
+      <div class="kpis">
+        <div><div class="k">Profit per rod, Year 1</div><div class="v" id="kCon">—</div><div class="s" id="kConS"></div></div>
+        <div><div class="k">Rods to break even</div><div class="v" id="kBe">—</div><div class="s">Year 1 mix</div></div>
+        <div><div class="k">Year 3 profit</div><div class="v" id="kY3">—</div><div class="s" id="kY3S"></div></div>
+        <div><div class="k">Cash in stock</div><div class="v" id="kInv">—</div><div class="s">Year 3, 5 months' supply</div></div>
+      </div>
+      <div class="cols2">
+        <div class="tablewrap"><table>
+          <thead><tr><th>One rod, Year 1</th><th class="r">Online</th><th class="r">Shop</th></tr></thead>
+          <tbody id="ueBody"></tbody>
+        </table></div>
+        <div class="tablewrap"><table>
+          <thead><tr><th>Three years</th><th class="r">Y1</th><th class="r">Y2</th><th class="r">Y3</th></tr></thead>
+          <tbody id="plBody"></tbody>
+        </table></div>
+      </div>
+      <div class="chart" id="tornadoBox">
+        <h4>Which inputs move Year 3 profit the most</h4>
+        <p class="tiny muted">Each input moved 20% down and 20% up on its own, starting from the current settings.</p>
+        <div class="legend"><span><i style="background:var(--c1)"></i>Raises profit</span><span><i style="background:var(--c3)"></i>Lowers profit</span></div>
+        <svg id="tornado" viewBox="0 0 640 330" role="img" aria-label="Sensitivity of Year 3 profit to each input"></svg>
+      </div>
+      <div class="chart" id="heatBox">
+        <h4>Profit per rod as a share of sales, by retail price and factory price</h4>
+        <p class="tiny muted">Uses Year 3's online/shop split and the current duty, freight and marketing cost. The outlined cell is closest to the current settings. Below about 20%, a small company can't cover its overhead.</p>
+        <div style="overflow-x:auto"><table class="heat" id="heat"></table></div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="sec" id="market"><div class="secnum">8</div><div>
+  <h2>Marketing</h2>
+  <p class="lead">Inshore anglers mostly trust the guides they've fished with and the shops where they buy bait, so marketing starts there. Paid ads come later, once there's something worth pointing them at. The partners below are roles to fill. Nobody has been contacted.</p>
+  <div class="cols4">
+    <div class="block"><span class="role">6–10 guides</span><h3>Guide fleet</h3><p>Working inshore guides on the middle Texas coast, the Louisiana marsh, Florida's Gulf coast and around Charleston or Georgia. Each gets a set of rods and a paid testing contract. Clients who buy with the guide's code earn the guide 10%.</p><p class="muted">You get real wear-and-tear data, and each guide puts the rods in 100+ clients' hands a season.</p></div>
+    <div class="block"><span class="role">2–4 creators</span><h3>Fishing channels</h3><p>YouTube or Instagram creators with 10,000–150,000 followers who actually fish the Gulf. A flat fee for three videos plus 8% of sales, disclosed on every post as the FTC requires. Estuary can reuse the footage indefinitely.</p><p class="muted">Read their comments to see whether the audience fishes.</p></div>
+    <div class="block"><span class="role">1 advisor</span><h3>One long-term partner</h3><p>After six months of working together, one respected guide or rod builder might get 0.5–2% of the company. That share vests over four years, with nothing in the first year, and comes with real design input and their name on one batch.</p><p class="muted">Don't give equity for one-off posts.</p></div>
+    <div class="block"><span class="role">10 shops</span><h3>Independent dealers</h3><p>Two demo rods and a printed batch sheet per shop, plus a casting day each season. Start on consignment or small orders and check sales every month.</p><p class="muted">Reorders are the number that shows real demand.</p></div>
+  </div>
+  <div class="cols3" style="margin-top:28px">
+    <div class="block"><h3>What to post about</h3><ul><li>The measuring rig: competitor rods, batch numbers, failures</li><li>Tide notes: what works by region and season</li><li>Repairs: rinsing, re-wrapping, replacing a tip</li><li>Build log: factory visits and sample rounds, rejects included</li></ul></div>
+    <div class="block"><h3>Making people want one</h3><ul><li>Numbered batches in real quantities, each in one color</li><li>Tannin as a color people recognize from across a dock</li><li>A page for every batch, so owners can look up their rod</li><li>Measuring days at shops where anglers bring any rod to be measured</li></ul></div>
+    <div class="block"><h3>Numbers to watch</h3><ul><li>Cost of a first order, by channel</li><li>Share of sales through guide codes</li><li>How fast shops sell through, and how often they reorder</li><li>Warranty claims per 100 rods</li><li>Customers buying again within 12 months</li></ul></div>
+  </div>
+</div></section>
+
+<section class="sec" id="exit"><div class="secnum">9</div><div>
+  <h2>Selling the company</h2>
+  <p class="lead">Fishing tackle companies do sell for millions, but most hardgoods startups never reach even the first row below. Nobody has shown interest in buying, and the multiples are guesses.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Outcome</th><th>What has to be true</th><th class="r">Sales</th><th class="r">Yearly profit</th><th class="r">Rough value</th></tr></thead>
+    <tbody>
+      <tr><td><b>A. Profitable small company</b></td><td>Two to four rods, 20–40 dealers, online sales working. The founder runs it.</td><td class="r">$2–4M</td><td class="r">$0.2–0.5M</td><td class="r">$0.5–2M at 2.5–4×</td></tr>
+      <tr><td><b>B. Bought by a bigger tackle company</b></td><td>Specialty dealers nationally, the modular handle on sale, two approved factories and clean books. A team runs it without the founder.</td><td class="r">$8–15M</td><td class="r">$1.0–2.4M</td><td class="r">$5–19M at 5–8×</td></tr>
+      <tr><td><b>C. A wider outdoor brand</b></td><td>A second product type (reels, clothing or terminal tackle) and growth over 25% a year</td><td class="r">$25M+</td><td class="r">$3M+</td><td class="r">Rare. Don't plan on it.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="cols2" style="margin-top:28px">
+    <div class="block"><h3>What makes it sellable</h3><ul>
+      <li>Trademark registered in the US in Class 28, and filed in the main export markets</li>
+      <li>Design patents on the handle and collar, and a utility patent only if a search shows the idea is new</li>
+      <li>Contracts saying the company owns the mandrels, layups and tooling</li>
+      <li>Two approved factories in different countries</li>
+      <li>The batch measurements and warranty history</li>
+      <li>No single retailer above 30% of sales</li>
+      <li>Accrual bookkeeping from the first day, with reviewed statements by Year 3</li>
+      <li>Rights to reuse all creator footage, and the company's own email list</li></ul></div>
+    <div class="block"><h3>Who might buy</h3><p>Big tackle groups such as Pure Fishing (sold by Newell Brands in 2018 for about $1.3B), Rapala VMC, Johnson Outdoors and Globeride, which owns Daiwa. Also distributors who want their own brand, private equity firms building outdoor portfolios, and retailers who would rather buy a brand than build a store brand.</p><p>What they look for is a brand that's growing in shops they don't already reach, with margins that still work after their own overhead.</p></div>
+  </div>
+</div></section>
+
+<section class="sec" id="next"><div class="secnum">10</div><div>
+  <h2>Next steps</h2>
+  <p class="lead">Only the Lunar New Year date is fixed. The rest are targets, so move them if school needs the time. Nothing here costs more than a few hundred dollars except the samples.</p>
+  <div class="steps">
+    <div class="step"><div class="when">By 18 Dec 2026</div><div><h4>Trademark search</h4><p>Search ESTUARY and three made-up alternatives on <a href="https://tmsearch.uspto.gov/" target="_blank" rel="noopener">USPTO search</a>, Class 28. Pick a name before spending anything on design.</p></div><div class="kind">Free, one evening</div></div>
+    <div class="step"><div class="when">By 31 Jan 2027</div><div><h4>Talk to 30 anglers and 10 shops</h4><p>Ask how their rods break, corrode and get transported, and what they paid for their last one. Test $179, $199 and $219, and ask whether a measured card would change their choice.</p></div><div class="kind">Free, weekends</div></div>
+    <div class="step"><div class="when">Send by 15 Jan 2027</div><div><h4>Quote requests to three factories</h4><p>Send Figs. 1–3, the parts list, the test plan and the NNN agreement. Ask for itemized prices at 300, 500 and 1,000 rods. Lunar New Year falls on 6 Feb 2027 and shuts factories for weeks, so expect answers in March.</p></div><div class="kind">Free now, samples $300–900 later</div></div>
+    <div class="step"><div class="when">By 28 Feb 2027</div><div><h4>Build the rig and measure six rods</h4><p>Borrow competitor rods from shops: Avid Inshore, Salinity, Pulse Wave and Teramar. That's the brand's first real data and its first real content.</p></div><div class="kind">About $100–300</div></div>
+    <div class="step"><div class="when">Optional, July 2027</div><div><h4>ICAST, only if samples are ready</h4><p>ICAST is a trade-only show in Orlando. Check whether you qualify and confirm the dates on the official site before planning anything. Skip it if the samples aren't done.</p></div><div class="kind">Optional</div></div>
+  </div>
+</div></section>
 </main>
+
+<footer class="foot">
+  <p><b>Sources.</b> Competitor prices and the Pure Fishing sale come from the original deck's sources unless marked otherwise. Duty and excise facts were checked against public reporting on 27 November 2026 and still need a customs broker and a tax adviser. Every cost, weight, price and projection not marked as sourced is my estimate. There are no prototypes, test results, supplier quotes, sales or partners yet.</p>
+  <ul>
+    <li><a href="https://www.hklaw.com/en/insights/publications/2026/02/supreme-court-strikes-down-ieepa-tariffs" target="_blank" rel="noopener">Holland &amp; Knight: Supreme Court strikes down IEEPA tariffs (Feb 2026)</a></li>
+    <li><a href="https://www.americanbar.org/groups/public_contract_law/resources/procurement-lawyer/2026-fall/ieepa-tariffs-struck-down-replacement-tariffs-expired/" target="_blank" rel="noopener">ABA: the Section 122 replacement tariffs expired</a></li>
+    <li><a href="https://www.morganlewis.com/pubs/2026/07/us-administration-rebuilds-global-tariff-program-under-section-301" target="_blank" rel="noopener">Morgan Lewis: tariffs rebuilt under Section 301 (Jul 2026)</a></li>
+    <li><a href="https://hts.usitc.gov/" target="_blank" rel="noopener">USITC Harmonized Tariff Schedule (9507.10, 6% general rate)</a></li>
+    <li><a href="https://www.law.cornell.edu/uscode/text/26/4161" target="_blank" rel="noopener">26 U.S.C. §4161: 10% excise on rods, capped at $10 a rod</a></li>
+    <li><a href="https://stcroixrodfactorystore.com/products/avid-inshore-series-spinning" target="_blank" rel="noopener">St. Croix Avid Inshore spinning (factory store)</a> · <a href="https://www.fishusa.com/St.-Croix-Avid-Inshore-Spinning-Rod/" target="_blank" rel="noopener">FishUSA listing</a></li>
+  </ul>
+</footer>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -766,7 +706,7 @@ var reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: red
 (function(){
   var b=$('#themeBtn'); var root=document.documentElement;
   try{var t=localStorage.getItem('estuary-theme'); if(t) root.setAttribute('data-theme',t);}catch(e){}
-  function label(){var t=root.getAttribute('data-theme'); b.textContent = t==='light'?'Light':t==='dark'?'Dark':'Auto';}
+  function label(){var t=root.getAttribute('data-theme'); b.textContent = t==='light'?'Light page':t==='dark'?'Dark page':'Theme: auto';}
   label();
   b.addEventListener('click',function(){var t=root.getAttribute('data-theme'); var n = !t?'light':t==='light'?'dark':null; if(n) root.setAttribute('data-theme',n); else root.removeAttribute('data-theme'); try{ if(n) localStorage.setItem('estuary-theme',n); else localStorage.removeItem('estuary-theme'); }catch(e){} label(); refreshAll();});
 })();
@@ -781,18 +721,18 @@ var MODELS = {
 MODELS.channel.guides = MODELS.flats.guides.map(function(g){return [Math.round(g[0]*86/84*2)/2, g[1]]});
 MODELS.transit.guides = MODELS.flats.guides;
 var HANDLES = {
-  splitcork:{name:'Split cork',sub:'standard',cost:[4,5,7],wt:22,msrp:0},
+  splitcork:{name:'Split cork',sub:'',cost:[4,5,7],wt:22,msrp:0},
   fullcork:{name:'Full cork',sub:'+$10',cost:[5,6.5,9],wt:32,msrp:10},
   eva:{name:'Split EVA',sub:'−$10',cost:[2,3,4.5],wt:15,msrp:-10},
-  keel:{name:'Keel Lock',sub:'Phase 2 · +$30',cost:[11,16,24],wt:40,msrp:30}
+  keel:{name:'Keel Lock',sub:'+$30, later',cost:[11,16,24],wt:40,msrp:30}
 };
 var SEATS = {
-  dps:{name:'Down-locking',sub:'Fuji DPS-type',cost:[2.5,3.5,5],wt:18,msrp:0},
-  vss:{name:'Skeleton',sub:'Fuji VSS-type · +$10',cost:[3.5,5,7],wt:15,msrp:10}
+  dps:{name:'Down-locking',sub:'Fuji DPS type',cost:[2.5,3.5,5],wt:18,msrp:0},
+  vss:{name:'Skeleton',sub:'Fuji VSS type, +$10',cost:[3.5,5,7],wt:15,msrp:10}
 };
 var GUIDES = {
-  alc:{name:'Alconite / stainless',sub:'K-frame',cost:[8,11,15],wt:14,msrp:0},
-  sic:{name:'SiC / titanium',sub:'K-frame · +$50',cost:[22,30,40],wt:9,msrp:50}
+  alc:{name:'Alconite, stainless',sub:'',cost:[8,11,15],wt:14,msrp:0},
+  sic:{name:'SiC, titanium',sub:'+$50',cost:[22,30,40],wt:9,msrp:50}
 };
 var FINISH = {
   graphite:{name:'Graphite',hex:'#2b3134',color:0x2b3134,rough:0.62,clear:0.0,cost:[0.6,1,1.6]},
@@ -812,7 +752,7 @@ var cfg = {model:'flats',handle:'splitcork',seat:'dps',guides:'alc',finish:'tann
 var BASE = {msrp:209,dtcReal:93,whPct:50,duty:18.5,freight:4.5,ship:21,pay:3.3,warrDtc:7,warrWh:3,cac:38,rep:7,dealer:5,acc:8,accGm:60,
   units:[1200,4000,9000],dtc:[75,60,45],fob:[44,40,37],fixed:[90,190,340],lead:5};
 var FM = JSON.parse(JSON.stringify(BASE));
-var DUTY = [{k:'mfn',name:'MFN only',sub:'6%',v:6},{k:'tw',name:'Taiwan',sub:'~10%',v:10},{k:'vn',name:'Vietnam',sub:'~18.5%',v:18.5},{k:'cn',name:'China',sub:'~35%',v:35}];
+var DUTY = [{k:'mfn',name:'Base rate only',sub:'6%',v:6},{k:'tw',name:'Taiwan',sub:'about 10%',v:10},{k:'vn',name:'Vietnam',sub:'about 18.5%',v:18.5},{k:'cn',name:'China',sub:'about 35%',v:35}];
 
 function unit(fob,p,msrpOverride){
   var msrp = msrpOverride||p.msrp;
@@ -841,7 +781,7 @@ function configCost(){
   var lines=[
     ['Blank: '+m.name+(m.pcs>1?' (4-pc ferrules)':''),m.cost],
     ['Handle: '+h.name,h.cost],
-    ['Reel seat: '+s.sub,s.cost],
+    ['Reel seat: '+s.name.toLowerCase()+' ('+s.sub.split(',')[0]+')',s.cost],
     ['Guides + tip top: '+g.name,g.cost],
     ['Finish: '+f.name+' + thread',f.cost],
     ['Hardware: winding check, keeper, butt cap',COMMON.hw],
@@ -866,7 +806,7 @@ function chips(id,group,obj,key,swatch){
   el.innerHTML=html;
   el.addEventListener('change',function(e){cfg[key]=e.target.value; onConfig(key);});
 }
-Object.keys(MODELS).forEach(function(k){MODELS[k].sub = MODELS[k].phase+' · $'+MODELS[k].msrp});
+Object.keys(MODELS).forEach(function(k){MODELS[k].sub = '$'+MODELS[k].msrp+(MODELS[k].pcs>1?', later':'')});
 chips('#g-model','model',MODELS,'model');
 chips('#g-handle','handle',HANDLES,'handle');
 chips('#g-seat','seat',SEATS,'seat');
@@ -878,17 +818,17 @@ function updateReadout(){
   var c=configCost(); var m=MODELS[cfg.model];
   var u=unit(c.tot[1],FM,c.msrp);
   $('#rFob').textContent=fmt(c.tot[1],2);
-  $('#rFobR').textContent='range '+fmt(c.tot[0])+'–'+fmt(c.tot[2])+' · est.';
+  $('#rFobR').textContent='estimate, range '+fmt(c.tot[0])+'–'+fmt(c.tot[2]);
   $('#rLand').textContent=fmt(u.landed+u.w.fet,2);
-  $('#rLandS').textContent=FM.duty+'% duty + $'+FM.freight+' freight + $'+u.w.fet.toFixed(2)+' FET';
+  $('#rLandS').textContent='with '+FM.duty+'% duty, $'+FM.freight.toFixed(2)+' freight, $'+u.w.fet.toFixed(2)+' excise';
   $('#rMsrp').textContent=fmt(c.msrp);
   var share=u.landed/c.msrp; var cls=share<=0.24?'good':share<=0.28?'warn':'bad';
-  var txt=share<=0.24?'Wholesale works':share<=0.28?'Wholesale is thin':'DTC only';
-  $('#rGate').innerHTML='<span class="gate '+cls+'">landed '+pct(share)+' of MSRP · '+txt+'</span>';
+  var txt=share<=0.24?'fine for selling through shops':share<=0.28?'thin for selling through shops':'too high to sell through shops';
+  $('#rGate').innerHTML='<span class="gate '+cls+'">Landed cost is '+pct(share)+' of retail, '+txt+'</span>';
   $('#rCon').textContent=fmt(u.d.con)+' / '+fmt(u.w.con);
-  $('#rConS').textContent='DTC '+pct(u.d.con/u.d.rev)+' · wholesale '+pct(u.w.con/u.w.rev);
+  $('#rConS').textContent='sold online / sold through a shop';
   var oz=(c.wt/28.35).toFixed(1);
-  $('#specline').innerHTML='<b>'+m.name+'</b> · '+(m.len===86?'7′2″':'7′0″')+' · '+m.power+' · '+m.action+' · '+m.pcs+'-pc · lure '+m.lure+' · '+m.line+' · est. weight <b>'+oz+' oz</b> ('+c.wt+' g) · '+HANDLES[cfg.handle].name+', '+SEATS[cfg.seat].sub+', '+GUIDES[cfg.guides].name+', '+FINISH[cfg.finish].name+' finish'+(cfg.handle==='keel'?' · <span class="tag gate2">Keel ships only after fatigue gate</span>':'')+(cfg.model==='transit'?' · <span class="tag gate2">Phase 3 · gated on demand</span>':'');
+  $('#specline').innerHTML='<b>'+m.name+'</b> · '+(m.len===86?'7′2″':'7′0″')+' · '+m.power+' · '+m.action+' · '+m.pcs+'-pc · lure '+m.lure+' · '+m.line+' · est. weight <b>'+oz+' oz</b> ('+c.wt+' g) · '+HANDLES[cfg.handle].name+', '+SEATS[cfg.seat].sub+', '+GUIDES[cfg.guides].name+', '+FINISH[cfg.finish].name+' blank'+(cfg.handle==='keel'?' <span class="tag gate2">handle ships only after testing</span>':'')+(cfg.model==='transit'?' <span class="tag gate2">only if there is demand</span>':'');
   // BOM
   var b=''; c.lines.forEach(function(l){b+='<tr><td>'+l[0]+'</td><td class="r">'+fmt(l[1][0],2)+'</td><td class="r">'+fmt(l[1][1],2)+'</td><td class="r">'+fmt(l[1][2],2)+'</td></tr>'});
   b+='<tr class="total"><td>FOB per rod</td><td class="r">'+fmt(c.tot[0],2)+'</td><td class="r">'+fmt(c.tot[1],2)+'</td><td class="r">'+fmt(c.tot[2],2)+'</td></tr>';
@@ -905,28 +845,23 @@ function drawLanded(c,u){
   segs.forEach(function(s,i){var w=Math.max(0,s[1]*sc-2); h+='<rect x="'+x.toFixed(1)+'" y="40" width="'+w.toFixed(1)+'" height="34" rx="'+(i===0?4:2)+'" fill="'+s[2]+'"><title>'+s[0]+': '+fmt(s[1],2)+'</title></rect>';
     if(w>44) h+='<text x="'+(x+w/2).toFixed(1)+'" y="62" text-anchor="middle" font-size="11" fill="#fff">'+fmt(s[1],0)+'</text>';
     x+=s[1]*sc;});
-  h+='<text x="'+x0+'" y="30" font-size="11" fill="var(--muted)">All-in cost before selling: '+fmt(tot,2)+'</text>';
+  h+='<text x="'+x0+'" y="30" font-size="11" fill="var(--muted)">Cost in the warehouse: '+fmt(tot,2)+'</text>';
   var wx=x0+c.msrp*FM.whPct/100*sc;
-  h+='<line x1="'+wx.toFixed(1)+'" y1="34" x2="'+wx.toFixed(1)+'" y2="96" stroke="var(--fg)" stroke-dasharray="3 3"/><text x="'+Math.min(wx,W-6).toFixed(1)+'" y="112" text-anchor="end" font-size="11" fill="var(--fg)">wholesale price '+fmt(c.msrp*FM.whPct/100,2)+'</text>';
+  h+='<line x1="'+wx.toFixed(1)+'" y1="34" x2="'+wx.toFixed(1)+'" y2="96" stroke="var(--fg)" stroke-dasharray="3 3"/><text x="'+Math.min(wx,W-6).toFixed(1)+'" y="112" text-anchor="end" font-size="11" fill="var(--fg)">price to shops '+fmt(c.msrp*FM.whPct/100,2)+'</text>';
   var gx=x0+c.msrp*0.24*sc;
-  h+='<line x1="'+gx.toFixed(1)+'" y1="80" x2="'+gx.toFixed(1)+'" y2="140" stroke="var(--good)" stroke-width="1.5"/><text x="'+(gx+4).toFixed(1)+'" y="136" font-size="11" fill="var(--good)">landed ceiling, 24% of MSRP = '+fmt(c.msrp*0.24,2)+'</text>';
+  h+='<line x1="'+gx.toFixed(1)+'" y1="80" x2="'+gx.toFixed(1)+'" y2="140" stroke="var(--good)" stroke-width="1.5"/><text x="'+(gx+4).toFixed(1)+'" y="136" font-size="11" fill="var(--good)">target, 24% of retail = '+fmt(c.msrp*0.24,2)+'</text>';
   svg.innerHTML=h;
-  $('#landSub').textContent='Per rod, '+MODELS[cfg.model].name+' as configured, base estimate, '+FM.duty+'% duty.';
+  $('#landSub').textContent='One '+MODELS[cfg.model].name+' as set up above, likely estimate, '+FM.duty+'% duty.';
   var left=c.msrp*FM.whPct/100-tot;
-  $('#landNote').innerHTML='Selling to a dealer at '+fmt(c.msrp*FM.whPct/100,2)+' leaves <b>'+fmt(left,2)+'</b> before freight to the dealer, rep commission and warranty. '+(u.landed<=c.msrp*0.24?'This configuration clears the ceiling.':'To clear the ceiling, cut FOB by about '+fmt(Math.max(0,(u.landed-c.msrp*0.24)/(1+FM.duty/100)),2)+' or raise the price.');
+  $('#landNote').innerHTML='Selling to a shop at '+fmt(c.msrp*FM.whPct/100,2)+' leaves <b>'+fmt(left,2)+'</b> before freight to the dealer, rep commission and warranty. '+(u.landed<=c.msrp*0.24?'This setup is under the target.':'To get under the target, cut the factory price by about '+fmt(Math.max(0,(u.landed-c.msrp*0.24)/(1+FM.duty/100)),2)+' or raise the price.');
 }
 
-/* ---------- product cards ---------- */
+/* ---------- product table ---------- */
 (function(){
-  var h='';
-  [['flats','Launch',MODELS.flats],['channel','Launch',MODELS.channel],['keel','Phase 2',null],['transit','Phase 3',MODELS.transit]].forEach(function(r){
-    if(r[0]==='keel'){
-      h+='<div class="card prod"><span class="tag gate2">Phase 2 · gated</span><h3>Keel system</h3><div class="price num">$129 <span class="small muted">blank only</span></div><dl><dt>What</dt><dd>Keel handle module plus Flats or Channel blanks</dd><dt>Handle</dt><dd>+$30 over a fixed rod. Sold once.</dd><dt>Gate</dt><dd>Fatigue and break tests in §03</dd><dt>Owns</dt><dd>Design patent, plus a utility patent only if novel</dd></dl><p class="small muted">Answers the question of what to buy the angler who already owns your rod.</p></div>';
-      return;}
-    var m=r[2];
-    h+='<div class="card prod"><span class="tag '+(r[1]==='Launch'?'src':'gate2')+'">'+r[1]+'</span><h3>'+m.name+'</h3><div class="price num">$'+m.msrp+'</div><dl><dt>Spec</dt><dd>'+(m.len===86?'7′2″':'7′0″')+' · '+m.power+' · '+m.action+' · '+m.pcs+'-pc</dd><dt>Lure</dt><dd>'+m.lure+'</dd><dt>Line</dt><dd>'+m.line+'</dd><dt>Reel</dt><dd>'+(r[0]==='channel'?'3000–4000':'2500')+' spinning</dd><dt>For</dt><dd>'+m.use+'</dd></dl></div>';
-  });
-  $('#prodCards').innerHTML=h;
+  var rows=[[MODELS.flats,'Launch','2500'],[MODELS.channel,'Launch','3000–4000'],[null,'Phase 2',''],[MODELS.transit,'Phase 3, if demand','2500']];
+  $('#prodTable').innerHTML=rows.map(function(r){var m=r[0];
+    if(!m) return '<tr><td><b>Keel blank</b></td><td>Phase 2</td><td class="r">$129</td><td colspan="4">Flats or Channel blank for the Keel Lock handle. The handle adds $30 to the first rod.</td><td>Owners adding a second technique</td></tr>';
+    return '<tr><td><b>'+m.name+'</b></td><td>'+r[1]+'</td><td class="r">$'+m.msrp+'</td><td>'+(m.len===86?'7′2″':'7′0″')+', '+m.power.toLowerCase()+', '+m.action.toLowerCase()+', '+m.pcs+'-pc</td><td>'+m.lure+'</td><td>'+m.line+'</td><td>'+r[2]+'</td><td>'+m.use+'</td></tr>';}).join('');
 })();
 
 /* ---------- taper table + elevation drawing ---------- */
@@ -983,35 +918,32 @@ $('#fmReset').addEventListener('click',function(){FM=JSON.parse(JSON.stringify(B
 function renderModel(){
   var y=[0,1,2].map(function(i){return year(i,FM)});
   var u=y[0].u;
-  var rows=[['Price realized',u.d.rev,u.w.rev],['Landed cost',-u.landed,-u.landed],['Federal excise (FET)',-u.d.fet,-u.w.fet],['Shipping / dealer freight',-u.d.ship,-u.w.ship],['Card fees / rep commission',-u.d.fee,-u.w.fee],['Returns + warranty',-u.d.warr,-u.w.warr],['Customer acquisition',-u.d.cac,0]];
-  var h=rows.map(function(r){return '<tr><td>'+r[0]+'</td><td class="r">'+fmt(r[1],2)+'</td><td class="r">'+(r[2]===0&&r[0]==='Customer acquisition'?'—':fmt(r[2],2))+'</td></tr>'}).join('');
-  h+='<tr class="total"><td>Contribution</td><td class="r '+(u.d.con<0?'neg':'')+'">'+fmt(u.d.con,2)+'</td><td class="r '+(u.w.con<0?'neg':'')+'">'+fmt(u.w.con,2)+'</td></tr>';
-  h+='<tr><td>Contribution margin</td><td class="r">'+pct(u.d.con/u.d.rev)+'</td><td class="r">'+pct(u.w.con/u.w.rev)+'</td></tr>';
+  var rows=[['Price paid',u.d.rev,u.w.rev],['Landed cost',-u.landed,-u.landed],['Excise tax',-u.d.fet,-u.w.fet],['Shipping',-u.d.ship,-u.w.ship],['Card fees or rep commission',-u.d.fee,-u.w.fee],['Returns and warranty',-u.d.warr,-u.w.warr],['Marketing',-u.d.cac,0]];
+  var h=rows.map(function(r){return '<tr><td>'+r[0]+'</td><td class="r">'+fmt(r[1],2)+'</td><td class="r">'+(r[2]===0&&r[0]==='Marketing'?'—':fmt(r[2],2))+'</td></tr>'}).join('');
+  h+='<tr class="total"><td>Profit before overhead</td><td class="r '+(u.d.con<0?'neg':'')+'">'+fmt(u.d.con,2)+'</td><td class="r '+(u.w.con<0?'neg':'')+'">'+fmt(u.w.con,2)+'</td></tr>';
+  h+='<tr><td>As a share of price</td><td class="r">'+pct(u.d.con/u.d.rev)+'</td><td class="r">'+pct(u.w.con/u.w.rev)+'</td></tr>';
   $('#ueBody').innerHTML=h;
-  var pl=[['Rods',function(r){return r.n.toLocaleString()}],['DTC share',function(r){return pct(r.s)}],['Revenue',function(r){return fmtK(r.rev)}],['Gross profit',function(r){return fmtK(r.gp)}],['Gross margin',function(r){return pct(r.gp/r.rev)}],['Contribution',function(r){return fmtK(r.con)}],['Fixed costs',function(r){return fmtK(-r.fixed)}],['Operating result',function(r){return '<span class="'+(r.op<0?'neg':'pos')+'">'+fmtK(r.op)+'</span>'}],['Inventory cash',function(r){return fmtK(r.inv)}]];
-  $('#plBody').innerHTML=pl.map(function(p,i){return '<tr'+(p[0]==='Operating result'?' class="total"':'')+'><td>'+p[0]+'</td>'+y.map(function(r){return '<td class="r">'+p[1](r)+'</td>'}).join('')+'</tr>'}).join('');
+  var pl=[['Rods sold',function(r){return r.n.toLocaleString()}],['Sold online',function(r){return pct(r.s)}],['Sales',function(r){return fmtK(r.rev)}],['Gross profit',function(r){return fmtK(r.gp)}],['Gross margin',function(r){return pct(r.gp/r.rev)}],['Before overhead',function(r){return fmtK(r.con)}],['Overhead',function(r){return fmtK(-r.fixed)}],['Profit',function(r){return '<span class="'+(r.op<0?'neg':'pos')+'">'+fmtK(r.op)+'</span>'}],['Cash in stock',function(r){return fmtK(r.inv)}]];
+  $('#plBody').innerHTML=pl.map(function(p,i){return '<tr'+(p[0]==='Profit'?' class="total"':'')+'><td>'+p[0]+'</td>'+y.map(function(r){return '<td class="r">'+p[1](r)+'</td>'}).join('')+'</tr>'}).join('');
   $('#kCon').textContent=fmt(y[0].perRod,2);
-  $('#kConS').textContent='per rod, Year 1 · '+pct(y[0].con/y[0].rev)+' of revenue';
+  $('#kConS').textContent=pct(y[0].con/y[0].rev)+' of sales, before overhead';
   $('#kBe').textContent=y[0].perRod>0?Math.ceil(y[0].fixed/y[0].perRod).toLocaleString():'never';
   $('#kY3').textContent=fmtK(y[2].op); $('#kY3').className='v '+(y[2].op<0?'neg':'');
-  $('#kY3S').textContent=pct(y[2].op/y[2].rev)+' of '+fmtK(y[2].rev)+' revenue';
+  $('#kY3S').textContent=pct(y[2].op/y[2].rev)+' of '+fmtK(y[2].rev)+' in sales';
   $('#kInv').textContent=fmtK(y[2].inv);
   drawTornado(y[2].op); drawHeat();
 }
-document.querySelectorAll('.readout-k').forEach(function(e){e.className='k'; e.style.cssText='font-family:var(--f-mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)'});
-document.querySelectorAll('.kpis .v').forEach(function(e){e.style.cssText='font-family:var(--f-display);font-stretch:110%;font-size:1.45rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.2;margin-top:2px'});
-document.querySelectorAll('.kpis .s').forEach(function(e){e.style.cssText='font-size:.76rem;color:var(--muted)'});
 
 var DRIVERS=[
-  ['Blended MSRP',function(p){return p.msrp},function(p,v){p.msrp=v}],
-  ['FOB cost, Y3',function(p){return p.fob[2]},function(p,v){p.fob[2]=v}],
+  ['Retail price',function(p){return p.msrp},function(p,v){p.msrp=v}],
+  ['Factory price, Y3',function(p){return p.fob[2]},function(p,v){p.fob[2]=v}],
   ['Duty rate',function(p){return p.duty},function(p,v){p.duty=v}],
-  ['CAC',function(p){return p.cac},function(p,v){p.cac=v}],
+  ['Marketing per order',function(p){return p.cac},function(p,v){p.cac=v}],
   ['Rods sold, Y3',function(p){return p.units[2]},function(p,v){p.units[2]=v}],
-  ['DTC share, Y3',function(p){return p.dtc[2]},function(p,v){p.dtc[2]=Math.min(100,v)}],
-  ['Fixed costs, Y3',function(p){return p.fixed[2]},function(p,v){p.fixed[2]=v}],
-  ['DTC shipping',function(p){return p.ship},function(p,v){p.ship=v}],
-  ['Wholesale % of MSRP',function(p){return p.whPct},function(p,v){p.whPct=v}]
+  ['Online share, Y3',function(p){return p.dtc[2]},function(p,v){p.dtc[2]=Math.min(100,v)}],
+  ['Overhead, Y3',function(p){return p.fixed[2]},function(p,v){p.fixed[2]=v}],
+  ['Shipping',function(p){return p.ship},function(p,v){p.ship=v}],
+  ['Shop price, % of retail',function(p){return p.whPct},function(p,v){p.whPct=v}]
 ];
 function drawTornado(base){
   var res=DRIVERS.map(function(d){
@@ -1032,7 +964,7 @@ function drawTornado(base){
     var y=top+i*rowH+6, bh=rowH-12;
     [['lo',r.lo,'−20%'],['hi',r.hi,'+20%']].forEach(function(e){
       var v=e[1]; var a=Math.min(X(v),X(base)), b=Math.max(X(v),X(base)); var col=v>=base?'var(--c1)':'var(--c3)';
-      h+='<rect x="'+a.toFixed(1)+'" y="'+y+'" width="'+Math.max(1,b-a-1).toFixed(1)+'" height="'+bh+'" rx="3" fill="'+col+'"><title>'+r.name+' '+e[2]+': '+fmtK(v)+' Y3 operating</title></rect>';
+      h+='<rect x="'+a.toFixed(1)+'" y="'+y+'" width="'+Math.max(1,b-a-1).toFixed(1)+'" height="'+bh+'" rx="3" fill="'+col+'"><title>'+r.name+' '+e[2]+': '+fmtK(v)+' Year 3 profit</title></rect>';
       var lx=v>=base?b+4:a-4; h+='<text x="'+lx.toFixed(1)+'" y="'+(y+bh/2+4)+'" text-anchor="'+(v>=base?'start':'end')+'" font-size="10" fill="var(--muted)">'+fmtK(v)+'</text>';
     });
     h+='<text x="4" y="'+(y+bh/2+4)+'" text-anchor="start" font-size="11" fill="var(--fg)">'+r.name+'</text>';
@@ -1044,13 +976,13 @@ function drawHeat(){
   var prices=[169,184,199,214,229,244,259], fobs=[33,37,41,45,49,53,57];
   var curP=prices.reduce(function(a,b){return Math.abs(b-FM.msrp)<Math.abs(a-FM.msrp)?b:a}), curF=fobs.reduce(function(a,b){return Math.abs(b-FM.fob[2])<Math.abs(a-FM.fob[2])?b:a});
   var s=FM.dtc[2]/100;
-  var h='<thead><tr><th>FOB ↓ · MSRP →</th>'+prices.map(function(p){return '<th>$'+p+'</th>'}).join('')+'</tr></thead><tbody>';
+  var h='<thead><tr><th>Factory ↓ Retail →</th>'+prices.map(function(p){return '<th>$'+p+'</th>'}).join('')+'</tr></thead><tbody>';
   fobs.forEach(function(f){
     h+='<tr><th>$'+f+'</th>';
     prices.forEach(function(p){
       var u=unit(f,FM,p); var rev=s*u.d.rev+(1-s)*u.w.rev, con=s*u.d.con+(1-s)*u.w.con, m=con/rev;
       var bg = m>=0 ? 'color-mix(in oklab,var(--c1) '+Math.round(Math.min(1,m/0.4)*85+5)+'%,var(--bg2))' : 'color-mix(in oklab,var(--c3) '+Math.round(Math.min(1,-m/0.2)*70+15)+'%,var(--bg2))';
-      h+='<td class="'+(p===curP&&f===curF?'cur':'')+'" style="background:'+bg+'" title="MSRP $'+p+', FOB $'+f+': '+fmt(con,2)+' per rod, '+pct(m)+'">'+pct(m)+'</td>';
+      h+='<td class="'+(p===curP&&f===curF?'cur':'')+'" style="background:'+bg+'" title="Retail $'+p+', factory $'+f+': '+fmt(con,2)+' per rod, '+pct(m)+'">'+pct(m)+'</td>';
     });
     h+='</tr>';
   });
@@ -1256,7 +1188,7 @@ function initThree(){
     return g;
   }
   var lineGeo=new T.BufferGeometry(); var linePos=new Float32Array(40*3); lineGeo.setAttribute('position',new T.BufferAttribute(linePos,3));
-  var lineMat=new T.LineBasicMaterial({color:0xc9d86a,transparent:true,opacity:0.95}); var line=new T.Line(lineGeo,lineMat); root.add(line);
+  var lineMat=new T.LineBasicMaterial({color:0x7f9230,transparent:true,opacity:0.95}); var line=new T.Line(lineGeo,lineMat); root.add(line);
   var lure=new T.Group(); (function(){var hd=new T.Mesh(new T.SphereGeometry(0.2,16,12),mat({color:0xb8bec2,metalness:0.8,roughness:0.3}));lure.add(lab(hd,'1/4 oz jig head'));
     var bd=new T.Mesh(new T.CylinderGeometry(0.16,0.06,1.5,14),mat({color:0xc4a86a,roughness:0.6}));bd.rotation.z=Math.PI/2;bd.position.x=-0.9;lure.add(lab(bd,'Paddletail'));
     var tl=new T.Mesh(new T.CylinderGeometry(0.2,0.2,0.04,16),mat({color:0xc4a86a,roughness:0.6}));tl.rotation.x=Math.PI/2;tl.position.x=-1.7;lure.add(lab(tl,'Paddle'));})();
