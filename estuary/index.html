@@ -69,8 +69,8 @@ h4{font-size:1.1rem}
 .aside h4{color:var(--fg);margin-bottom:6px}
 
 /* bench */
-.bench{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:0 28px;border-top:1px solid var(--fg)}
-.stage{position:relative;height:500px;background:var(--stage)}
+.bench{display:grid;grid-template-columns:minmax(0,1fr);border-top:1px solid var(--fg)}
+.stage{position:relative;height:560px;background:#d9b99a}
 .stage canvas{display:block;width:100%;height:100%;position:absolute;inset:0;cursor:grab}
 .stage canvas:active{cursor:grabbing}
 .loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:.9rem}
@@ -82,7 +82,7 @@ h4{font-size:1.1rem}
 .sbtn{font:inherit;font-size:.98rem;padding:2px 9px;border:1px solid var(--line2);border-radius:2px;background:var(--bg2);color:var(--fg);cursor:pointer}
 .sbtn:hover{border-color:var(--fg)}
 .sbtn[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
-.panel{padding-block:12px;display:flex;flex-direction:column;gap:14px}
+.panel{padding-block:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:16px 24px;border-bottom:1px solid var(--line)}
 fieldset{border:0;margin:0;padding:0;min-width:0}
 legend{font-family:var(--f-head);font-weight:600;font-size:1.05rem;padding:0;margin-bottom:3px}
 .chips{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 7px;align-items:baseline;font-size:.92rem}
@@ -189,10 +189,9 @@ svg text{font-family:var(--f-mono)}
 .foot ul{padding-left:18px} .foot li{margin:3px 0}
 
 @media (max-width:900px){
-  .bench{grid-template-columns:minmax(0,1fr)}
   .intro,.model{grid-template-columns:minmax(0,1fr)}
   .cols4{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .stage{height:400px}
+  .stage{height:440px}
 }
 @media (max-width:640px){
   .cols2,.cols3,.cols4{grid-template-columns:minmax(0,1fr)}
@@ -222,7 +221,7 @@ svg text{font-family:var(--f-mono)}
   <div class="meta">Rewrite of the Project Estuary pitch<br>Draft 2 · 27 November 2026<button class="themebtn" id="themeBtn" type="button">Theme</button></div>
 </header>
 <nav class="contents" aria-label="Contents">
-  <a href="#verdict"><b>1</b>Changes</a><a href="#product"><b>2</b>Product</a><a href="#engineering"><b>3</b>Drawings</a><a href="#competition"><b>4</b>Competitors</a><a href="#brand"><b>5</b>Brand</a><a href="#sourcing"><b>6</b>Factories and cost</a><a href="#model"><b>7</b>Financial model</a><a href="#market"><b>8</b>Marketing</a><a href="#exit"><b>9</b>Exit</a><a href="#next"><b>10</b>Next steps</a>
+  <a href="#verdict"><b>1</b>Changes</a><a href="#us-market"><b>2</b>What Americans buy</a><a href="#product"><b>3</b>Product</a><a href="#engineering"><b>4</b>Drawings</a><a href="#competition"><b>5</b>Competitors</a><a href="#brand"><b>6</b>Brand</a><a href="#sourcing"><b>7</b>Factories and cost</a><a href="#model"><b>8</b>Financial model</a><a href="#market"><b>9</b>Marketing</a><a href="#exit"><b>10</b>Exit</a><a href="#next"><b>11</b>Next steps</a>
 </nav>
 
 <main>
@@ -268,7 +267,11 @@ svg text{font-family:var(--f-mono)}
     <fieldset><legend>Reel seat</legend><div class="chips" id="g-seat"></div></fieldset>
     <fieldset><legend>Guides</legend><div class="chips" id="g-guides"></div></fieldset>
     <fieldset><legend>Blank color</legend><div class="chips" id="g-finish"></div></fieldset>
-    <fieldset><legend>Thread color</legend><div class="chips" id="g-trim"></div></fieldset>
+    <fieldset><legend>Thread trim</legend><div class="chips" id="g-trim"></div></fieldset>
+    <fieldset><legend>Hood and check color</legend><div class="chips" id="g-hood"></div></fieldset>
+    <fieldset><legend>Reel accent <small class="muted">(display only)</small></legend><div class="chips" id="g-reel"></div></fieldset>
+    <fieldset><legend>Braid <small class="muted">(display only)</small></legend><div class="chips" id="g-line"></div></fieldset>
+    <fieldset><legend>Lure <small class="muted">(display only)</small></legend><div class="chips" id="g-lure"></div></fieldset>
   </form>
   <div class="readout">
     <div><div class="k">Factory price (FOB)</div><div class="v" id="rFob">$—</div><div class="s" id="rFobR"></div></div>
@@ -278,11 +281,11 @@ svg text{font-family:var(--f-mono)}
   </div>
   <div class="specline" id="specline"></div>
 </div>
-<p class="benchcap">The launch rod, modeled to the spec in section 3. Drag to turn it, scroll to zoom, and hover over a part to see its name. Changing a part updates the figures under the model. The figures use my estimates for a 500-rod order and the settings in the financial model (section 7). The load test shows a modeled bend shape, not measured data.</p>
+<p class="benchcap">The launch rod over a Gulf marsh at sunrise, modeled to the spec in section 4. Drag to turn it, scroll to zoom, and hover over a part to see its name. Changing a rod part updates the figures above, which use my estimates for a 500-rod order and the settings in the financial model (section 8). The reel, braid and lure are only there to show the rod rigged. The load test shows a modeled bend shape, not measured data.</p>
 
 <section class="sec" id="verdict"><div class="secnum">1</div><div>
   <h2>What I'd change in the deck</h2>
-  <p class="lead">Twelve places where the deck assumes something it can't back up yet, what I'd put there instead, and how to find out for sure.</p>
+  <p class="lead">Thirteen places where the deck assumes something it can't back up yet, what I'd put there instead, and how to find out for sure.</p>
   <div class="tablewrap"><table class="chal">
     <thead><tr><th>The deck says</th><th>The problem</th><th>Replace with</th><th>How to check</th></tr></thead>
     <tbody>
@@ -290,6 +293,7 @@ svg text{font-family:var(--f-mono)}
       <tr><td>"Without the luxury markup"</td><td>That's a value pitch. Okuma and Abu Garcia already own value and have far more scale. It also clashes with calling the brand premium.</td><td>Sell on proof: every rod measured. Price it between St. Croix's Mojo and Avid lines.</td><td>Ask about price in interviews and take refundable reservations at $179, $199 and $219.</td></tr>
       <tr><td>$159 and $179 retail</td><td>With a realistic landed cost, selling to shops at half of retail leaves about $15–20 a rod. One warranty claim wipes that out.</td><td>Launch at $199 (Flats) and $219 (Channel). Sell mostly direct until landed cost is 24% of retail or less.</td><td>The check under the 3D model, then real quotes.</td></tr>
       <tr><td>Shimano Zodias as a benchmark</td><td>Zodias is a freshwater bass rod.</td><td>Compare against Shimano's inshore line (Teramar) and confirm the current models.</td><td>Borrow the rods and measure them on the rig.</td></tr>
+      <tr><td>Five competitors</td><td>PENN is missing. Its Carnage III Inshore lists at $199.95–229.95, the same price planned for Estuary, and Pure Fishing's distribution is behind it.</td><td>Add PENN and treat the Carnage III as the main rival at launch price.</td><td>Measure a Carnage III on the rig and show the numbers side by side.</td></tr>
       <tr><td>$25 to win a customer</td><td>That's low for a $200 rod from a brand nobody has heard of.</td><td>Use $38, test it at $60, and build the guide and shop channels so it falls over time.</td><td>Spend $1–2K on ads after launch and divide by first orders.</td></tr>
       <tr><td>$18 to ship a rod</td><td>A one-piece 7-foot rod goes in a box about 86 inches long, and carriers add surcharges for long parcels.</td><td>Use $21, and get real quotes.</td><td>USPS, UPS and a fulfillment company, quoted for an 88 × 4 × 4 in box at 2 lb.</td></tr>
       <tr><td>"Confirm HTS duties" in a footnote</td><td>US tariffs on imports changed twice in 2026. The IEEPA tariffs were struck down on 20 February, the 10% Section 122 tariff that replaced them ran out on 24 July, and new Section 301 duties of 10–12.5% now cover most countries. Where you build now changes cost by double digits.</td><td>Make duty an input. The model has settings for Taiwan, Vietnam and China.</td><td>A licensed customs broker, for HTS 9507.10 and the extra duties for each country.</td></tr>
@@ -312,7 +316,57 @@ svg text{font-family:var(--f-mono)}
   </table></div>
 </div></section>
 
-<section class="sec" id="product"><div class="secnum">2</div><div>
+
+<section class="sec" id="us-market"><div class="secnum">2</div><div>
+  <h2>What Americans buy</h2>
+  <p class="lead">Nobody publishes free, current counts of how many rods sell in the US. Southwick Associates and Circana sell that data, and a Southwick market report has cost around $3,000. The public numbers are still enough to size the market, see where the volume is, and see which inshore rods Estuary would sit next to.</p>
+  <div class="kpis">
+    <div><div class="k">Americans who fished, 2024</div><div class="v">57.9M</div><div class="s">A record, 19% of people 6 and older. About 57M in 2025. <span class="tag src">RBFF / ASA</span></div></div>
+    <div><div class="k">Saltwater anglers, 2025</div><div class="v">15.5M</div><div class="s">Up about 400,000 on 2024, also a record <span class="tag src">ASA 2026 report</span></div></div>
+    <div><div class="k">Rods and reels sold, 2022</div><div class="v">$3.27B</div><div class="s">The biggest tackle category. All tackle was over $8B. <span class="tag src">Southwick, via The Fisherman</span></div></div>
+    <div><div class="k">Gulf of Mexico anglers, 2015</div><div class="v">2.5M</div><div class="s">19.7M trips and $10.4B on trips and gear <span class="tag src">NOAA, older survey</span></div></div>
+  </div>
+
+  <div class="cols2" style="margin-top:28px">
+    <div class="block"><h3>How many rods that is <span class="tag est">my rough math</span></h3>
+      <p>No public source gives a unit count, so here's a back-of-envelope range:</p>
+      <div class="tablewrap" style="margin-top:8px"><table>
+        <tbody>
+          <tr><td>Rods, reels and combos sold in 2022</td><td class="r">$3.27B</td></tr>
+          <tr><td>Share that is rods and combos (guess)</td><td class="r">40–55%</td></tr>
+          <tr><td>Spent on rods</td><td class="r">$1.3–1.8B</td></tr>
+          <tr><td>Average price paid per rod (guess)</td><td class="r">$45–80</td></tr>
+          <tr class="total"><td>Rods sold per year</td><td class="r">about 16–40 million</td></tr>
+        </tbody>
+      </table></div>
+      <p style="margin-top:10px">As a cross-check, 57 million anglers buying a new rod every 1.5 to 3.5 years lands in the same range. With an average that low, most of those rods must cost under $100.</p></div>
+    <div class="block"><h3>The Gulf slice <span class="tag est">my rough math</span></h3>
+      <p>NOAA counted about 2.5 million Gulf anglers in 2015. Suppose one in five buys a rod in a given year, and a quarter of those spend $150 or more. Both are guesses.</p>
+      <p>That works out to roughly <b>125,000 rods a year</b> at Estuary's price level in the Gulf states. The model's Year 3 target of 9,000 rods would be about 7% of that. That's ambitious for a new brand, but not absurd, and it's the number to pin down in the angler interviews.</p></div>
+  </div>
+
+  <h3 style="margin:32px 0 6px">The volume sellers</h3>
+  <p class="small muted" style="max-width:70ch">Ugly Stik, owned by Pure Fishing, calls the GX2 "America's favorite fishing rod". That's the maker's own claim, with no published sales figure. The best public signal is third-party tracking of Amazon listings. It covers one channel and different months, and Walmart, Bass Pro, Academy and Dick's don't publish anything.</p>
+  <div class="chart" style="margin-top:10px">
+    <h4>Estimated units sold per month on Amazon, 2026</h4>
+    <svg id="amzChart" viewBox="0 0 720 200" role="img" aria-label="Estimated monthly Amazon unit sales for top rods and combos"></svg>
+    <p class="tiny muted">Source: ASINSIGHT third-party estimates, June–August 2026 snapshots. These are estimates and not Amazon's own data.</p>
+  </div>
+
+  <h3 style="margin:32px 0 6px">Inshore rods Estuary would sit next to</h3>
+  <p class="small muted" style="max-width:70ch">Buyers' guides at Outdoor Life, Field &amp; Stream and Wired2Fish keep naming the same handful for redfish and trout: PENN Carnage III and Battalion II, St. Croix Triumph, Ugly Stik Carbon Inshore and Okuma Pulse Wave. These are editors' picks, not sales rankings, but they are what a buyer sees when they research. Prices are current list prices at the maker or a major retailer.</p>
+  <div class="chart" style="margin-top:10px">
+    <h4>Price ladder, inshore spinning rods</h4>
+    <svg id="ladder" viewBox="0 0 720 330" role="img" aria-label="Price ranges of popular inshore spinning rods compared with Estuary"></svg>
+  </div>
+  <div class="cols3" style="margin-top:22px">
+    <div class="block"><h3>Stay out of the volume</h3><p>The big unit numbers come from cheap rods and combos for beginners. Estuary can't win there and shouldn't try.</p></div>
+    <div class="block"><h3>PENN is the real rival</h3><p>At $199–219, Estuary lands right on PENN's Carnage III, which has a saltwater reputation and Pure Fishing's reach behind it. The pitch has to be measured proof and service, because PENN will win on price promotions.</p></div>
+    <div class="block"><h3>The crowded middle</h3><p>$110–190 is packed with Triumph, Battalion II and Waterloo's Salinity, and $240 and up belongs to St. Croix Avid. A $199 rod has to clearly feel better than a $160 Triumph, or people will buy the Triumph.</p></div>
+  </div>
+</div></section>
+
+<section class="sec" id="product"><div class="secnum">3</div><div>
   <h2>The product</h2>
   <p class="lead">Rods in this price range share the same blank materials, Fuji guides and cork. On a rack they look interchangeable. The brand needs things a customer can see and check, and things the company ends up owning.</p>
   <div class="cols3">
@@ -328,7 +382,7 @@ svg text{font-family:var(--f-mono)}
     <div class="block"><h3>Keel Lock handle <span class="tag gate2">phase 2, after testing</span></h3>
       <p>A machined collar locks the handle and reel seat onto a ground section at the base of the blank. A key lines the reel up with the guides. One handle then fits both the Flats and the Channel blank.</p>
       <p>A second rod costs the angler $129 for a blank instead of $219. The rod packs shorter, and existing customers have something new to buy.</p>
-      <p>Detachable handles have been around for decades, so a utility patent may not be possible. It ships only if it passes the fatigue and break tests in section 3. If it doesn't, the line stays fixed-handle.</p></div>
+      <p>Detachable handles have been around for decades, so a utility patent may not be possible. It ships only if it passes the fatigue and break tests in section 4. If it doesn't, the line stays fixed-handle.</p></div>
   </div>
   <h3 style="margin:32px 0 8px">The line</h3>
   <div class="tablewrap"><table>
@@ -337,7 +391,7 @@ svg text{font-family:var(--f-mono)}
   </table></div>
 </div></section>
 
-<section class="sec" id="engineering"><div class="secnum">3</div><div>
+<section class="sec" id="engineering"><div class="secnum">4</div><div>
   <h2>Drawings</h2>
   <p class="lead">These are starting targets to send with quote requests, not production drawings. Guide positions get set on the first samples with a static load test, and blank diameters depend on which mandrel the factory has.</p>
   <figure class="fig"><svg id="dwElev" viewBox="0 0 1000 300" role="img" aria-label="Side elevation of the Flats 70M with handle zones and guide stations"></svg>
@@ -436,13 +490,14 @@ svg text{font-family:var(--f-mono)}
   </table></div>
 </div></section>
 
-<section class="sec" id="competition"><div class="secnum">4</div><div>
+<section class="sec" id="competition"><div class="secnum">5</div><div>
   <h2>Competitors</h2>
-  <p class="lead">Shimano and Daiwa spend more on materials research than this company ever will. St. Croix has the history and the warranty, Okuma has price, and Waterloo has Texas. From their public product pages, none of the five publishes measurements for individual rods or builds a line around salt-water service. That's the opening. Check it again before any ad uses the word "first".</p>
+  <p class="lead">PENN's Carnage III, one of the inshore rods buyers' guides recommend most, sells at Estuary's exact price. Shimano and Daiwa spend more on materials research than this company ever will. St. Croix has the history and the warranty, Okuma has price, and Waterloo has Texas. From their public product pages, none of these brands publishes measurements for individual rods or builds a line around salt-water service. That's the opening. Check it again before any ad uses the word "first".</p>
   <div class="tablewrap"><table>
     <thead><tr><th>Brand</th><th>Inshore rod</th><th>Price</th><th>What they're good at</th><th>Don't compete on</th><th>Where Estuary can win</th></tr></thead>
     <tbody>
       <tr><td><b>St. Croix</b></td><td>Avid Inshore spinning</td><td>About $240–320 at big retailers <span class="tag src">checked Nov 2026</span></td><td>Made in the US, long warranty, lots of dealers</td><td>Warranty length or heritage</td><td>Measured specs for $40–80 less, and salt-water hardware</td></tr>
+      <tr><td><b>PENN</b> (Pure Fishing)</td><td>Carnage III Inshore, Battalion II Inshore</td><td>$199.95–229.95 and $159.95–189.95 list <span class="tag src">Pure Fishing site, Nov 2026</span></td><td>Saltwater name, mass retail and frequent sales</td><td>Discounts and shelf space</td><td>Per-rod measurements, service and a brand that only does inshore</td></tr>
       <tr><td><b>Waterloo</b></td><td>Salinity</td><td>$179.99 <span class="tag src">from the deck</span></td><td>Credibility on the Texas coast, rods for specific techniques</td><td>Texas guides in Year 1</td><td>Measured specs and the modular handle. Start in Louisiana and on Florida's Gulf coast as well as Texas.</td></tr>
       <tr><td><b>Shimano</b></td><td>Teramar, not Zodias</td><td>Check current models <span class="tag est">to do</span></td><td>Materials research, matching reels, distribution</td><td>Claims about blank technology</td><td>A brand that only does inshore, a service program, batch data in public</td></tr>
       <tr><td><b>Daiwa</b></td><td>Ardito-TR (travel)</td><td>Official page <span class="tag src">from the deck</span></td><td>Materials research, travel rods</td><td>Travel rods in Years 1–2</td><td>The modular handle as a different way to pack a rod</td></tr>
@@ -452,7 +507,7 @@ svg text{font-family:var(--f-mono)}
   <p class="small muted" style="margin-top:10px">Someone could copy the measured card within a year. It's harder to copy having done it first, the batch data behind it, and a service program that makes the rod cheaper to own over five years.</p>
 </div></section>
 
-<section class="sec" id="brand"><div class="secnum">5</div><div>
+<section class="sec" id="brand"><div class="secnum">6</div><div>
   <h2>Brand</h2>
   <p class="lead">Tide and river gauges are marked with a repeating E shape every tenth of a foot. Anyone who fishes tidal water has seen one bolted to a piling. The logo uses that E, so the brand's mark is a measuring mark.</p>
   <div class="cols3">
@@ -515,7 +570,7 @@ svg text{font-family:var(--f-mono)}
   </div>
 </div></section>
 
-<section class="sec" id="sourcing"><div class="secnum">6</div><div>
+<section class="sec" id="sourcing"><div class="secnum">7</div><div>
   <h2>Factories and cost</h2>
   <p class="lead">I haven't contacted any factory. The duty notes below reflect what was reported in November 2026 and need a licensed customs broker to confirm. The new Section 301 duties are being challenged in court and could change again.</p>
   <div class="cols3">
@@ -566,7 +621,7 @@ svg text{font-family:var(--f-mono)}
   </div>
 </div></section>
 
-<section class="sec" id="model"><div class="secnum">7</div><div>
+<section class="sec" id="model"><div class="secnum">8</div><div>
   <h2>Financial model</h2>
   <p class="lead">Every input is an assumption, and the defaults are my base case. Treat it as a way to see what matters, not a forecast. The deck showed $47 profit per rod before overhead. With 2026 duty, a more realistic cost to win customers and factory prices for 500 rods, you only get back to about that by charging more. Year 3 makes money, but not much.</p>
   <div class="model">
@@ -624,7 +679,7 @@ svg text{font-family:var(--f-mono)}
   </div>
 </div></section>
 
-<section class="sec" id="market"><div class="secnum">8</div><div>
+<section class="sec" id="market"><div class="secnum">9</div><div>
   <h2>Marketing</h2>
   <p class="lead">Inshore anglers mostly trust the guides they've fished with and the shops where they buy bait, so marketing starts there. Paid ads come later, once there's something worth pointing them at. The partners below are roles to fill. Nobody has been contacted.</p>
   <div class="cols4">
@@ -640,7 +695,7 @@ svg text{font-family:var(--f-mono)}
   </div>
 </div></section>
 
-<section class="sec" id="exit"><div class="secnum">9</div><div>
+<section class="sec" id="exit"><div class="secnum">10</div><div>
   <h2>Selling the company</h2>
   <p class="lead">Fishing tackle companies do sell for millions, but most hardgoods startups never reach even the first row below. Nobody has shown interest in buying, and the multiples are guesses.</p>
   <div class="tablewrap"><table>
@@ -665,7 +720,7 @@ svg text{font-family:var(--f-mono)}
   </div>
 </div></section>
 
-<section class="sec" id="next"><div class="secnum">10</div><div>
+<section class="sec" id="next"><div class="secnum">11</div><div>
   <h2>Next steps</h2>
   <p class="lead">Only the Lunar New Year date is fixed. The rest are targets, so move them if school needs the time. Nothing here costs more than a few hundred dollars except the samples.</p>
   <div class="steps">
@@ -686,6 +741,12 @@ svg text{font-family:var(--f-mono)}
     <li><a href="https://www.morganlewis.com/pubs/2026/07/us-administration-rebuilds-global-tariff-program-under-section-301" target="_blank" rel="noopener">Morgan Lewis: tariffs rebuilt under Section 301 (Jul 2026)</a></li>
     <li><a href="https://hts.usitc.gov/" target="_blank" rel="noopener">USITC Harmonized Tariff Schedule (9507.10, 6% general rate)</a></li>
     <li><a href="https://www.law.cornell.edu/uscode/text/26/4161" target="_blank" rel="noopener">26 U.S.C. §4161: 10% excise on rods, capped at $10 a rod</a></li>
+    <li><a href="https://www.nmma.org/press/article/25183" target="_blank" rel="noopener">NMMA: record fishing participation in 2024 (57.9M)</a> · <a href="https://asafishing.org/wp-content/uploads/2026/07/2026-Special-Report-on-Fishing_WEB_FV.pdf" target="_blank" rel="noopener">ASA 2026 Special Report on Fishing</a></li>
+    <li><a href="https://www.thefisherman.com/article/guest-editors-log-fishing-by-the-numbers/" target="_blank" rel="noopener">The Fisherman: Southwick tackle sales figures</a> · <a href="https://www.southwickassociates.com/2022marketsize/" target="_blank" rel="noopener">Southwick market size reports</a></li>
+    <li><a href="https://www.fisheries.noaa.gov/resource/outreach-materials/gulf-mexico-saltwater-recreational-fisheries-snapshot" target="_blank" rel="noopener">NOAA Fisheries: Gulf of Mexico recreational snapshot</a></li>
+    <li><a href="https://www.in-fisherman.com/editorial/ugly-stik-gx2-icast-award/501660" target="_blank" rel="noopener">In-Fisherman: Ugly Stik GX2 ICAST award</a> · <a href="https://www.asinsight.com/report/US/spinning-rod-and-reel-combo" target="_blank" rel="noopener">ASINSIGHT combo estimates</a> · <a href="https://www.asinsight.com/report/US/gx2-ugly-stik" target="_blank" rel="noopener">ASINSIGHT GX2 estimates</a></li>
+    <li><a href="https://outdoorlife.com/gear/best-inshore-spinning-rods" target="_blank" rel="noopener">Outdoor Life</a> · <a href="https://www.fieldandstream.com/outdoor-gear/fishing/fishing-rods/best-inshore-spinning-rods" target="_blank" rel="noopener">Field &amp; Stream</a> · <a href="https://www.wired2fish.com/buyers-guides/best-spinning-rods-for-fishing" target="_blank" rel="noopener">Wired2Fish</a> inshore rod guides</li>
+    <li><a href="https://www.purefishing.com/products/carnage-iii-inshore-spinning-rod" target="_blank" rel="noopener">PENN Carnage III Inshore</a> · <a href="https://www.purefishing.com/collections/saltwater-rods?view=bc-original" target="_blank" rel="noopener">Pure Fishing saltwater rods (Battalion II, Ugly Stik Carbon Inshore)</a> · <a href="https://www.sportsmans.com/c/cat135700-hpf-medium-light-action-spinning-rods" target="_blank" rel="noopener">Sportsman's (St. Croix Triumph Inshore)</a></li>
     <li><a href="https://stcroixrodfactorystore.com/products/avid-inshore-series-spinning" target="_blank" rel="noopener">St. Croix Avid Inshore spinning (factory store)</a> · <a href="https://www.fishusa.com/St.-Croix-Avid-Inshore-Spinning-Rod/" target="_blank" rel="noopener">FishUSA listing</a></li>
   </ul>
 </footer>
@@ -745,8 +806,15 @@ var TRIM = {
   tannin:{name:'Tannin',hex:'#b07a3e',color:0xb07a3e},
   bone:{name:'Bone',hex:'#e6e0cf',color:0xe6e0cf}
 };
+TRIM.gold={name:'Gold metallic',hex:'#c9a24a',color:0xc9a24a,metal:true};
+FINISH.copper={name:'Redfish copper',hex:'#8c4a26',color:0x8c4a26,rough:0.26,clear:1.0,metal:0.35,cost:[1.4,2,2.8]};
+FINISH.speck={name:'Speckled trout',hex:'#a9b4ad',color:0xc3cbc5,rough:0.3,clear:1.0,speck:true,cost:[2.2,3.2,4.5]};
+var HOOD={graphite:{name:'Graphite',hex:'#2a2d30',color:0x2a2d30,cost:[0,0,0]},seaglass:{name:'Sea-glass',hex:'#5fae9c',color:0x4f9e8c,cost:[0.2,0.4,0.7]},copper:{name:'Copper',hex:'#b4703f',color:0xb4703f,cost:[0.2,0.4,0.7]},red:{name:'Gauge red',hex:'#b1361e',color:0xb1361e,cost:[0.2,0.4,0.7]}};
+var REEL={gunmetal:{name:'Gunmetal',hex:'#5b6166',color:0x6a7177},seaglass:{name:'Sea-glass',hex:'#5fae9c',color:0x4f9e8c},copper:{name:'Copper',hex:'#b4703f',color:0xb4703f},red:{name:'Gauge red',hex:'#b1361e',color:0xb1361e}};
+var LINE={hivis:{name:'Hi-vis yellow',hex:'#d9e04a',color:0xd9e04a},moss:{name:'Moss green',hex:'#5d7a3a',color:0x5d7a3a},white:{name:'White',hex:'#f0efe8',color:0xf0efe8},pink:{name:'Pink',hex:'#ef6fa6',color:0xef6fa6}};
+var LURE={chicken:{name:'Electric chicken',hex:'#ff5fa2',a:0xff4f98,b:0xd7f23a},penny:{name:'New penny',hex:'#b5652e',a:0xa9561f,b:0xe0a56a},glow:{name:'Glow',hex:'#e8f0d0',a:0xdfe9c2,b:0xf7f9ee},chart:{name:'Chartreuse',hex:'#c6e03a',a:0xb9d82a,b:0xf2f5c8},purple:{name:'Purple and gold',hex:'#5b3a8a',a:0x4d2f80,b:0xd9b14a}};
 var COMMON = {hw:[1,1.4,2.2], labor:[6,8,12], measure:[0.6,0.9,1.5], pack:[2,2.6,4]};
-var cfg = {model:'flats',handle:'splitcork',seat:'dps',guides:'alc',finish:'tannin',trim:'seaglass'};
+var cfg = {model:'flats',handle:'splitcork',seat:'dps',guides:'alc',finish:'tannin',trim:'gold',hood:'copper',reel:'gunmetal',line:'hivis',lure:'chicken'};
 
 /* ---------- financial model ---------- */
 var BASE = {msrp:209,dtcReal:93,whPct:50,duty:18.5,freight:4.5,ship:21,pay:3.3,warrDtc:7,warrWh:3,cac:38,rep:7,dealer:5,acc:8,accGm:60,
@@ -784,6 +852,7 @@ function configCost(){
     ['Reel seat: '+s.name.toLowerCase()+' ('+s.sub.split(',')[0]+')',s.cost],
     ['Guides + tip top: '+g.name,g.cost],
     ['Finish: '+f.name+' + thread',f.cost],
+    ['Anodized hood and winding check: '+HOOD[cfg.hood].name.toLowerCase(),HOOD[cfg.hood].cost],
     ['Hardware: winding check, keeper, butt cap',COMMON.hw],
     ['Assembly, wraps, QC labor',labor],
     ['Measurement step + serial card',COMMON.measure],
@@ -813,6 +882,10 @@ chips('#g-seat','seat',SEATS,'seat');
 chips('#g-guides','guides',GUIDES,'guides');
 chips('#g-finish','finish',FINISH,'finish',true);
 chips('#g-trim','trim',TRIM,'trim',true);
+chips('#g-hood','hood',HOOD,'hood',true);
+chips('#g-reel','reel',REEL,'reel',true);
+chips('#g-line','line',LINE,'line',true);
+chips('#g-lure','lure',LURE,'lure',true);
 
 function updateReadout(){
   var c=configCost(); var m=MODELS[cfg.model];
@@ -828,7 +901,7 @@ function updateReadout(){
   $('#rCon').textContent=fmt(u.d.con)+' / '+fmt(u.w.con);
   $('#rConS').textContent='sold online / sold through a shop';
   var oz=(c.wt/28.35).toFixed(1);
-  $('#specline').innerHTML='<b>'+m.name+'</b> · '+(m.len===86?'7′2″':'7′0″')+' · '+m.power+' · '+m.action+' · '+m.pcs+'-pc · lure '+m.lure+' · '+m.line+' · est. weight <b>'+oz+' oz</b> ('+c.wt+' g) · '+HANDLES[cfg.handle].name+', '+SEATS[cfg.seat].sub+', '+GUIDES[cfg.guides].name+', '+FINISH[cfg.finish].name+' blank'+(cfg.handle==='keel'?' <span class="tag gate2">handle ships only after testing</span>':'')+(cfg.model==='transit'?' <span class="tag gate2">only if there is demand</span>':'');
+  $('#specline').innerHTML='<b>'+m.name+'</b> · '+(m.len===86?'7′2″':'7′0″')+' · '+m.power+' · '+m.action+' · '+m.pcs+'-pc · lure '+m.lure+' · '+m.line+' · est. weight <b>'+oz+' oz</b> ('+c.wt+' g) · '+HANDLES[cfg.handle].name+', '+SEATS[cfg.seat].sub+', '+GUIDES[cfg.guides].name+', '+FINISH[cfg.finish].name+' blank, '+HOOD[cfg.hood].name.toLowerCase()+' hood, '+TRIM[cfg.trim].name.toLowerCase()+' trim'+(cfg.handle==='keel'?' <span class="tag gate2">handle ships only after testing</span>':'')+(cfg.model==='transit'?' <span class="tag gate2">only if there is demand</span>':'');
   // BOM
   var b=''; c.lines.forEach(function(l){b+='<tr><td>'+l[0]+'</td><td class="r">'+fmt(l[1][0],2)+'</td><td class="r">'+fmt(l[1][1],2)+'</td><td class="r">'+fmt(l[1][2],2)+'</td></tr>'});
   b+='<tr class="total"><td>FOB per rod</td><td class="r">'+fmt(c.tot[0],2)+'</td><td class="r">'+fmt(c.tot[1],2)+'</td><td class="r">'+fmt(c.tot[2],2)+'</td></tr>';
@@ -1000,6 +1073,10 @@ function initThree(){
   stage.insertBefore(renderer.domElement,stage.firstChild);
   $('#loading').remove();
   var scene=new T.Scene();
+  (function(){var cv=document.createElement('canvas');cv.width=4;cv.height=512;var x=cv.getContext('2d');var g=x.createLinearGradient(0,0,0,512);
+    g.addColorStop(0,'#2b4766');g.addColorStop(0.42,'#7d93a8');g.addColorStop(0.62,'#e7ad86');g.addColorStop(0.7,'#f4cfa3');g.addColorStop(0.74,'#f2d6b3');g.addColorStop(1,'#3a5a5e');
+    x.fillStyle=g;x.fillRect(0,0,4,512);var t=new T.CanvasTexture(cv);t.encoding=T.sRGBEncoding;scene.background=t;})();
+  scene.fog=new T.Fog(0xeec9a6,160,560);
   var camera=new T.PerspectiveCamera(30,1,0.1,1000);
   var controls=T.OrbitControls?new T.OrbitControls(camera,renderer.domElement):null;
   if(controls){controls.enableDamping=true;controls.dampingFactor=0.08;controls.minDistance=3;controls.maxDistance=260;controls.rotateSpeed=0.7;}
@@ -1008,18 +1085,34 @@ function initThree(){
   (function(){
     var env=new T.Scene();
     var g=new T.SphereGeometry(50,32,16); var cols=[]; var pos=g.attributes.position; var c=new T.Color();
-    for(var i=0;i<pos.count;i++){var y=pos.getY(i)/50; c.setRGB(0.18+0.5*Math.max(0,y),0.2+0.5*Math.max(0,y),0.22+0.5*Math.max(0,y)); cols.push(c.r,c.g,c.b);}
+    for(var i=0;i<pos.count;i++){var y=pos.getY(i)/50; if(y>0){c.setRGB(0.95-0.6*y,0.78-0.3*y,0.62+0.1*y);}else{c.setRGB(0.16,0.3+0.1*y,0.33);} cols.push(c.r,c.g,c.b);}
     g.setAttribute('color',new T.Float32BufferAttribute(cols,3));
     env.add(new T.Mesh(g,new T.MeshBasicMaterial({vertexColors:true,side:T.BackSide})));
     function panel(x,y,z,w,h,k){var m=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshBasicMaterial({color:new T.Color(k,k,k),side:T.DoubleSide})); m.position.set(x,y,z); m.lookAt(0,0,0); env.add(m);}
     panel(0,30,20,40,10,3.5); panel(-35,10,-10,10,30,2); panel(35,5,10,12,25,2.4); panel(0,-10,-40,60,6,1.2);
     var pm=new T.PMREMGenerator(renderer); scene.environment=pm.fromScene(env,0.04).texture;
   })();
-  scene.add(new T.HemisphereLight(0xdfe9ec,0x1a1410,0.55));
-  var key=new T.DirectionalLight(0xffffff,1.6); key.position.set(30,60,50); scene.add(key);
-  var rim=new T.DirectionalLight(0x9fd8cc,0.8); rim.position.set(-40,10,-40); scene.add(rim);
+  scene.add(new T.HemisphereLight(0xcfe0ee,0x2c4a4c,0.6));
+  var key=new T.DirectionalLight(0xfff1e2,1.55); key.position.set(30,60,50); scene.add(key);
+  var rim=new T.DirectionalLight(0xffb27a,1.1); rim.position.set(160,40,-300); scene.add(rim);
 
   var pivot=new T.Group(); scene.add(pivot); var root=new T.Group(); pivot.add(root); var pivotX=42;
+  /* water, marsh and sun */
+  var waterGeo=new T.PlaneGeometry(1000,700,90,60); waterGeo.rotateX(-Math.PI/2); waterGeo.translate(42,0,-200);
+  var wBase=Float32Array.from(waterGeo.attributes.position.array);
+  var water=new T.Mesh(waterGeo,new T.MeshPhongMaterial({color:0x174650,specular:0x6a4a33,shininess:110}));
+  water.position.y=-11; scene.add(water);
+  var land=new T.Mesh(new T.PlaneGeometry(1400,120),new T.MeshStandardMaterial({color:0x4b5a2c,roughness:1}));
+  land.rotation.x=-Math.PI/2; land.position.set(42,-10.6,-420); scene.add(land);
+  (function(){var n=1400;var cone=new T.ConeGeometry(0.9,1,4);cone.translate(0,0.5,0);
+    var im=new T.InstancedMesh(cone,new T.MeshStandardMaterial({color:0xffffff,roughness:0.95}),n);var d=new T.Object3D();var col=new T.Color();
+    for(var i=0;i<n;i++){d.position.set(-480+Math.random()*1040,-10.7,-372-Math.random()*90);var h=5+Math.random()*13;d.scale.set(0.8+Math.random(),h,0.8+Math.random());d.rotation.set((Math.random()-0.5)*0.2,Math.random()*3,(Math.random()-0.5)*0.25);d.updateMatrix();im.setMatrixAt(i,d.matrix);
+      col.setHSL(0.17+Math.random()*0.07,0.35+Math.random()*0.2,0.25+Math.random()*0.17);im.setColorAt(i,col);}
+    scene.add(im);})();
+  (function(){var cv=document.createElement('canvas');cv.width=cv.height=128;var x=cv.getContext('2d');var g=x.createRadialGradient(64,64,0,64,64,64);g.addColorStop(0,'rgba(255,246,220,1)');g.addColorStop(0.18,'rgba(255,226,170,0.95)');g.addColorStop(0.45,'rgba(255,190,120,0.35)');g.addColorStop(1,'rgba(255,170,110,0)');x.fillStyle=g;x.fillRect(0,0,128,128);
+    var t=new T.CanvasTexture(cv);var sp=new T.Sprite(new T.SpriteMaterial({map:t,depthWrite:false,fog:false,transparent:true}));sp.position.set(150,6,-520);sp.scale.set(120,120,1);scene.add(sp);})();
+  function waves(t){var a=waterGeo.attributes.position.array;for(var i=0;i<a.length;i+=3){var x=wBase[i],z=wBase[i+2];a[i+1]=0.28*Math.sin(x*0.07+t*0.8)+0.18*Math.sin(z*0.11+t*1.2)+0.09*Math.sin((x+z)*0.23+t*2.1);}
+    waterGeo.attributes.position.needsUpdate=true;waterGeo.computeVertexNormals();}
 
   /* textures */
   function canvasTex(w,h,draw,rep){var cv=document.createElement('canvas');cv.width=w;cv.height=h;draw(cv.getContext('2d'),w,h);var t=new T.CanvasTexture(cv);t.encoding=T.sRGBEncoding;t.wrapS=t.wrapT=T.RepeatWrapping;t.anisotropy=4;return t;}
@@ -1031,12 +1124,28 @@ function initThree(){
   var evaTex=canvasTex(256,256,function(x,w,h){x.fillStyle='#24282a';x.fillRect(0,0,w,h);for(var i=0;i<6000;i++){var v=rnd(20,60)|0;x.fillStyle='rgba('+v+','+(v+4)+','+(v+6)+',0.5)';x.fillRect(rnd(0,w),rnd(0,h),1.2,1.2);}});
   var knurlTex=canvasTex(64,64,function(x,w,h){x.fillStyle='#777';x.fillRect(0,0,w,h);x.strokeStyle='#222';x.lineWidth=2;for(var i=-64;i<128;i+=8){x.beginPath();x.moveTo(i,0);x.lineTo(i+64,64);x.stroke();x.beginPath();x.moveTo(i+64,0);x.lineTo(i,64);x.stroke();}});
 
+  var speckTex=canvasTex(256,1024,function(x,w,h){var g=x.createLinearGradient(0,0,w,0);g.addColorStop(0,'#4f5e58');g.addColorStop(0.3,'#8e9c94');g.addColorStop(0.5,'#a8939f');g.addColorStop(0.7,'#8e9c94');g.addColorStop(1,'#4f5e58');x.fillStyle=g;x.fillRect(0,0,w,h);
+    for(var i=0;i<900;i++){x.fillStyle='rgba(18,22,24,'+rnd(0.55,0.95)+')';x.beginPath();x.ellipse(rnd(0,w),rnd(0,h),rnd(1.5,4.5),rnd(0.8,2.2),0,0,6.3);x.fill();}});
+  speckTex.repeat.set(1,9);
+  var burlTex=canvasTex(128,128,function(x,w,h){x.fillStyle='#4a2f1d';x.fillRect(0,0,w,h);for(var i=0;i<900;i++){x.fillStyle=Math.random()<0.5?'rgba(20,12,8,0.8)':'rgba(190,120,60,'+rnd(0.3,0.7)+')';x.fillRect(rnd(0,w),rnd(0,h),rnd(1,3),rnd(1,3));}});
+  var emblemTex=canvasTex(128,128,function(x,w,h){x.fillStyle='#16181a';x.fillRect(0,0,w,h);x.fillStyle='#c9a24a';x.fillRect(44,30,10,68);x.fillRect(44,30,40,10);x.fillRect(44,59,30,10);x.fillRect(44,88,40,10);});
   /* materials */
   var M={
     blank:new T.MeshPhysicalMaterial({color:0x4f2d14,roughness:0.32,metalness:0.0,clearcoat:1,clearcoatRoughness:0.12,side:T.DoubleSide}),
     trim:new T.MeshStandardMaterial({color:0x6fc2ad,roughness:0.45,metalness:0.1}),
-    thread:new T.MeshPhysicalMaterial({color:0x111111,roughness:0.35,clearcoat:1,clearcoatRoughness:0.1})
+    thread:new T.MeshPhysicalMaterial({color:0x111111,roughness:0.35,clearcoat:1,clearcoatRoughness:0.1}),
+    hood:new T.MeshStandardMaterial({color:0xb4703f,metalness:0.85,roughness:0.3}),
+    hoodK:new T.MeshStandardMaterial({map:knurlTex,color:0xb4703f,metalness:0.75,roughness:0.42}),
+    gold:new T.MeshStandardMaterial({color:0xc9a24a,metalness:0.9,roughness:0.28}),
+    burl:new T.MeshStandardMaterial({map:burlTex,roughness:0.85}),
+    reelBody:new T.MeshStandardMaterial({color:0x353a3f,metalness:0.75,roughness:0.32}),
+    reelAcc:new T.MeshStandardMaterial({color:0x6a7177,metalness:0.85,roughness:0.28}),
+    spoolLine:new T.MeshStandardMaterial({color:0xd9e04a,roughness:0.85}),
+    lureA:new T.MeshPhysicalMaterial({color:0xff4f98,roughness:0.45,clearcoat:0.6}),
+    lureB:new T.MeshPhysicalMaterial({color:0xd7f23a,roughness:0.45,clearcoat:0.6}),
+    lureHead:new T.MeshStandardMaterial({color:0xd7f23a,metalness:0.3,roughness:0.35})
   };
+  Object.keys(M).forEach(function(k){M[k].userData.shared=true;});
   function mat(o){return new T.MeshStandardMaterial(o)}
   function lab(mesh,text){mesh.userData.label=text;return mesh}
 
@@ -1055,7 +1164,7 @@ function initThree(){
   function at(s){var L=model.len; var f=Math.max(0,Math.min(N,s/L*N)); var i=Math.min(N-1,Math.floor(f)), t=f-i;
     if(s>L){var e=s-L;return {x:CX[N]+Math.cos(CP[N])*e,y:CY[N]+Math.sin(CP[N])*e,phi:CP[N]};}
     return {x:CX[i]+(CX[i+1]-CX[i])*t,y:CY[i]+(CY[i+1]-CY[i])*t,phi:CP[i]+(CP[i+1]-CP[i])*t};}
-  var blankGeo=new T.BufferGeometry(); var bpos=new Float32Array((N+1)*RS*3); blankGeo.setAttribute('position',new T.BufferAttribute(bpos,3));
+  var blankGeo=new T.BufferGeometry(); var bpos=new Float32Array((N+1)*RS*3); blankGeo.setAttribute('position',new T.BufferAttribute(bpos,3)); (function(){var uv=new Float32Array((N+1)*RS*2);for(var i=0;i<=N;i++)for(var j=0;j<RS;j++){var k=(i*RS+j)*2;uv[k]=j/RS;uv[k+1]=i/N;}blankGeo.setAttribute('uv',new T.BufferAttribute(uv,2));})();
   (function(){var idx=[];for(var i=0;i<N;i++)for(var j=0;j<RS;j++){var a=i*RS+j,b=i*RS+(j+1)%RS,c=(i+1)*RS+j,d=(i+1)*RS+(j+1)%RS;idx.push(a,c,b,b,c,d);}blankGeo.setIndex(idx);})();
   var blankStart=0;
   function updateBlank(){
@@ -1081,8 +1190,11 @@ function initThree(){
     var cork=function(len){var t=corkTex.clone();t.needsUpdate=true;t.repeat.set(2,len/2);return mat({map:t,roughness:0.92,metalness:0});};
     var eva=function(len){var t=evaTex.clone();t.needsUpdate=true;t.repeat.set(2,len/2);return mat({map:t,roughness:0.95});};
     var gripMat=h==='eva'?eva:cork, gripName=h==='eva'?'EVA grip':'Cork grip';
-    var cap=lab(lathe([[0,0.0],[0.03,0.36],[0.15,0.5],[0.4,0.53],[0.6,0.52]],mat({color:0x16181a,roughness:0.75})),'Butt cap, rubber');
+    var cap=lab(lathe([[0,0.0],[0.0,0.42],[0.06,0.5],[0.4,0.53],[0.6,0.52]],mat({color:0x16181a,roughness:0.75})),'Butt cap, rubber');
     g.add(place(cap,0,[-6,0,0],true));
+    var emb=new T.Mesh(new T.CircleGeometry(0.4,40),mat({map:emblemTex,roughness:0.5,metalness:0.2})); emb.rotation.y=-Math.PI/2; emb.position.x=-0.004;
+    var embG=new T.Group(); embG.add(lab(emb,'Butt cap with E emblem')); g.add(place(embG,0,[-6,0,0],true));
+    var capRing=lab(cyl(0.525,0.525,0.12,M.hood),'Anodized butt ring'); g.add(place(capRing,0.42,[-5.5,0,0],true));
     var tr=lab(cyl(0.53,0.53,0.07,M.trim),'Trim ring'); g.add(place(tr,0.6,[-5,0,0],true));
     if(h==='fullcork'){
       var rg=lab(lathe([[0,0.5],[3,0.56],[7,0.5],[8.9,0.46]],cork(8.9)),'Full cork rear grip'); g.add(place(rg,0.6,[-3.5,0,0],true));
@@ -1092,6 +1204,10 @@ function initThree(){
       var t2=lab(cyl(0.3,0.3,0.08,M.trim),'Trim ring'); g.add(place(t2,7.52,[-1.6,0,0],true));
       var up=lab(lathe([[0,0.4],[0.3,0.47],[1.9,0.46]],gripMat(1.9)),gripName+', upper'); g.add(place(up,7.6,[-1.2,0,0],true));
     }
+    var ringM=h==='eva'?M.hood:M.burl, ringN=h==='eva'?'Anodized trim ring':'Burl cork ring';
+    function burl(s,r,len,ex){g.add(place(lab(cyl(r,r,len,ringM),ringN),s,ex,true));}
+    if(h==='fullcork'){burl(0.67,0.505,0.22,[-3.5,0,0]);burl(9.25,0.47,0.22,[-3.5,0,0]);}
+    else {burl(0.67,0.515,0.2,[-4,0,0]);burl(3.86,0.5,0.2,[-4,0,0]);burl(9.28,0.468,0.2,[-1.2,0,0]);}
     var foreStart=14.5, foreLen=5;
     if(h==='keel'){
       var core=lab(cyl(radius(5),radius(8),7.2,M.blank),'Handle module core tube (carbon)'); g.add(place(core,0.5,[-2,0,0],true));
@@ -1101,15 +1217,20 @@ function initThree(){
       foreStart=15.4; foreLen=4.1;
     }
     var fg=lab(lathe([[0,0.47],[0.15,0.48],[foreLen*0.6,0.42],[foreLen-0.15,0.35],[foreLen,0.33]],gripMat(foreLen)),gripName+', fore'); g.add(place(fg,foreStart,[2.6,1.4,0],false));
-    var wc=lab(cyl(0.34,0.3,0.22,mat({color:0x9aa1a6,metalness:1,roughness:0.25})),'Winding check'); g.add(place(wc,19.5,[3.6,1.4,0],false));
+    g.add(place(lab(cyl(0.485,0.485,0.2,ringM),ringN),foreStart+0.04,[2.6,1.4,0],false));
+    g.add(place(lab(cyl(0.355,0.345,0.18,ringM),ringN),foreStart+foreLen-0.2,[2.6,1.4,0],false));
+    var wc=lab(cyl(0.34,0.3,0.24,M.hood),'Anodized winding check'); g.add(place(wc,19.5,[3.6,1.4,0],false));
+    var sw=new T.Group(), sr=radius(31.8)*1.13;
+    [[0,0.22,M.trim,'Trim band'],[0.22,0.3,M.thread,'Thread wrap'],[0.52,0.07,M.gold,'Metallic accent'],[0.59,0.34,M.thread,'Thread wrap'],[0.93,0.07,M.gold,'Metallic accent'],[1.0,0.3,M.thread,'Thread wrap'],[1.3,0.22,M.trim,'Trim band']].forEach(function(b){var c=cyl(sr,sr,b[1],b[2]);c.position.x=b[0];sw.add(lab(c,'Signature wrap: '+b[3].toLowerCase()));});
+    g.add(place(sw,31,[0,2.2,0],false));
     // hook keeper
     var hk=new T.Group(); var loop=new T.Mesh(new T.TorusGeometry(0.14,0.018,8,24,Math.PI),mat({color:0xb9c0c4,metalness:1,roughness:0.3})); loop.position.set(0.22,radius(20.4)+0.02,0); hk.add(loop);
-    var hkw=cyl(radius(20.4)*1.12,radius(20.4)*1.12,0.3,M.thread); hk.add(hkw);
+    var hkw=cyl(radius(20.4)*1.12,radius(20.4)*1.12,0.3,M.thread); hk.add(hkw); var hkt=cyl(radius(20.4)*1.15,radius(20.4)*1.15,0.05,M.trim); hkt.position.x=0.3; hk.add(lab(hkt,'Trim band'));
     lab(loop,'Hook keeper'); lab(hkw,'Thread wrap');
     g.add(place(hk,20.2,[3.4,2.6,0],false));
     // decal band
     var m=MODELS[cfg.model];
-    var dt=canvasTex(256,1024,function(x,w,h2){x.clearRect(0,0,w,h2);x.save();x.translate(w/2,h2);x.rotate(-Math.PI/2);x.fillStyle='#e9e5da';x.font='600 30px Archivo, Helvetica, sans-serif';x.textBaseline='middle';x.fillText('ESTUARY',30,0);x.font='22px "IBM Plex Mono", monospace';x.fillText(m.name.toUpperCase()+'  ·  '+(m.len===86?"7'2\"":"7'0\"")+'  '+m.power.charAt(0)+(m.power.indexOf('heavy')>0?'H':'')+'  '+(m.action==='Fast'?'F':'MF')+'  ·  №0001',230,0);x.restore();});
+    var dt=canvasTex(256,1024,function(x,w,h2){x.clearRect(0,0,w,h2);x.save();x.translate(w/2,h2);x.rotate(-Math.PI/2);x.fillStyle='#e9e5da';x.font='600 34px "Barlow Condensed", Helvetica, sans-serif';x.textBaseline='middle';x.fillText('ESTUARY',30,0);x.font='22px "IBM Plex Mono", monospace';x.fillText(m.name.toUpperCase()+'  ·  '+(m.len===86?"7'2\"":"7'0\"")+'  '+m.power.charAt(0)+(m.power.indexOf('heavy')>0?'H':'')+'  '+(m.action==='Fast'?'F':'MF')+'  ·  №0001',230,0);x.restore();});
     dt.wrapS=dt.wrapT=T.ClampToEdgeWrapping;
     var dg=new T.CylinderGeometry(radius(25)*1.03,radius(25)*1.03,9.6,32,1,true,-Math.PI,Math.PI*2); dg.rotateZ(-Math.PI/2); dg.translate(4.8,0,0);
     var dm=new T.MeshStandardMaterial({map:dt,transparent:true,roughness:0.4,depthWrite:false}); dm.userData.keepT=true; var decal=lab(new T.Mesh(dg,dm),'Decal: model, rating, serial');
@@ -1122,14 +1243,14 @@ function initThree(){
     var down=Math.PI/2; // theta center that faces -y
     if(cfg.seat==='dps'){
       g.add(place(lab(cyl(0.4,0.4,5.0,black),'Reel seat body (DPS-type)'),9.5,[0,2.6,0],true));
-      g.add(place(lab(cyl(0.48,0.47,1.1,black,32,true,down+0.9,Math.PI*2-1.8),'Fixed hood'),13.4,[0.6,2.6,0],true));
-      g.add(place(lab(cyl(0.5,0.5,1.1,mat({map:knurlTex,color:0x2a2d30,roughness:0.5,metalness:0.3})),'Locking nut'),9.5,[-0.6,2.6,0],true));
-      g.add(place(lab(cyl(0.47,0.48,0.9,black,32,true,down+0.9,Math.PI*2-1.8),'Moving hood'),10.6,[-0.2,2.6,0],true));
+      g.add(place(lab(cyl(0.48,0.47,1.1,M.hood,32,true,down+0.9,Math.PI*2-1.8),'Fixed hood, anodized'),13.4,[0.6,2.6,0],true));
+      g.add(place(lab(cyl(0.5,0.5,1.1,M.hoodK),'Locking nut, knurled'),9.5,[-0.6,2.6,0],true));
+      g.add(place(lab(cyl(0.47,0.48,0.9,M.hood,32,true,down+0.9,Math.PI*2-1.8),'Moving hood, anodized'),10.6,[-0.2,2.6,0],true));
     } else {
       var shell=mat({color:0x17191b,roughness:0.38,metalness:0.15,side:T.DoubleSide});
       g.add(place(lab(cyl(0.4,0.38,4.6,shell,32,true,-Math.PI/2+0.55,Math.PI*2-1.1),'Skeleton seat (VSS-type): blank exposed on top'),9.9,[0,2.6,0],true));
-      g.add(place(lab(cyl(0.46,0.45,1.0,black,32,true,down+0.9,Math.PI*2-1.8),'Fixed hood'),13.5,[0.6,2.6,0],true));
-      g.add(place(lab(cyl(0.46,0.46,0.8,mat({map:knurlTex,color:0x2a2d30,roughness:0.5,metalness:0.3})),'Locking nut'),9.5,[-0.6,2.6,0],true));
+      g.add(place(lab(cyl(0.46,0.45,1.0,M.hood,32,true,down+0.9,Math.PI*2-1.8),'Fixed hood, anodized'),13.5,[0.6,2.6,0],true));
+      g.add(place(lab(cyl(0.46,0.46,0.8,M.hoodK),'Locking nut, knurled'),9.5,[-0.6,2.6,0],true));
     }
     g.add(place(lab(cyl(0.49,0.49,0.06,trim),'Trim ring'),14.44,[0.8,2.6,0],true));
     g.add(place(lab(cyl(0.51,0.51,0.06,trim),'Trim ring'),9.44,[-0.8,2.6,0],true));
@@ -1172,29 +1293,42 @@ function initThree(){
     return g;
   }
   function buildReel(){
-    var g=new T.Group(); var gm=mat({color:0x2f3438,metalness:0.7,roughness:0.35}), dk=mat({color:0x15181a,metalness:0.4,roughness:0.5}), sp=mat({color:0xa9b0b5,metalness:1,roughness:0.25});
-    var r=new T.Group();
+    var g=new T.Group(); var gm=M.reelBody, ac=M.reelAcc, dk=mat({color:0x15181a,metalness:0.4,roughness:0.5}), sp=mat({color:0xc3c9cd,metalness:1,roughness:0.22});
+    var r=new T.Group(), y=-2.85;
     var foot=new T.Mesh(new T.BoxGeometry(2.6,0.06,0.36),dk); foot.position.set(0,-0.43,0); r.add(lab(foot,'Reel foot'));
     var stem=new T.Mesh(new T.BoxGeometry(0.34,1.9,0.22),gm); stem.position.set(0.15,-1.4,0); stem.rotation.z=0.12; r.add(lab(stem,'Reel stem'));
-    var body=new T.Mesh(new T.SphereGeometry(0.85,24,16),gm); body.scale.set(1.15,1.0,0.75); body.position.set(-0.15,-2.85,0); r.add(lab(body,'Reference 2500 reel (not included)'));
-    var rotor=cyl(0.72,0.8,1.0,dk); rotor.position.set(0.55,-2.85,0); r.add(lab(rotor,'Rotor'));
-    var spool=cyl(0.86,0.86,0.75,sp); spool.position.set(1.55,-2.85,0); r.add(lab(spool,'Spool'));
-    var lip=cyl(0.95,0.95,0.08,sp); lip.position.set(2.27,-2.85,0); r.add(lab(lip,'Spool lip'));
-    var bail=new T.Mesh(new T.TorusGeometry(0.98,0.03,8,32,Math.PI),sp); bail.rotation.y=Math.PI/2; bail.position.set(1.35,-2.85,0); r.add(lab(bail,'Bail'));
-    var arm=new T.Mesh(new T.BoxGeometry(0.12,0.12,1.3),gm); arm.position.set(-0.15,-2.85,-0.95); r.add(lab(arm,'Handle arm'));
-    var knob=new T.Mesh(new T.CylinderGeometry(0.16,0.16,0.55,16),dk); knob.position.set(-0.15,-2.4,-1.6); r.add(lab(knob,'Handle knob'));
+    var stripe=new T.Mesh(new T.BoxGeometry(0.36,0.5,0.24),ac); stripe.position.set(0.1,-1.85,0); stripe.rotation.z=0.12; r.add(lab(stripe,'Stem accent'));
+    var body=new T.Mesh(new T.SphereGeometry(0.85,32,20),gm); body.scale.set(1.15,1.0,0.75); body.position.set(-0.15,y,0); r.add(lab(body,'Reference 2500 reel (display only)'));
+    var cover=new T.Mesh(new T.CylinderGeometry(0.5,0.5,0.06,32),ac); cover.rotation.x=Math.PI/2; cover.position.set(-0.15,y,0.64); r.add(lab(cover,'Side cover'));
+    var rear=cyl(0.3,0.42,0.4,dk); rear.position.set(-1.35,y,0); r.add(lab(rear,'Rear cap'));
+    var rotor=cyl(0.72,0.82,1.0,gm); rotor.position.set(0.55,y,0); r.add(lab(rotor,'Rotor'));
+    var rring=cyl(0.84,0.84,0.1,ac); rring.position.set(1.45,y,0); r.add(lab(rring,'Rotor ring'));
+    var spool=cyl(0.7,0.7,0.72,sp); spool.position.set(1.58,y,0); r.add(lab(spool,'Spool'));
+    var wound=cyl(0.8,0.8,0.6,M.spoolLine); wound.position.set(1.62,y,0); r.add(lab(wound,'Braid on spool'));
+    var lip=cyl(0.9,0.9,0.08,sp); lip.position.set(2.24,y,0); r.add(lab(lip,'Spool lip'));
+    var drag=cyl(0.36,0.3,0.38,ac); drag.position.set(2.32,y,0); r.add(lab(drag,'Drag knob'));
+    var bail=new T.Mesh(new T.TorusGeometry(0.98,0.03,8,40,Math.PI),sp); bail.rotation.y=Math.PI/2; bail.position.set(1.35,y,0); r.add(lab(bail,'Bail'));
+    var roller=new T.Mesh(new T.CylinderGeometry(0.07,0.07,0.18,12),ac); roller.position.set(1.35,y+0.98,0); r.add(lab(roller,'Line roller'));
+    var arm=new T.Mesh(new T.BoxGeometry(0.12,0.12,1.3),gm); arm.position.set(-0.15,y,-0.95); r.add(lab(arm,'Handle arm'));
+    var knob=new T.Mesh(new T.CylinderGeometry(0.18,0.15,0.6,20),ac); knob.position.set(-0.15,y+0.45,-1.6); r.add(lab(knob,'Handle knob'));
     g.add(place(r,12,[0,-5,0],true));
     g.userData.spool=new T.Vector3(2.3,-2.05,0); g.userData.reel=r;
     return g;
   }
   var lineGeo=new T.BufferGeometry(); var linePos=new Float32Array(40*3); lineGeo.setAttribute('position',new T.BufferAttribute(linePos,3));
   var lineMat=new T.LineBasicMaterial({color:0x7f9230,transparent:true,opacity:0.95}); var line=new T.Line(lineGeo,lineMat); root.add(line);
-  var lure=new T.Group(); (function(){var hd=new T.Mesh(new T.SphereGeometry(0.2,16,12),mat({color:0xb8bec2,metalness:0.8,roughness:0.3}));lure.add(lab(hd,'1/4 oz jig head'));
-    var bd=new T.Mesh(new T.CylinderGeometry(0.16,0.06,1.5,14),mat({color:0xc4a86a,roughness:0.6}));bd.rotation.z=Math.PI/2;bd.position.x=-0.9;lure.add(lab(bd,'Paddletail'));
-    var tl=new T.Mesh(new T.CylinderGeometry(0.2,0.2,0.04,16),mat({color:0xc4a86a,roughness:0.6}));tl.rotation.x=Math.PI/2;tl.position.x=-1.7;lure.add(lab(tl,'Paddle'));})();
+  var lure=new T.Group(); (function(){
+    var hd=new T.Mesh(new T.SphereGeometry(0.21,20,14),M.lureHead); lure.add(lab(hd,'1/4 oz jig head, painted'));
+    [0.13,-0.13].forEach(function(z){var e=new T.Mesh(new T.SphereGeometry(0.075,12,8),mat({color:0xf4f1e6,roughness:0.3}));e.position.set(0.05,0.04,z*1.25);lure.add(lab(e,'3D eye'));
+      var p=new T.Mesh(new T.SphereGeometry(0.04,10,8),mat({color:0x111111,roughness:0.2}));p.position.set(0.07,0.04,z*1.25+(z>0?0.045:-0.045));lure.add(lab(p,'3D eye'));});
+    var top=new T.Mesh(new T.CylinderGeometry(0.17,0.07,1.5,16,1,false,0,Math.PI),M.lureA); top.rotation.z=Math.PI/2; top.rotation.x=Math.PI/2; top.position.x=-0.9; lure.add(lab(top,'Paddletail, back color'));
+    var bot=new T.Mesh(new T.CylinderGeometry(0.17,0.07,1.5,16,1,false,Math.PI,Math.PI),M.lureB); bot.rotation.z=Math.PI/2; bot.rotation.x=Math.PI/2; bot.position.x=-0.9; lure.add(lab(bot,'Paddletail, belly color'));
+    var tl=new T.Mesh(new T.CylinderGeometry(0.22,0.22,0.05,20),M.lureA); tl.rotation.x=Math.PI/2; tl.position.x=-1.72; lure.add(lab(tl,'Paddle'));
+    var hook=new T.Mesh(new T.TorusGeometry(0.16,0.015,6,20,Math.PI*1.2),mat({color:0xc9ced2,metalness:1,roughness:0.2})); hook.position.set(-0.45,0.12,0); lure.add(lab(hook,'Hook point'));
+  })();
   root.add(lure);
 
-  function setOpacity(group,o){group.traverse(function(n){if(n.isMesh){var mm=Array.isArray(n.material)?n.material:[n.material];mm.forEach(function(m){if(m===M.blank||m===M.trim||m===M.thread){return;}m.transparent=o<1||!!m.userData.keepT;m.opacity=o;});}});}
+  function setOpacity(group,o){group.traverse(function(n){if(n.isMesh){var mm=Array.isArray(n.material)?n.material:[n.material];mm.forEach(function(m){if(m.userData.shared){return;}m.transparent=o<1||!!m.userData.keepT;m.opacity=o;});}});}
   var now=0;
   function swap(slot,builder,rise){
     var old=slots[slot]; if(old){dying.push({g:old,t0:now,rise:rise});}
@@ -1213,7 +1347,7 @@ function initThree(){
   slots.reel.visible=true;
 
   /* camera */
-  var VIEWS={full:{t:function(){return [model.len/2,-2.2,0]},W:function(){return model.len*1.04},H:16,d:[-0.06,0.24,1]},
+  var VIEWS={full:{t:function(){return [model.len/2,-2.2,0]},W:function(){return model.len*1.04},H:16,d:[-0.06,0.15,1]},
     handle:{t:function(){return [11.5,-1.6,0]},W:function(){return 26},H:9,d:[-0.45,0.32,1]},
     guides:{t:function(){return [52,-1,0]},W:function(){return 38},H:9,d:[-0.55,0.3,1]},
     tip:{t:function(){return [model.len-6,-0.4,0]},W:function(){return 14},H:4.5,d:[-0.5,0.28,1]},
@@ -1269,7 +1403,7 @@ function initThree(){
     }
     explode+=(explodeT-explode)*Math.min(1,dt*(reduceMotion?60:5));
     detach+=(detachT-detach)*Math.min(1,dt*(reduceMotion?60:4));
-    computeCurve(); updateBlank();
+    computeCurve(); updateBlank(); if(!reduceMotion||now<0.1) waves(now);
     // place
     var det=cfg.handle==='keel'?detach*-9:0;
     for(var i=0;i<placed.length;i++){var o=placed[i], s=o.userData.s, ex=o.userData.ex, p=at(s);
@@ -1303,8 +1437,10 @@ function initThree(){
   frame();
 
   three={
-    finish:function(){var f=FINISH[cfg.finish]; M.blank.color.setHex(f.color); M.blank.roughness=f.rough; M.blank.clearcoat=f.clear;},
-    trim:function(){M.trim.color.setHex(TRIM[cfg.trim].color);},
+    finish:function(){var f=FINISH[cfg.finish]; M.blank.map=f.speck?speckTex:null; M.blank.color.setHex(f.speck?0xffffff:f.color); M.blank.roughness=f.rough; M.blank.clearcoat=f.clear; M.blank.metalness=f.metal||0; M.blank.needsUpdate=true;},
+    trim:function(){var t=TRIM[cfg.trim]; M.trim.color.setHex(t.color); M.trim.metalness=t.metal?0.9:0.1; M.trim.roughness=t.metal?0.28:0.45;},
+    colors:function(){M.hood.color.setHex(HOOD[cfg.hood].color); M.hoodK.color.setHex(HOOD[cfg.hood].color); M.reelAcc.color.setHex(REEL[cfg.reel].color);
+      M.spoolLine.color.setHex(LINE[cfg.line].color); lineMat.color.setHex(LINE[cfg.line].color); var l=LURE[cfg.lure]; M.lureA.color.setHex(l.a); M.lureB.color.setHex(l.b); M.lureHead.color.setHex(l.b);},
     rebuild:function(key){
       model=MODELS[cfg.model]; blankStart=cfg.handle==='keel'?7.5:0;
       if(key==='model'){swap('handle',buildHandle,3);swap('guides',buildGuides,-3);goView(curView);}
@@ -1315,11 +1451,37 @@ function initThree(){
       if(cfg.handle!=='keel'){toggle($('#bDetach'),false);$('#bDetach').textContent='Unlock handle';}
     }
   };
-  three.finish(); three.trim();
+  three.finish(); three.trim(); three.colors();
 }
 
+/* ---------- market charts ---------- */
+function drawMarket(){
+  var a=$('#amzChart'); if(a){
+    var rows=[['Ugly Stik Dock Runner spinning combo',2000,2000],['PLUSINNO telescopic rod combo',2000,2000],['Ugly Stik GX2 combo',800,800],['Ugly Stik GX2 rod, per listing',200,500]];
+    var L=250,R=640,top=10,rh=44,X=function(v){return L+v/2200*(R-L)}, h='';
+    [0,500,1000,1500,2000].forEach(function(t){h+='<line x1="'+X(t)+'" y1="'+top+'" x2="'+X(t)+'" y2="'+(top+rh*rows.length)+'" stroke="var(--line)"/><text x="'+X(t)+'" y="'+(top+rh*rows.length+16)+'" text-anchor="middle" font-size="11" fill="var(--faint)">'+t.toLocaleString()+'</text>';});
+    rows.forEach(function(r,i){var y=top+i*rh+12;
+      h+='<text x="0" y="'+(y+13)+'" font-size="12" fill="var(--fg)">'+r[0]+'</text>';
+      h+='<rect x="'+L+'" y="'+y+'" width="'+(X(r[1])-L)+'" height="18" rx="2" fill="var(--c2)"><title>'+r[0]+': about '+r[1].toLocaleString()+(r[2]>r[1]?'–'+r[2]:'')+' a month</title></rect>';
+      if(r[2]>r[1]) h+='<rect x="'+X(r[1])+'" y="'+y+'" width="'+(X(r[2])-X(r[1]))+'" height="18" rx="2" fill="var(--c2)" opacity="0.35"><title>'+r[0]+': 200–500 a month</title></rect>';
+      h+='<text x="'+(X(r[2])+6)+'" y="'+(y+13)+'" font-size="12" fill="var(--muted)">'+(r[2]>r[1]?r[1]+'–'+r[2]:'~'+r[1].toLocaleString())+'</text>';});
+    a.setAttribute('viewBox','0 0 720 '+(top+rh*rows.length+24)); a.innerHTML=h;}
+  var l=$('#ladder'); if(l){
+    var rows=[['Okuma Pulse Wave Inshore',99.99,99.99,0,'from'],['Ugly Stik Carbon Inshore',109.95,109.95,0,''],['St. Croix Triumph Inshore',150,170,0,''],['PENN Battalion II Inshore',159.95,189.95,0,'list'],['Waterloo Salinity',179.99,179.99,0,''],['Estuary Flats 70M',199,199,1,'planned'],['PENN Carnage III Inshore',199.95,229.95,0,''],['Estuary Channel 72MH',219,219,1,'planned'],['St. Croix Avid Inshore',240,320,0,'street']];
+    var L=210,R=690,top=8,rh=32,X=function(v){return L+(v-80)/(340-80)*(R-L)}, h='';
+    [100,150,200,250,300].forEach(function(t){h+='<line x1="'+X(t)+'" y1="'+top+'" x2="'+X(t)+'" y2="'+(top+rh*rows.length)+'" stroke="var(--line)"/><text x="'+X(t)+'" y="'+(top+rh*rows.length+16)+'" text-anchor="middle" font-size="11" fill="var(--faint)">$'+t+'</text>';});
+    rows.forEach(function(r,i){var y=top+i*rh+rh/2, col=r[3]?'var(--accent)':'var(--c2)', lab='$'+(r[1]%1?r[1].toFixed(2):r[1])+(r[2]>r[1]?'–'+(r[2]%1?r[2].toFixed(2):r[2]):'')+(r[4]?' '+r[4]:'');
+      h+='<text x="0" y="'+(y+4)+'" font-size="12" fill="var(--fg)"'+(r[3]?' font-weight="600"':'')+'>'+r[0]+'</text>';
+      if(r[2]>r[1]) h+='<rect x="'+X(r[1])+'" y="'+(y-5)+'" width="'+(X(r[2])-X(r[1]))+'" height="10" rx="5" fill="'+col+'"><title>'+r[0]+': '+lab+'</title></rect>';
+      else h+='<circle cx="'+X(r[1])+'" cy="'+y+'" r="6" fill="'+col+'"'+(r[3]?' stroke="var(--bg)" stroke-width="2"':'')+'><title>'+r[0]+': '+lab+'</title></circle>';
+      h+='<text x="'+(X(r[2])+10)+'" y="'+(y+4)+'" font-size="11" fill="var(--muted)">'+lab+'</text>';});
+    l.setAttribute('viewBox','0 0 720 '+(top+rh*rows.length+24)); l.innerHTML=h;}
+}
+drawMarket();
+
 function onConfig(key){
-  if(three){ if(key==='finish')three.finish(); else if(key==='trim')three.trim(); else three.rebuild(key); }
+  if(three){ if(key==='finish')three.finish(); else if(key==='trim')three.trim(); else if(['hood','reel','line','lure'].indexOf(key)>=0) three.colors(); else three.rebuild(key); }
+  if(['reel','line','lure'].indexOf(key)>=0) return;
   updateReadout();
 }
 function refreshAll(){renderModel(); updateReadout();}
